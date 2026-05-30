@@ -348,7 +348,14 @@ export function privateKeyFor(userId) {
 
 export function parseTimestamp(value) {
   if (!value) return -1
-  const time = new Date(value).getTime()
+  let str = String(value)
+  // If the timestamp doesn't end with Z and doesn't contain a + or - offset,
+  // append 'Z' to force JavaScript to parse it as a UTC timestamp (since PostgreSQL's 
+  // 'timestamp without time zone' drops the timezone suffix)
+  if (!str.endsWith('Z') && !str.includes('+') && !/-\d{2}:\d{2}$/.test(str)) {
+    str += 'Z'
+  }
+  const time = new Date(str).getTime()
   return Number.isNaN(time) ? -1 : time
 }
 
