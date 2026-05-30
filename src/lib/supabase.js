@@ -50,6 +50,11 @@ function parseBody(text) {
   }
 }
 
+function customerNameFromSession(session) {
+  const fallbackName = session?.email?.split('@')[0] || session?.userId?.slice(0, 8) || 'Customer'
+  return String(session?.fullName || fallbackName).trim().slice(0, 50)
+}
+
 export async function loginWithPassword(email, password) {
   const body = await request('/auth/v1/token?grant_type=password', {
     method: 'POST',
@@ -82,7 +87,6 @@ export async function registerAccount({ firstName, lastName, email, password }) 
         first_name: firstName,
         last_name: lastName,
         full_name: fullName,
-        role: 'resident',
       },
     }),
   })
@@ -99,9 +103,8 @@ export async function registerAccount({ firstName, lastName, email, password }) 
       }),
       body: JSON.stringify({
         customer_id: userId,
-        full_name: fullName,
+        full_name: fullName.slice(0, 50),
         email,
-        role: 'resident',
       }),
     })
   }
@@ -163,9 +166,8 @@ export async function upsertCustomer(session) {
     }),
     body: JSON.stringify({
       customer_id: session.userId,
-      full_name: session.fullName || 'User',
+      full_name: customerNameFromSession(session),
       email: session.email || '',
-      role: 'resident',
     }),
   })
 }
@@ -245,7 +247,7 @@ export async function fetchProfile(session) {
   })
 
   const customers = await request(
-    `/rest/v1/customers?customer_id=eq.${user.id}&select=customer_id,full_name,email,contact_number`,
+    `/rest/v1/customers?customer_id=eq.${user.id}&select=customer_id,full_name,email`,
     { headers: authHeaders(session?.accessToken, { Accept: 'application/json' }) },
   )
 

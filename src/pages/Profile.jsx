@@ -27,7 +27,7 @@ export default function Profile({ session, onLogout, onNavigate }) {
       const { user, customer } = await fetchProfile(session)
       setProfile({
         fullName: customer?.full_name || user.user_metadata?.full_name || session.fullName || 'User',
-        contact: customer?.contact_number || customer?.email || user.email || session.email || '',
+        contact: customer?.email || user.email || session.email || '',
         userId: customer?.customer_id || user.id || session.userId,
       })
     } catch (err) {
