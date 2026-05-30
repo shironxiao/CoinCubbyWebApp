@@ -61,7 +61,6 @@ export default function History({ session }) {
     <main className="page xml-page xml-history">
       <section className="xml-screen-header">
         <h1>Rental History</h1>
-        <span className="xml-profile-dot">●</span>
       </section>
 
       <section className="history-summary">

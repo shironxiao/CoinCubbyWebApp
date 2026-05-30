@@ -83,7 +83,6 @@ export default function Rent({ session }) {
     <main className="page xml-page xml-rentals">
       <section className="xml-screen-header">
         <h1>My Rentals</h1>
-        <span className="xml-profile-dot">●</span>
       </section>
 
       <section className="xml-active-banner">
@@ -91,7 +90,7 @@ export default function Rent({ session }) {
           <small>ACTIVE RENTALS</small>
           <strong>{rentals.length} locker(s) rented</strong>
         </div>
-        <span>▣</span>
+        <span className="locker-glyph banner-locker" aria-hidden="true"></span>
       </section>
 
       {message && <p className={message.includes('returned') ? 'success' : 'alert'}>{message}</p>}

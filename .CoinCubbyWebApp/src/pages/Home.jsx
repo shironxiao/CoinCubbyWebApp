@@ -101,7 +101,7 @@ export default function Home({ session, onNavigate }) {
 
       <section className="xml-stats-row">
         <div className="xml-stat-card">
-          <span className="xml-icon-circle">▣</span>
+          <span className="xml-icon-circle locker-glyph" aria-hidden="true"></span>
           <div>
             <strong>{lockers.length}</strong>
             <small>Total Locker</small>
@@ -117,7 +117,7 @@ export default function Home({ session, onNavigate }) {
 
       <section className="xml-locker-panel">
         <div className="xml-locker-panel-head">
-          <span className="xml-dark-circle">▣</span>
+          <span className="xml-dark-circle locker-glyph light" aria-hidden="true"></span>
           <div>
             <strong>CoinCubby</strong>
             <small>{availableCount} available</small>
@@ -140,7 +140,7 @@ export default function Home({ session, onNavigate }) {
               type="button"
               onClick={() => openRental(locker)}
             >
-              <span className="locker-icon">▣</span>
+              <span className="locker-icon locker-glyph" aria-hidden="true"></span>
               <strong>{locker.id}</strong>
               <span className="locker-dot"></span>
               <small>{locker.status}</small>

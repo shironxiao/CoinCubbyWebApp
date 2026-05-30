@@ -361,6 +361,37 @@ button {
   color: var(--dark);
 }
 
+.locker-glyph {
+  position: relative;
+}
+
+.locker-glyph::before {
+  content: '';
+  width: 16px;
+  height: 14px;
+  border: 2px solid currentColor;
+  border-radius: 3px;
+  box-sizing: border-box;
+}
+
+.locker-glyph::after {
+  content: '';
+  position: absolute;
+  top: 9px;
+  left: 50%;
+  width: 11px;
+  height: 9px;
+  border: 2px solid currentColor;
+  border-bottom: 0;
+  border-radius: 8px 8px 0 0;
+  transform: translateX(-50%);
+  box-sizing: border-box;
+}
+
+.locker-glyph.light {
+  color: var(--white);
+}
+
 .xml-dark-circle {
   background: var(--dark);
   color: var(--white);
@@ -469,6 +500,10 @@ button {
 }
 
 .locker-icon {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
   color: var(--gray);
 }
 
@@ -657,6 +692,10 @@ button {
   height: 48px;
   border-radius: 50%;
   background: #d1e6b9;
+  color: var(--green);
+}
+
+.xml-active-banner > .banner-locker {
   color: var(--green);
 }
 
@@ -984,10 +1023,94 @@ dd {
   margin-top: 14px;
 }
 
-@media (min-width: 761px) {
-  .page,
+@media (min-width: 900px) {
+  .sidebar {
+    top: 24px;
+    right: 32px;
+  }
+
+  .hamburger-button {
+    display: none;
+  }
+
+  .sidebar nav,
+  .sidebar.menu-open nav {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+    margin-top: 0;
+    padding: 6px;
+    border-radius: 999px;
+    background: var(--dark);
+  }
+
+  .sidebar nav button {
+    min-height: 36px;
+    border-radius: 999px;
+    padding: 8px 14px;
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  .page {
+    width: min(1120px, calc(100% - 96px));
+    padding: 28px;
+  }
+
   .auth-page {
-    border-left: 1px solid #111;
-    border-right: 1px solid #111;
+    display: grid;
+    place-items: center;
+    width: 100%;
+    max-width: none;
+    border: 0;
+    padding: 48px;
+  }
+
+  .auth-panel {
+    width: min(430px, 100%);
+    min-height: auto;
+    border: 0;
+    border-radius: 24px;
+    box-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
+  }
+
+  .xml-home {
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 16px;
+    align-content: start;
+  }
+
+  .xml-home .page-header,
+  .xml-home .xml-stats-row,
+  .xml-home .xml-locker-panel {
+    grid-column: 1 / -1;
+  }
+
+  .xml-locker-panel {
+    padding: 20px;
+  }
+
+  .locker-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .xml-rentals,
+  .xml-history {
+    width: min(980px, calc(100% - 96px));
+  }
+
+  .rental-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .profile-page {
+    width: min(720px, calc(100% - 96px));
+    padding-top: 28px;
+  }
+
+  .history-list {
+    gap: 8px;
   }
 }

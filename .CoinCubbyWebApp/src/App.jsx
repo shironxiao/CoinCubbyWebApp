@@ -20,7 +20,7 @@ export default function App() {
   const [menuOpen, setMenuOpen] = useState(false)
   const navItems = [
     ['home', 'Home'],
-    ['rent', 'My Rental'],
+    ['rent', 'Rental'],
     ['history', 'History'],
     ['profile', 'Profile'],
   ]

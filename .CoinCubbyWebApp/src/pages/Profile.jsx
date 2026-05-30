@@ -40,15 +40,17 @@ export default function Profile({ session, onLogout, onNavigate }) {
   }, [loadProfile])
 
   async function handleSignOut() {
-    await logout(session?.accessToken)
-    onLogout()
-    onNavigate('login')
+    try {
+      await logout(session?.accessToken)
+    } finally {
+      onLogout()
+      onNavigate('login')
+    }
   }
 
   return (
     <main className="page xml-page profile-page">
       <header className="xml-topbar">
-        <span className="xml-home-dot">⌂</span>
         <strong>Profile</strong>
       </header>
 
