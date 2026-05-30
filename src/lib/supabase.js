@@ -36,6 +36,18 @@ async function request(path, options = {}) {
   if (!response.ok) {
     const message =
       body?.error_description || body?.msg || body?.message || 'Request failed.'
+
+    // Auto-logout if token is expired or invalid
+    if (
+      message.includes('JWT') ||
+      message.includes('token is expired') ||
+      message.includes('invalid claim')
+    ) {
+      clearSession()
+      if (typeof window !== 'undefined') {
+        window.location.hash = '/login'
+      }
+    }
     throw new Error(message)
   }
 
@@ -173,7 +185,13 @@ export async function upsertCustomer(session) {
 }
 
 export async function createRental({ locker, duration, isOpenTime, paymentMethod, session }) {
-  await upsertCustomer(session)
+  // Make customer upsert non-fatal so that existing customer accounts don't block the rental
+  try {
+    await upsertCustomer(session)
+  } catch (err) {
+    console.warn('Customer upsert warning (continuing):', err)
+  }
+
   const rates = await fetchRates()
   const sizeTypeId = locker.sizeTypeId || (locker.size === 'Medium' ? 2 : locker.size === 'Large' ? 3 : 1)
   const rate = (rates || []).find((item) => Number(item.size_type_id) === Number(sizeTypeId))
@@ -181,7 +199,18 @@ export async function createRental({ locker, duration, isOpenTime, paymentMethod
   if (!rate) throw new Error(`Rate not found for ${locker.size}.`)
 
   const now = new Date()
-  const qrToken = crypto.randomUUID().replaceAll('-', '').slice(0, 10).toUpperCase()
+  
+  // Safe QR Token generation that doesn't crash in non-secure (HTTP) contexts
+  let qrToken = ''
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    qrToken = crypto.randomUUID().replaceAll('-', '').slice(0, 10).toUpperCase()
+  } else {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+    for (let i = 0; i < 10; i++) {
+      qrToken += chars.charAt(Math.floor(Math.random() * chars.length))
+    }
+  }
+
   const body = {
     customer_id: session.userId,
     rate_id: rate.rate_id,
