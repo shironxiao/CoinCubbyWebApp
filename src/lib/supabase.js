@@ -200,16 +200,8 @@ export async function createRental({ locker, duration, isOpenTime, paymentMethod
 
   const now = new Date()
   
-  // Safe QR Token generation that doesn't crash in non-secure (HTTP) contexts
-  let qrToken = ''
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    qrToken = crypto.randomUUID().replaceAll('-', '').slice(0, 10).toUpperCase()
-  } else {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-    for (let i = 0; i < 10; i++) {
-      qrToken += chars.charAt(Math.floor(Math.random() * chars.length))
-    }
-  }
+  // Use the persistent unique locker access token derived from the user's ID
+  const qrToken = privateKeyFor(session.userId)
 
   const body = {
     customer_id: session.userId,
