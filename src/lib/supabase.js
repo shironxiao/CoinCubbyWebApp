@@ -136,6 +136,15 @@ export async function logout(token) {
   }
 }
 
+export async function changePassword(password, token) {
+  return request('/auth/v1/user', {
+    method: 'PUT',
+    headers: authHeaders(token, { 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ password }),
+  })
+}
+
+
 export function sizeFromType(sizeTypeId) {
   if (Number(sizeTypeId) === 2) return { label: 'Medium', rate: 20 }
   if (Number(sizeTypeId) === 3) return { label: 'Large', rate: 30 }

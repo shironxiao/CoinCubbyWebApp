@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { fetchProfile, logout, privateKeyFor } from '../lib/supabase'
+import { fetchProfile, logout, privateKeyFor, changePassword } from '../lib/supabase'
 
 export default function Profile({ session, onLogout, onNavigate }) {
   const [profile, setProfile] = useState({
@@ -9,6 +9,43 @@ export default function Profile({ session, onLogout, onNavigate }) {
     userId: session?.userId || '',
   })
   const [message, setMessage] = useState('')
+  const [isChangingPassword, setIsChangingPassword] = useState(false)
+  const [passwordForm, setPasswordForm] = useState({
+    password: '',
+    confirmPassword: '',
+  })
+  const [error, setError] = useState('')
+  const [notice, setNotice] = useState('')
+  const [loadingPassword, setLoadingPassword] = useState(false)
+
+  function updatePasswordFields(event) {
+    setPasswordForm((current) => ({ ...current, [event.target.name]: event.target.value }))
+  }
+
+  async function handleChangePassword(event) {
+    event.preventDefault()
+    setError('')
+    setNotice('')
+
+    if (!passwordForm.password) return setError('Password is required.')
+    if (passwordForm.password.length < 6) return setError('Password must be at least 6 characters.')
+    if (passwordForm.password !== passwordForm.confirmPassword) return setError('Passwords do not match.')
+
+    setLoadingPassword(true)
+    try {
+      await changePassword(passwordForm.password, session?.accessToken)
+      setNotice('Password updated successfully.')
+      setPasswordForm({ password: '', confirmPassword: '' })
+      setTimeout(() => {
+        setIsChangingPassword(false)
+        setNotice('')
+      }, 1500)
+    } catch (err) {
+      setError(err.message || 'Password update failed. Please try again.')
+    } finally {
+      setLoadingPassword(false)
+    }
+  }
 
   const initials = useMemo(() => {
     const name = profile.fullName || profile.contact || 'User'
@@ -68,11 +105,63 @@ export default function Profile({ session, onLogout, onNavigate }) {
         <small>Use this key for quick locker access</small>
       </section>
 
-      <section className="xml-list-row">
-        <span>▣</span>
-        <p>Change Private Key</p>
-        <b>›</b>
-      </section>
+      {!isChangingPassword ? (
+        <section
+          className="xml-list-row"
+          style={{ cursor: 'pointer' }}
+          onClick={() => setIsChangingPassword(true)}
+        >
+          <span>▣</span>
+          <p>Change password</p>
+          <b>›</b>
+        </section>
+      ) : (
+        <form className="form-stack" onSubmit={handleChangePassword} style={{ marginTop: '16px' }}>
+          <label className="xml-field">
+            <span>New Password</span>
+            <input
+              name="password"
+              type="password"
+              value={passwordForm.password}
+              onChange={updatePasswordFields}
+              placeholder="••••••••"
+              autoComplete="new-password"
+            />
+          </label>
+          <label className="xml-field">
+            <span>Confirm Password</span>
+            <input
+              name="confirmPassword"
+              type="password"
+              value={passwordForm.confirmPassword}
+              onChange={updatePasswordFields}
+              placeholder="••••••••"
+              autoComplete="new-password"
+            />
+          </label>
+
+          {error && <p className="alert">{error}</p>}
+          {notice && <p className="success">{notice}</p>}
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '8px' }}>
+            <button
+              className="secondary-button"
+              type="button"
+              onClick={() => {
+                setIsChangingPassword(false)
+                setPasswordForm({ password: '', confirmPassword: '' })
+                setError('')
+                setNotice('')
+              }}
+            >
+              Cancel
+            </button>
+            <button className="primary-button xml-black-button" type="submit" disabled={loadingPassword}>
+              {loadingPassword ? 'Saving...' : 'Save'}
+            </button>
+          </div>
+        </form>
+      )}
 
       <button className="danger-button xml-black-button" type="button" onClick={handleSignOut}>
         Sign Out
