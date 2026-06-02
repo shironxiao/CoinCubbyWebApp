@@ -144,6 +144,16 @@ export async function changePassword(password, token) {
   })
 }
 
+export async function sendPasswordResetEmail(email) {
+  const redirectTo = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173'
+  return request(`/auth/v1/recover?redirect_to=${encodeURIComponent(redirectTo)}`, {
+    method: 'POST',
+    headers: authHeaders(null, { 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ email }),
+  })
+}
+
+
 
 export function sizeFromType(sizeTypeId) {
   if (Number(sizeTypeId) === 2) return { label: 'Medium', rate: 20 }

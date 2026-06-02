@@ -1,11 +1,17 @@
 import { useState } from 'react'
-import { loginWithPassword } from '../lib/supabase'
+import { loginWithPassword, sendPasswordResetEmail } from '../lib/supabase'
 import logo from '../assets/coin_logo.png'
 
 export default function Login({ onNavigate, onLogin }) {
   const [form, setForm] = useState({ email: '', password: '' })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+
+  const [view, setView] = useState('login')
+  const [resetEmail, setResetEmail] = useState('')
+  const [resetNotice, setResetNotice] = useState('')
+  const [resetError, setResetError] = useState('')
+  const [resetLoading, setResetLoading] = useState(false)
 
   function updateField(event) {
     setForm((current) => ({ ...current, [event.target.name]: event.target.value }))
@@ -34,53 +40,134 @@ export default function Login({ onNavigate, onLogin }) {
     }
   }
 
+  async function handleResetSubmit(event) {
+    event.preventDefault()
+    setResetError('')
+    setResetNotice('')
+
+    if (!resetEmail.trim()) return setResetError('Please enter your email.')
+    if (!/^\S+@\S+\.\S+$/.test(resetEmail)) return setResetError('Enter a valid email address.')
+
+    setResetLoading(true)
+    try {
+      await sendPasswordResetEmail(resetEmail.trim())
+      setResetNotice('Password reset link sent! Please check your inbox.')
+      setResetEmail('')
+    } catch (err) {
+      setResetError(err.message || 'Failed to send recovery email. Please try again.')
+    } finally {
+      setResetLoading(false)
+    }
+  }
+
   return (
     <main className="auth-page android-auth">
       <section className="auth-panel xml-login-panel">
         <img className="auth-logo" src={logo} alt="CoinCubby logo" />
-        <div>
-          <h1>CoinCubby</h1>
-          <p className="muted">Log in to our smart public locker system</p>
-        </div>
 
-        <form className="form-stack" onSubmit={handleSubmit}>
-          <label className="xml-field">
-            <span>Email Address</span>
-            <input
-              name="email"
-              type="email"
-              value={form.email}
-              onChange={updateField}
-              placeholder="example@mail.com"
-              autoComplete="email"
-            />
-          </label>
-          <label className="xml-field">
-            <span>Password</span>
-            <input
-              name="password"
-              type="password"
-              value={form.password}
-              onChange={updateField}
-              placeholder="••••••••"
-              autoComplete="current-password"
-            />
-          </label>
+        {view === 'login' ? (
+          <>
+            <div>
+              <h1>CoinCubby</h1>
+              <p className="muted">Log in to our smart public locker system</p>
+            </div>
 
-          {error && <p className="alert">{error}</p>}
+            <form className="form-stack" onSubmit={handleSubmit}>
+              <label className="xml-field">
+                <span>Email Address</span>
+                <input
+                  name="email"
+                  type="email"
+                  value={form.email}
+                  onChange={updateField}
+                  placeholder="example@mail.com"
+                  autoComplete="email"
+                />
+              </label>
+              <label className="xml-field">
+                <span>Password</span>
+                <input
+                  name="password"
+                  type="password"
+                  value={form.password}
+                  onChange={updateField}
+                  placeholder="••••••••"
+                  autoComplete="current-password"
+                />
+              </label>
 
-          <button className="primary-button xml-black-button" type="submit" disabled={loading}>
-            {loading ? 'Logging in...' : 'Continue'}
-          </button>
-        </form>
+              {error && <p className="alert">{error}</p>}
 
-        <p className="auth-switch">
-          Don't have an account?{' '}
-          <button type="button" onClick={() => onNavigate('register')}>
-            Create an account
-          </button>
-        </p>
+              <button className="primary-button xml-black-button" type="submit" disabled={loading}>
+                {loading ? 'Logging in...' : 'Continue'}
+              </button>
+            </form>
+
+            <p className="auth-switch">
+              <button
+                type="button"
+                onClick={() => {
+                  setView('forgot')
+                  setResetEmail(form.email)
+                  setResetError('')
+                  setResetNotice('')
+                }}
+              >
+                Forgot password?
+              </button>
+            </p>
+
+            <p className="auth-switch">
+              Don&apos;t have an account?{' '}
+              <button type="button" onClick={() => onNavigate('register')}>
+                Create an account
+              </button>
+            </p>
+          </>
+        ) : (
+          <>
+            <div>
+              <h1>Reset Password</h1>
+              <p className="muted">Enter your email and we&apos;ll send you a reset link</p>
+            </div>
+
+            <form className="form-stack" onSubmit={handleResetSubmit}>
+              <label className="xml-field">
+                <span>Email Address</span>
+                <input
+                  name="resetEmail"
+                  type="email"
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                  placeholder="example@mail.com"
+                  autoComplete="email"
+                />
+              </label>
+
+              {resetError && <p className="alert">{resetError}</p>}
+              {resetNotice && <p className="success">{resetNotice}</p>}
+
+              <button className="primary-button xml-black-button" type="submit" disabled={resetLoading}>
+                {resetLoading ? 'Sending...' : 'Send Reset Link'}
+              </button>
+            </form>
+
+            <p className="auth-switch">
+              <button
+                type="button"
+                onClick={() => {
+                  setView('login')
+                  setResetError('')
+                  setResetNotice('')
+                }}
+              >
+                Back to Login
+              </button>
+            </p>
+          </>
+        )}
       </section>
     </main>
   )
 }
+
