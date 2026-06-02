@@ -35,7 +35,7 @@ async function request(path, options = {}) {
 
   if (!response.ok) {
     const message =
-      body?.error_description || body?.msg || body?.message || 'Request failed.'
+      body?.error_description || body?.msg || body?.message || body?.error || `Request failed (${response.status}).`
 
     // Auto-logout if token is expired or invalid
     if (
