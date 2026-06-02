@@ -145,11 +145,27 @@ export async function changePassword(password, token) {
 }
 
 export async function sendPasswordResetEmail(email) {
-  return request('/auth/v1/recover', {
+  const url = `${SUPABASE_URL}/auth/v1/recover?apikey=${encodeURIComponent(SUPABASE_ANON)}`
+  const response = await fetch(url, {
     method: 'POST',
-    headers: authHeaders(null, { 'Content-Type': 'application/json' }),
+    headers: {
+      'Content-Type': 'application/json',
+      apikey: SUPABASE_ANON,
+      Authorization: `Bearer ${SUPABASE_ANON}`,
+    },
     body: JSON.stringify({ email }),
   })
+
+  const text = await response.text()
+  const body = text ? parseBody(text) : null
+
+  if (!response.ok) {
+    const message =
+      body?.error_description || body?.msg || body?.message || body?.error || `Password reset failed (${response.status}).`
+    throw new Error(message)
+  }
+
+  return body
 }
 
 
