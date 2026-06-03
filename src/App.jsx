@@ -6,6 +6,7 @@ import Login from './pages/Login'
 import Profile from './pages/Profile'
 import Register from './pages/Register'
 import Rent from './pages/Rent'
+import ResetPassword from './pages/ResetPassword'
 import { clearSession, getSession } from './lib/supabase'
 
 const protectedPages = ['home', 'rent', 'history', 'profile']
@@ -14,10 +15,18 @@ function pageFromHash() {
   return window.location.hash.replace('#/', '') || 'login'
 }
 
+function getRecoveryToken() {
+  const hash = window.location.hash
+  if (!hash.includes('access_token') || !hash.includes('type=recovery')) return null
+  const params = new URLSearchParams(hash.replace('#', ''))
+  return params.get('access_token') || null
+}
+
 export default function App() {
   const [session, setSession] = useState(() => getSession())
   const [page, setPage] = useState(() => pageFromHash())
   const [menuOpen, setMenuOpen] = useState(false)
+  const [recoveryToken, setRecoveryToken] = useState(() => getRecoveryToken())
   const navItems = [
     ['home', 'Home'],
     ['rent', 'Rental'],
@@ -26,18 +35,26 @@ export default function App() {
   ]
 
   useEffect(() => {
-    const onHashChange = () => setPage(pageFromHash())
+    const onHashChange = () => {
+      const token = getRecoveryToken()
+      if (token) {
+        setRecoveryToken(token)
+      } else {
+        setPage(pageFromHash())
+      }
+    }
     window.addEventListener('hashchange', onHashChange)
     return () => window.removeEventListener('hashchange', onHashChange)
   }, [])
 
   useEffect(() => {
-    if (!session && protectedPages.includes(page)) {
+    if (!session && !recoveryToken && protectedPages.includes(page)) {
       navigate('login')
     }
-  }, [page, session])
+  }, [page, session, recoveryToken])
 
   function navigate(nextPage) {
+    setRecoveryToken(null)
     window.location.hash = `/${nextPage}`
     setPage(nextPage)
     setMenuOpen(false)
@@ -49,6 +66,10 @@ export default function App() {
   }
 
   function renderPage() {
+    if (recoveryToken) {
+      return <ResetPassword accessToken={recoveryToken} onNavigate={navigate} />
+    }
+
     if (!session && page === 'register') return <Register onNavigate={navigate} />
     if (!session) return <Login onLogin={setSession} onNavigate={navigate} />
 
@@ -63,7 +84,7 @@ export default function App() {
 
   return (
     <div className="app-shell">
-      {session && (
+      {session && !recoveryToken && (
         <aside className={`sidebar ${menuOpen ? 'menu-open' : ''}`}>
           <div className="brand">
             <span>CC</span>
@@ -99,3 +120,4 @@ export default function App() {
     </div>
   )
 }
+
