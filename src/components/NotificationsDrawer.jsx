@@ -7,6 +7,7 @@ export default function NotificationsDrawer({
   onMarkAsRead,
   onMarkAllAsRead,
   onClearAll,
+  onNavigate,
 }) {
   // Prevent body scroll when drawer is open
   useEffect(() => {
@@ -102,6 +103,30 @@ export default function NotificationsDrawer({
     }
   }
 
+  function handleNotificationClick(notif) {
+    if (!notif.isRead) {
+      onMarkAsRead(notif.id)
+    }
+    if (onNavigate) {
+      switch (notif.type) {
+        case 'rental_start':
+          onNavigate('rent')
+          break
+        case 'rental_end':
+          onNavigate('history')
+          break
+        case 'security':
+        case 'wallet':
+          onNavigate('profile')
+          break
+        case 'info':
+        default:
+          onNavigate('home')
+          break
+      }
+    }
+  }
+
   const hasNotifications = notifications.length > 0
   const unreadCount = notifications.filter((n) => !n.isRead).length
 
@@ -161,12 +186,12 @@ export default function NotificationsDrawer({
                     <div
                       key={notif.id}
                       className={`notif-item ${notif.isRead ? 'read' : 'unread'}`}
-                      onClick={() => !notif.isRead && onMarkAsRead(notif.id)}
+                      onClick={() => handleNotificationClick(notif)}
                       role="button"
                       tabIndex={0}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' || e.key === ' ') {
-                          if (!notif.isRead) onMarkAsRead(notif.id)
+                          handleNotificationClick(notif)
                         }
                       }}
                     >
@@ -192,12 +217,12 @@ export default function NotificationsDrawer({
                     <div
                       key={notif.id}
                       className={`notif-item ${notif.isRead ? 'read' : 'unread'}`}
-                      onClick={() => !notif.isRead && onMarkAsRead(notif.id)}
+                      onClick={() => handleNotificationClick(notif)}
                       role="button"
                       tabIndex={0}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' || e.key === ' ') {
-                          if (!notif.isRead) onMarkAsRead(notif.id)
+                          handleNotificationClick(notif)
                         }
                       }}
                     >
@@ -223,12 +248,12 @@ export default function NotificationsDrawer({
                     <div
                       key={notif.id}
                       className={`notif-item ${notif.isRead ? 'read' : 'unread'}`}
-                      onClick={() => !notif.isRead && onMarkAsRead(notif.id)}
+                      onClick={() => handleNotificationClick(notif)}
                       role="button"
                       tabIndex={0}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' || e.key === ' ') {
-                          if (!notif.isRead) onMarkAsRead(notif.id)
+                          handleNotificationClick(notif)
                         }
                       }}
                     >

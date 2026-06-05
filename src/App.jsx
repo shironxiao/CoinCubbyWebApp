@@ -212,6 +212,10 @@ export default function App() {
         onMarkAsRead={handleMarkAsRead}
         onMarkAllAsRead={handleMarkAllAsRead}
         onClearAll={handleClearAll}
+        onNavigate={(path) => {
+          navigate(path)
+          setNotifOpen(false)
+        }}
       />
     </div>
   )
