@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { fetchProfile, logout, privateKeyFor, changePassword } from '../lib/supabase'
 
-export default function Profile({ session, onLogout, onNavigate }) {
+export default function Profile({ session, onLogout, onNavigate, addNotification }) {
   const [profile, setProfile] = useState({
     fullName: session?.fullName || '',
     contact: session?.email || '',
@@ -35,6 +35,16 @@ export default function Profile({ session, onLogout, onNavigate }) {
     try {
       await changePassword(passwordForm.password, session?.accessToken)
       setNotice('Password updated successfully.')
+      
+      // Trigger notification
+      if (addNotification) {
+        addNotification({
+          title: 'Password Updated',
+          content: 'Your account password was updated successfully.',
+          type: 'security',
+        })
+      }
+
       setPasswordForm({ password: '', confirmPassword: '' })
       setTimeout(() => {
         setIsChangingPassword(false)

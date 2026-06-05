@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 import { useEffect, useState } from 'react'
 import './App.css'
 import History from './pages/History'
@@ -7,6 +8,7 @@ import Profile from './pages/Profile'
 import Register from './pages/Register'
 import Rent from './pages/Rent'
 import ResetPassword from './pages/ResetPassword'
+import NotificationsDrawer from './components/NotificationsDrawer'
 import { clearSession, getSession } from './lib/supabase'
 
 const protectedPages = ['home', 'rent', 'history', 'profile']
@@ -27,12 +29,73 @@ export default function App() {
   const [page, setPage] = useState(() => pageFromHash())
   const [menuOpen, setMenuOpen] = useState(false)
   const [recoveryToken, setRecoveryToken] = useState(() => getRecoveryToken())
+  const [notifOpen, setNotifOpen] = useState(false)
+  const [notifications, setNotifications] = useState([])
+
   const navItems = [
     ['home', 'Home'],
     ['rent', 'Rental'],
     ['history', 'History'],
     ['profile', 'Profile'],
   ]
+
+  // Load user-specific notifications
+  useEffect(() => {
+    if (session?.userId) {
+      try {
+        const stored = localStorage.getItem(`coincubby.notifications.${session.userId}`)
+        setNotifications(
+          stored
+            ? JSON.parse(stored)
+            : [
+                {
+                  id: 'welcome',
+                  title: 'Welcome to CoinCubby!',
+                  content: 'You can now rent lockers, check your balance, and view transaction history.',
+                  type: 'info',
+                  timestamp: new Date().toISOString(),
+                  isRead: false,
+                },
+              ]
+        )
+      } catch {
+        setNotifications([])
+      }
+    } else {
+      setNotifications([])
+    }
+  }, [session?.userId])
+
+  // Save notifications to localStorage
+  useEffect(() => {
+    if (session?.userId) {
+      localStorage.setItem(`coincubby.notifications.${session.userId}`, JSON.stringify(notifications))
+    }
+  }, [notifications, session?.userId])
+
+  function addNotification({ title, content, type }) {
+    const newNotif = {
+      id: Date.now().toString(),
+      title,
+      content,
+      type,
+      timestamp: new Date().toISOString(),
+      isRead: false,
+    }
+    setNotifications((prev) => [newNotif, ...prev])
+  }
+
+  function handleMarkAsRead(id) {
+    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, isRead: true } : n)))
+  }
+
+  function handleMarkAllAsRead() {
+    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })))
+  }
+
+  function handleClearAll() {
+    setNotifications([])
+  }
 
   useEffect(() => {
     const onHashChange = () => {
@@ -73,14 +136,23 @@ export default function App() {
     if (!session && page === 'register') return <Register onNavigate={navigate} />
     if (!session) return <Login onLogin={setSession} onNavigate={navigate} />
 
-    if (page === 'rent') return <Rent session={session} />
+    if (page === 'rent') return <Rent session={session} addNotification={addNotification} />
     if (page === 'history') return <History session={session} />
     if (page === 'profile') {
-      return <Profile session={session} onLogout={handleLogout} onNavigate={navigate} />
+      return (
+        <Profile
+          session={session}
+          onLogout={handleLogout}
+          onNavigate={navigate}
+          addNotification={addNotification}
+        />
+      )
     }
 
-    return <Home session={session} onNavigate={navigate} />
+    return <Home session={session} onNavigate={navigate} addNotification={addNotification} />
   }
+
+  const unreadCount = notifications.filter((n) => !n.isRead).length
 
   return (
     <div className="app-shell">
@@ -90,17 +162,32 @@ export default function App() {
             <span>CC</span>
             <strong>CoinCubby</strong>
           </div>
-          <button
-            className="hamburger-button"
-            type="button"
-            aria-label="Open navigation menu"
-            aria-expanded={menuOpen}
-            onClick={() => setMenuOpen((open) => !open)}
-          >
-            <span></span>
-            <span></span>
-            <span></span>
-          </button>
+          <div className="sidebar-controls">
+            <button
+              className={`notif-bell-button ${unreadCount > 0 ? 'has-unread' : ''}`}
+              type="button"
+              aria-label="View notifications"
+              onClick={() => setNotifOpen(true)}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+              </svg>
+              {unreadCount > 0 && <span className="notif-badge">{unreadCount}</span>}
+            </button>
+
+            <button
+              className="hamburger-button"
+              type="button"
+              aria-label="Open navigation menu"
+              aria-expanded={menuOpen}
+              onClick={() => setMenuOpen((open) => !open)}
+            >
+              <span></span>
+              <span></span>
+              <span></span>
+            </button>
+          </div>
           <nav>
             {navItems.map(([key, label]) => (
               <button
@@ -117,6 +204,15 @@ export default function App() {
       )}
 
       <div className="content-shell">{renderPage()}</div>
+
+      <NotificationsDrawer
+        isOpen={notifOpen}
+        onClose={() => setNotifOpen(false)}
+        notifications={notifications}
+        onMarkAsRead={handleMarkAsRead}
+        onMarkAllAsRead={handleMarkAllAsRead}
+        onClearAll={handleClearAll}
+      />
     </div>
   )
 }

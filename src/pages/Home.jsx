@@ -5,7 +5,7 @@ function statusClass(status) {
   return String(status || 'Available').toLowerCase().replaceAll(' ', '-')
 }
 
-export default function Home({ session, onNavigate }) {
+export default function Home({ session, onNavigate, addNotification }) {
   const [lockers, setLockers] = useState([])
   const [selectedLocker, setSelectedLocker] = useState(null)
   const [duration, setDuration] = useState('1')
@@ -68,6 +68,16 @@ export default function Home({ session, onNavigate }) {
         paymentMethod: isOpenTime ? 'Device' : paymentMethod,
         session,
       })
+      
+      // Trigger notification
+      if (addNotification) {
+        addNotification({
+          title: 'Locker Rented',
+          content: `Locker ${selectedLocker.id} (${selectedLocker.size}) is active. Key: COIN-${session.userId.slice(0, 8).toUpperCase()}`,
+          type: 'rental_start',
+        })
+      }
+
       setSelectedLocker(null)
       await loadLockers()
       onNavigate('rent')

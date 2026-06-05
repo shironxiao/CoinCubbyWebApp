@@ -24,7 +24,7 @@ function mapRental(row) {
   }
 }
 
-export default function Rent({ session }) {
+export default function Rent({ session, addNotification }) {
   const [rentals, setRentals] = useState([])
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
@@ -62,6 +62,16 @@ export default function Rent({ session }) {
     setMessage('')
     try {
       await completeRental(item, session.accessToken)
+      
+      // Trigger notification
+      if (addNotification) {
+        addNotification({
+          title: 'Locker Returned',
+          content: `Locker ${item.lockerNumber} has been successfully returned.`,
+          type: 'rental_end',
+        })
+      }
+
       setMessage(`Locker ${item.lockerNumber} returned.`)
       await loadRentals()
     } catch (err) {
