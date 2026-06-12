@@ -25,6 +25,8 @@ export default function History({ session }) {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
+  const [timeFilter, setTimeFilter] = useState('all') // 'all', 'today', 'week', 'month'
+  const [statusFilter, setStatusFilter] = useState('all') // 'all', 'active', 'completed'
 
   const loadHistory = useCallback(async () => {
     if (!session?.userId) {
@@ -49,12 +51,48 @@ export default function History({ session }) {
     loadHistory()
   }, [loadHistory])
 
+  const filteredItems = useMemo(() => {
+    const now = new Date()
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime()
+    // Current week's Sunday
+    const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay()).getTime()
+    // 1st of current month
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime()
+
+    return items.filter((item) => {
+      // 1. Status Filter
+      if (statusFilter !== 'all') {
+        if (item.status.toLowerCase() !== statusFilter.toLowerCase()) {
+          return false
+        }
+      }
+
+      // 2. Time Filter
+      if (timeFilter !== 'all') {
+        const itemTime = new Date(item.startTime).getTime()
+        if (Number.isNaN(itemTime)) return false
+
+        if (timeFilter === 'today' && itemTime < todayStart) {
+          return false
+        }
+        if (timeFilter === 'week' && itemTime < weekStart) {
+          return false
+        }
+        if (timeFilter === 'month' && itemTime < monthStart) {
+          return false
+        }
+      }
+
+      return true
+    })
+  }, [items, timeFilter, statusFilter])
+
   const summary = useMemo(
     () => ({
-      totalSpent: items.reduce((sum, item) => sum + item.amount, 0),
-      completed: items.filter((item) => item.status === 'Completed').length,
+      totalSpent: filteredItems.reduce((sum, item) => sum + item.amount, 0),
+      completed: filteredItems.filter((item) => item.status === 'Completed').length,
     }),
-    [items],
+    [filteredItems],
   )
 
   return (
@@ -65,7 +103,7 @@ export default function History({ session }) {
 
       <section className="history-summary">
         <div>
-          <strong>{items.length}</strong>
+          <strong>{filteredItems.length}</strong>
           <span>Total Rentals</span>
         </div>
         <div>
@@ -75,6 +113,62 @@ export default function History({ session }) {
         <div>
           <strong>{summary.completed}</strong>
           <span>Completed</span>
+        </div>
+      </section>
+
+      <section className="history-filters">
+        <div className="filter-group">
+          <label>Time Period</label>
+          <div className="filter-options">
+            <button
+              className={`filter-pill ${timeFilter === 'all' ? 'active' : ''}`}
+              onClick={() => setTimeFilter('all')}
+            >
+              All Time
+            </button>
+            <button
+              className={`filter-pill ${timeFilter === 'today' ? 'active' : ''}`}
+              onClick={() => setTimeFilter('today')}
+            >
+              Today
+            </button>
+            <button
+              className={`filter-pill ${timeFilter === 'week' ? 'active' : ''}`}
+              onClick={() => setTimeFilter('week')}
+            >
+              This Week
+            </button>
+            <button
+              className={`filter-pill ${timeFilter === 'month' ? 'active' : ''}`}
+              onClick={() => setTimeFilter('month')}
+            >
+              This Month
+            </button>
+          </div>
+        </div>
+
+        <div className="filter-group">
+          <label>Status</label>
+          <div className="filter-options">
+            <button
+              className={`filter-pill ${statusFilter === 'all' ? 'active' : ''}`}
+              onClick={() => setStatusFilter('all')}
+            >
+              All
+            </button>
+            <button
+              className={`filter-pill ${statusFilter === 'active' ? 'active' : ''}`}
+              onClick={() => setStatusFilter('active')}
+            >
+              Active
+            </button>
+            <button
+              className={`filter-pill ${statusFilter === 'completed' ? 'active' : ''}`}
+              onClick={() => setStatusFilter('completed')}
+            >
+              Completed
+            </button>
+          </div>
         </div>
       </section>
 
@@ -88,9 +182,10 @@ export default function History({ session }) {
       {message && <p className="alert">{message}</p>}
       {loading && <div className="xml-loading"><span></span><p>Loading history...</p></div>}
       {!loading && items.length === 0 && <p className="empty-state">No rental history yet.</p>}
+      {!loading && items.length > 0 && filteredItems.length === 0 && <p className="empty-state">No matching rentals found.</p>}
 
       <section className="history-list">
-        {items.map((item) => (
+        {filteredItems.map((item) => (
           <article className="history-row" key={item.id}>
             <div>
               <strong>{item.lockerNumber}</strong>
