@@ -475,6 +475,38 @@ button {
   font-size: 11px;
 }
 
+.module-selector {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: none;
+}
+
+.module-selector::-webkit-scrollbar {
+  display: none;
+}
+
+.module-selector button {
+  min-height: 36px;
+  border: 1px solid #c8e6c9;
+  border-radius: 999px;
+  padding: 8px 14px;
+  background: #e8f5e9;
+  color: var(--dark);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.module-selector button.active {
+  border-color: var(--dark);
+  background: var(--dark);
+  color: var(--white);
+}
+
 .locker-grid {
   display: grid;
   gap: 10px;

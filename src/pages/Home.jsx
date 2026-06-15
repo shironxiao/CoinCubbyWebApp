@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
-import { createRental, fetchLockers, formatMoney } from '../lib/supabase'
+import { createRental, fetchLockers, fetchModules, formatMoney } from '../lib/supabase'
 
 function statusClass(status) {
   return String(status || 'Available').toLowerCase().replaceAll(' ', '-')
 }
 
 export default function Home({ session, onNavigate, addNotification }) {
+  const [modules, setModules] = useState([])
+  const [selectedModuleId, setSelectedModuleId] = useState('')
   const [lockers, setLockers] = useState([])
   const [selectedLocker, setSelectedLocker] = useState(null)
   const [duration, setDuration] = useState('1')
@@ -20,15 +22,45 @@ export default function Home({ session, onNavigate, addNotification }) {
     [lockers],
   )
 
+  const selectedModule = useMemo(
+    () => modules.find((moduleItem) => String(moduleItem.module_id) === String(selectedModuleId)),
+    [modules, selectedModuleId],
+  )
+
   useEffect(() => {
-    loadLockers()
+    loadModules()
   }, [])
 
-  async function loadLockers() {
+  useEffect(() => {
+    if (selectedModuleId) {
+      loadLockers(selectedModuleId)
+    }
+  }, [selectedModuleId])
+
+  async function loadModules() {
     setLoading(true)
     setMessage('')
     try {
-      setLockers(await fetchLockers())
+      const rows = await fetchModules()
+      setModules(rows || [])
+      if (rows?.length) {
+        setSelectedModuleId(String(rows[0].module_id))
+      } else {
+        setLockers([])
+        setMessage('No active modules found.')
+      }
+    } catch (err) {
+      setMessage(err.message || 'Failed to load modules.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function loadLockers(moduleId) {
+    setLoading(true)
+    setMessage('')
+    try {
+      setLockers(await fetchLockers(moduleId))
     } catch (err) {
       setMessage(err.message || 'Failed to load lockers.')
     } finally {
@@ -79,7 +111,7 @@ export default function Home({ session, onNavigate, addNotification }) {
       }
 
       setSelectedLocker(null)
-      await loadLockers()
+      await loadLockers(selectedModuleId)
       onNavigate('rent')
     } catch (err) {
       setMessage(err.message || 'Could not save rental.')
@@ -130,12 +162,25 @@ export default function Home({ session, onNavigate, addNotification }) {
           <span className="xml-dark-circle locker-glyph light" aria-hidden="true"></span>
           <div>
             <strong>CoinCubby</strong>
-            <small>{availableCount} available</small>
+            <small>{selectedModule?.name || 'Select a module'} · {availableCount} available</small>
           </div>
           <div className="xml-location">
             <small>Location</small>
             <strong>Hannah's Shop</strong>
           </div>
+        </div>
+
+        <div className="module-selector" aria-label="Module selector">
+          {modules.map((moduleItem) => (
+            <button
+              key={moduleItem.module_id}
+              className={String(moduleItem.module_id) === String(selectedModuleId) ? 'active' : ''}
+              type="button"
+              onClick={() => setSelectedModuleId(String(moduleItem.module_id))}
+            >
+              {moduleItem.name || `Module ${moduleItem.module_id}`}
+            </button>
+          ))}
         </div>
 
       {message && <p className="alert">{message}</p>}

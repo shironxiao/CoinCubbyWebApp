@@ -176,9 +176,17 @@ export function sizeFromType(sizeTypeId) {
   return { label: 'Small', rate: 10 }
 }
 
-export async function fetchLockers() {
+export async function fetchModules() {
+  return request(
+    '/rest/v1/modules?select=module_id,name,status&status=eq.Active&order=module_id.asc',
+    { headers: authHeaders() },
+  )
+}
+
+export async function fetchLockers(moduleId) {
+  const moduleFilter = moduleId ? `module_id=eq.${moduleId}&` : ''
   const rows = await request(
-    '/rest/v1/lockers?select=locker_id,locker_number,status,size_type_id&order=locker_id.asc',
+    `/rest/v1/lockers?${moduleFilter}select=locker_id,locker_number,status,size_type_id,module_id&order=locker_id.asc`,
     { headers: authHeaders() },
   )
 
@@ -191,6 +199,7 @@ export async function fetchLockers() {
       size: size.label,
       rate: size.rate,
       sizeTypeId: row.size_type_id,
+      moduleId: row.module_id,
     }
   })
 }
