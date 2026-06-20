@@ -29,6 +29,7 @@ export default function Rent({ session, addNotification }) {
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
   const [tick, setTick] = useState(() => Date.now())
+  const [confirmItem, setConfirmItem] = useState(null)
 
   useEffect(() => {
     const id = setInterval(() => setTick(Date.now()), 1000)
@@ -145,13 +146,57 @@ export default function Rent({ session, addNotification }) {
                 </div>
               </dl>
 
-              <button className="primary-button xml-black-button" type="button" onClick={() => returnLocker(item)}>
+              <button className="primary-button xml-black-button" type="button" onClick={() => setConfirmItem(item)}>
                 Return Locker
               </button>
             </article>
           )
         })}
       </section>
+
+      {confirmItem && (
+        <div className="modal-backdrop" role="presentation" onClick={(e) => e.target === e.currentTarget && setConfirmItem(null)}>
+          <div className="rent-sheet xml-rent-sheet">
+            <div className="sheet-title">
+              <div>
+                <h2>Return Locker {confirmItem.lockerNumber}?</h2>
+                <p className="muted">
+                  Size: {confirmItem.sizeName} | {currentCost(confirmItem)}
+                </p>
+              </div>
+              <button className="icon-button" type="button" onClick={() => setConfirmItem(null)}>
+                X
+              </button>
+            </div>
+
+            <p style={{ textAlign: 'center', margin: '14px 0', fontSize: '13px', color: '#555555', lineHeight: '1.5' }}>
+              Are you sure you want to return this locker? 
+              <br />
+              This will deactivate your access token and end your rental session.
+            </p>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '8px' }}>
+              <button 
+                className="secondary-button" 
+                type="button" 
+                onClick={() => setConfirmItem(null)}
+              >
+                Cancel
+              </button>
+              <button 
+                className="primary-button xml-black-button" 
+                type="button" 
+                onClick={() => {
+                  returnLocker(confirmItem)
+                  setConfirmItem(null)
+                }}
+              >
+                Yes, Return
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   )
 }
