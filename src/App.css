@@ -39,14 +39,14 @@
   margin-left: auto;
   border: 0;
   border-radius: 0;
-  background: var(--dark);
+  background: transparent;
   cursor: pointer;
 }
 
 .hamburger-button span {
   width: 18px;
   height: 2px;
-  background: var(--white);
+  background: var(--dark);
 }
 
 .sidebar nav {
