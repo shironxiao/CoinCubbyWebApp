@@ -1111,37 +1111,66 @@ dd {
 
 /* Login Page - Fresh Mint Green */
 .login-page {
-  background: #e9fbf0;
+  background: radial-gradient(circle at top left, rgba(109, 199, 141, 0.25), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(133, 211, 157, 0.18), transparent 26%),
+    #f6fbf4;
 }
 
 .login-page .auth-panel {
-  background: var(--white);
-  padding: 42px 32px;
-  border-radius: 36px;
-  box-shadow: 0 32px 80px rgba(69, 159, 95, 0.16);
-  margin: 24px 18px;
+  background: rgba(255, 255, 255, 0.96);
+  padding: 46px 32px;
+  border-radius: 38px;
+  box-shadow: 0 32px 90px rgba(47, 86, 40, 0.12);
+  margin: 22px 16px;
+  position: relative;
+  overflow: hidden;
 }
 
 .login-page .auth-panel::before {
   content: '';
   position: absolute;
-  top: -30px;
-  right: -40px;
-  width: 120px;
-  height: 120px;
+  top: -36px;
+  right: -26px;
+  width: 132px;
+  height: 132px;
   border-radius: 50%;
-  background: rgba(72, 176, 106, 0.14);
-  z-index: -1;
+  background: rgba(92, 196, 130, 0.16);
+  z-index: 0;
+}
+
+.login-page .auth-panel::after {
+  content: '';
+  position: absolute;
+  bottom: -32px;
+  left: -24px;
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  background: rgba(107, 196, 140, 0.12);
+  z-index: 0;
 }
 
 .login-page .auth-logo {
-  width: 92px;
-  height: 92px;
-  margin: 0 auto 28px;
+  width: 88px;
+  height: 88px;
+  margin: 0 auto 24px;
+  position: relative;
+  z-index: 1;
+}
+
+.login-page .auth-panel h1,
+.login-page .muted,
+.login-page .xml-field,
+.login-page .form-stack,
+.login-page .auth-switch,
+.login-page .alert,
+.login-page .success {
+  position: relative;
+  z-index: 1;
 }
 
 .login-page .auth-panel h1 {
-  color: #1f4032;
+  color: #1a5038;
   font-size: 32px;
   font-weight: 900;
   text-align: center;
@@ -1149,8 +1178,8 @@ dd {
 }
 
 .login-page .muted {
-  color: #5a7160;
-  font-size: 15px;
+  color: #5b7666;
+  font-size: 14px;
   text-align: center;
   margin-bottom: 28px;
   line-height: 1.6;
@@ -1158,47 +1187,36 @@ dd {
 
 .login-page .xml-field {
   display: grid;
-  grid-template-columns: auto 1fr;
-  align-items: center;
-  gap: 0;
-  border-radius: 28px;
-  overflow: hidden;
-  background: #f4fbf5;
-  border: 1px solid #d8eed6;
+  gap: 8px;
 }
 
 .login-page .xml-field > span {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 130px;
-  padding: 14px 18px;
-  background: #cbedce;
-  color: #1d613f;
-  font-size: 14px;
-  font-weight: 800;
+  color: #3d7156;
+  font-size: 13px;
+  font-weight: 700;
 }
 
 .login-page input {
   width: 100%;
-  height: 56px;
-  border: none;
-  border-radius: 0 28px 28px 0;
+  height: 50px;
+  border: 1px solid #dae9de;
+  border-radius: 14px;
   padding: 0 18px;
-  background: var(--white);
-  color: var(--dark);
+  background: #ffffff;
+  color: #22312b;
   font: inherit;
   font-size: 15px;
-  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .login-page input:focus {
   outline: none;
-  box-shadow: inset 0 0 0 1px #69c48c, 0 0 0 4px rgba(79, 168, 107, 0.12);
+  border-color: #7cc58d;
+  box-shadow: 0 0 0 4px rgba(124, 197, 141, 0.16);
 }
 
 .login-page input::placeholder {
-  color: #9ca992;
+  color: #99aa92;
 }
 
 .login-page .form-stack {
@@ -1208,20 +1226,20 @@ dd {
 }
 
 .login-page .xml-black-button {
-  background: #53c175;
+  background: linear-gradient(135deg, #4db66f 0%, #378650 100%);
   color: var(--white);
-  min-height: 54px;
+  min-height: 52px;
   font-weight: 800;
   font-size: 15px;
-  border-radius: 18px;
+  border-radius: 16px;
   border: none;
   transition: transform 0.15s ease, box-shadow 0.2s ease, background 0.2s ease;
-  box-shadow: 0 16px 30px rgba(46, 122, 72, 0.18);
+  box-shadow: 0 16px 28px rgba(57, 105, 57, 0.18);
 }
 
 .login-page .xml-black-button:hover:not(:disabled) {
-  background: #3ca45a;
-  box-shadow: 0 18px 34px rgba(46, 122, 72, 0.22);
+  background: linear-gradient(135deg, #42a05f 0%, #336c4e 100%);
+  box-shadow: 0 18px 34px rgba(45, 84, 45, 0.24);
 }
 
 .login-page .xml-black-button:active:not(:disabled) {
@@ -1229,31 +1247,30 @@ dd {
 }
 
 .login-page .xml-black-button:disabled {
-  opacity: 0.65;
+  opacity: 0.7;
   cursor: not-allowed;
 }
 
 .login-page .auth-switch {
-  color: #5f7163;
+  color: #5f7367;
   font-size: 14px;
   text-align: center;
-  margin-top: 26px;
+  margin-top: 24px;
   line-height: 1.8;
 }
 
 .login-page .auth-switch button {
-  color: #3c8a5c;
+  color: #3c7c55;
   background: transparent;
   border: none;
   cursor: pointer;
   font-weight: 800;
   transition: color 0.2s ease;
   padding: 0;
-  text-decoration: none;
 }
 
 .login-page .auth-switch button:hover {
-  color: #2e6d47;
+  color: #2f6343;
 }
 
 .login-page .alert {
@@ -1266,8 +1283,8 @@ dd {
 }
 
 .login-page .success {
-  background: #e8f7ea;
-  color: #1c6f41;
+  background: #e8f6ec;
+  color: #1d6f40;
   border-radius: 12px;
   padding: 12px 14px;
   font-size: 13px;
