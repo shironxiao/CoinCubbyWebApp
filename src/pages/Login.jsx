@@ -61,7 +61,7 @@ export default function Login({ onNavigate, onLogin }) {
   }
 
   return (
-    <main className="auth-page android-auth">
+    <main className="auth-page android-auth login-page">
       <section className="auth-panel xml-login-panel">
         <img className="auth-logo" src={logo} alt="CoinCubby logo" />
 

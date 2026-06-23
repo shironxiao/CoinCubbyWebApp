@@ -1109,6 +1109,111 @@ dd {
   font-size: 18px;
 }
 
+/* Login Page - White and Green Theme */
+.login-page {
+  background: var(--white);
+}
+
+.login-page .auth-panel {
+  background: var(--white);
+}
+
+.login-page .auth-logo {
+  filter: drop-shadow(0 2px 8px rgba(76, 175, 80, 0.2));
+}
+
+.login-page .auth-panel h1 {
+  color: var(--dark);
+  font-size: 32px;
+  margin-bottom: 8px;
+}
+
+.login-page .muted {
+  color: #666666;
+  font-size: 14px;
+  margin-bottom: 24px;
+}
+
+.login-page .xml-field > span {
+  background: var(--green);
+  color: var(--white);
+  border-radius: 0 12px 12px 0;
+  padding: 8px 16px;
+}
+
+.login-page .xml-field {
+  color: var(--dark);
+}
+
+.login-page input {
+  border: 2px solid #e0e0e0;
+  background: var(--white);
+  transition: border-color 0.2s ease;
+}
+
+.login-page input:focus {
+  outline: none;
+  border-color: var(--green);
+  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+}
+
+.login-page input::placeholder {
+  color: #b0b0b0;
+}
+
+.login-page .xml-black-button {
+  background: var(--green);
+  color: var(--white);
+  min-height: 52px;
+  font-weight: 800;
+  border-radius: 12px;
+  transition: background 0.2s ease;
+}
+
+.login-page .xml-black-button:hover:not(:disabled) {
+  background: #45a049;
+}
+
+.login-page .xml-black-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.login-page .auth-switch {
+  color: #666666;
+  font-size: 14px;
+}
+
+.login-page .auth-switch button {
+  color: var(--green);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-weight: 800;
+  transition: color 0.2s ease;
+}
+
+.login-page .auth-switch button:hover {
+  color: #45a049;
+  text-decoration: underline;
+}
+
+.login-page .alert {
+  background: #fee4e2;
+  color: #b42318;
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 13px;
+}
+
+.login-page .success {
+  background: #dcfae6;
+  color: #067647;
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 13px;
+}
+
 .xml-list-row {
   display: grid;
   grid-template-columns: 24px 1fr 18px;
