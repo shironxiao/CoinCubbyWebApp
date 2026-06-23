@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { createRental, fetchLockers, fetchModules, formatMoney } from '../lib/supabase'
+import { activateRental, createRental, fetchLockers, fetchModules, fetchTransactionPayments, formatMoney, updateLockerStatus } from '../lib/supabase'
 
 function statusClass(status) {
   return String(status || 'Available').toLowerCase().replaceAll(' ', '-')
@@ -16,6 +16,10 @@ export default function Home({ session, onNavigate, addNotification }) {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
+  const [paymentTx, setPaymentTx] = useState(null)
+  const [insertedAmount, setInsertedAmount] = useState(0)
+  const [secondsLeft, setSecondsLeft] = useState(60)
+  const [hasTimedOut, setHasTimedOut] = useState(false)
 
   const availableCount = useMemo(
     () => lockers.filter((locker) => locker.status === 'Available').length,
@@ -36,6 +40,74 @@ export default function Home({ session, onNavigate, addNotification }) {
       loadLockers(selectedModuleId)
     }
   }, [selectedModuleId])
+
+  // Countdown timer for Pay at Device
+  useEffect(() => {
+    if (!paymentTx || hasTimedOut || secondsLeft <= 0) return
+
+    const timer = setTimeout(() => {
+      setSecondsLeft((prev) => {
+        if (prev <= 1) {
+          setHasTimedOut(true)
+          return 0
+        }
+        return prev - 1
+      })
+    }, 1000)
+
+    return () => clearTimeout(timer)
+  }, [paymentTx, secondsLeft, hasTimedOut])
+
+  // Polling for cash insertions at the device
+  useEffect(() => {
+    if (!paymentTx || hasTimedOut) return
+
+    let isMounted = true
+    const interval = setInterval(async () => {
+      try {
+        const payments = await fetchTransactionPayments(paymentTx.transactionId, session.accessToken)
+        if (!isMounted) return
+
+        const sum = (payments || []).reduce((acc, p) => acc + Number(p.amount || 0), 0)
+        
+        setInsertedAmount((prev) => {
+          if (sum > prev) {
+            setSecondsLeft(60) // reset the timer back to 60!
+          }
+          return sum
+        })
+
+        if (sum >= paymentTx.totalAmount) {
+          clearInterval(interval)
+          await activateRental(paymentTx.transactionId, paymentTx.lockerId, session.accessToken)
+          
+          if (addNotification) {
+            addNotification({
+              title: 'Locker Rented',
+              content: `Locker ${paymentTx.lockerNumber} is active. Key: COIN-${session.userId.slice(0, 8).toUpperCase()}`,
+              type: 'rental_start',
+            })
+          }
+
+          setPaymentTx(null)
+          await loadLockers(selectedModuleId)
+          onNavigate('rent')
+        }
+      } catch (err) {
+        console.error('Error polling payments:', err)
+      }
+    }, 1500)
+
+    return () => {
+      isMounted = false
+      clearInterval(interval)
+    }
+  }, [paymentTx, hasTimedOut, session?.accessToken, session?.userId, selectedModuleId, addNotification, onNavigate])
+
+  function handleContinuePayment() {
+    setSecondsLeft(60)
+    setHasTimedOut(false)
+  }
 
   async function loadModules() {
     setLoading(true)
@@ -93,7 +165,7 @@ export default function Home({ session, onNavigate, addNotification }) {
     setSaving(true)
     setMessage('')
     try {
-      await createRental({
+      const transactionId = await createRental({
         locker: selectedLocker,
         duration,
         isOpenTime,
@@ -101,18 +173,33 @@ export default function Home({ session, onNavigate, addNotification }) {
         session,
       })
       
-      // Trigger notification
-      if (addNotification) {
-        addNotification({
-          title: 'Locker Rented',
-          content: `Locker ${selectedLocker.id} (${selectedLocker.size}) is active. Key: COIN-${session.userId.slice(0, 8).toUpperCase()}`,
-          type: 'rental_start',
-        })
-      }
+      const isDevicePending = !isOpenTime && paymentMethod === 'Device'
 
-      setSelectedLocker(null)
-      await loadLockers(selectedModuleId)
-      onNavigate('rent')
+      if (isDevicePending) {
+        setPaymentTx({
+          transactionId,
+          lockerId: selectedLocker.dbId,
+          lockerNumber: selectedLocker.id,
+          totalAmount: total,
+        })
+        setInsertedAmount(0)
+        setSecondsLeft(60)
+        setHasTimedOut(false)
+        setSelectedLocker(null)
+      } else {
+        // Trigger notification
+        if (addNotification) {
+          addNotification({
+            title: 'Locker Rented',
+            content: `Locker ${selectedLocker.id} (${selectedLocker.size}) is active. Key: COIN-${session.userId.slice(0, 8).toUpperCase()}`,
+            type: 'rental_start',
+          })
+        }
+
+        setSelectedLocker(null)
+        await loadLockers(selectedModuleId)
+        onNavigate('rent')
+      }
     } catch (err) {
       setMessage(err.message || 'Could not save rental.')
     } finally {
@@ -291,6 +378,94 @@ export default function Home({ session, onNavigate, addNotification }) {
               </button>
             </div>
           </form>
+        </div>
+      )}
+
+      {paymentTx && (
+        <div className="modal-backdrop" role="presentation">
+          <div className="rent-sheet xml-rent-sheet">
+            <div className="sheet-title">
+              <div>
+                <h2>Insert Money at Device</h2>
+                <p className="muted">Locker {paymentTx.lockerNumber} · Payment Pending</p>
+              </div>
+              <button 
+                className="icon-button" 
+                type="button" 
+                onClick={async () => {
+                  try {
+                    await updateLockerStatus(paymentTx.lockerId, 'Available', session.accessToken)
+                    await loadLockers(selectedModuleId)
+                  } catch (err) {
+                    console.error('Error cancelling rental payment:', err)
+                  }
+                  setPaymentTx(null)
+                }}
+              >
+                X
+              </button>
+            </div>
+
+            <div className="payment-status-card">
+              <div className="amount-stat">
+                <span>Total Due</span>
+                <strong>{formatMoney(paymentTx.totalAmount)}</strong>
+              </div>
+              <div className="amount-stat">
+                <span>Inserted</span>
+                <strong className="inserted-text">{formatMoney(insertedAmount)}</strong>
+              </div>
+              <div className="amount-stat">
+                <span>Remaining</span>
+                <strong className="remaining-text">
+                  {formatMoney(Math.max(0, paymentTx.totalAmount - insertedAmount))}
+                </strong>
+              </div>
+            </div>
+
+            {hasTimedOut ? (
+              <div className="timeout-container">
+                <p className="alert">Payment session timed out. No cash was detected.</p>
+                <button
+                  className="primary-button xml-black-button continue-payment-btn"
+                  type="button"
+                  onClick={handleContinuePayment}
+                >
+                  Continue
+                </button>
+              </div>
+            ) : (
+              <div className="timer-container">
+                <div className="progress-bar-bg">
+                  <div 
+                    className="progress-bar-fill" 
+                    style={{ width: `${(secondsLeft / 60) * 100}%` }}
+                  ></div>
+                </div>
+                <p className="timer-text">
+                  Please insert cash. Time remaining: <strong>{secondsLeft}s</strong>
+                </p>
+              </div>
+            )}
+
+            <div className="action-row">
+              <button 
+                className="secondary-button" 
+                type="button" 
+                onClick={async () => {
+                  try {
+                    await updateLockerStatus(paymentTx.lockerId, 'Available', session.accessToken)
+                    await loadLockers(selectedModuleId)
+                  } catch (err) {
+                    console.error('Error cancelling rental payment:', err)
+                  }
+                  setPaymentTx(null)
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </main>

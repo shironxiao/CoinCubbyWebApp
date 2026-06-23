@@ -1626,3 +1626,97 @@ dd {
     gap: 8px;
   }
 }
+
+/* 'Pay at Device' pending payment card and timer styles */
+.payment-status-card {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  padding: 16px;
+  background: var(--white);
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  margin: 8px 0;
+  text-align: center;
+}
+
+.amount-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.amount-stat span {
+  font-size: 10px;
+  color: var(--gray);
+  text-transform: uppercase;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+.amount-stat strong {
+  font-size: 16px;
+  color: var(--dark);
+}
+
+.amount-stat .inserted-text {
+  color: #2e7d32;
+}
+
+.amount-stat .remaining-text {
+  color: #c62828;
+}
+
+.timer-container {
+  display: grid;
+  gap: 8px;
+  text-align: center;
+  padding: 8px 0;
+}
+
+.progress-bar-bg {
+  width: 100%;
+  height: 6px;
+  background: var(--line);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: var(--dark);
+  border-radius: 3px;
+  transition: width 1s linear;
+}
+
+.timer-text {
+  font-size: 13px;
+  color: var(--gray);
+  margin: 0;
+}
+
+.timer-text strong {
+  color: var(--dark);
+}
+
+.timeout-container {
+  display: grid;
+  gap: 12px;
+  text-align: center;
+  padding: 8px 0;
+}
+
+.timeout-container .alert {
+  padding: 12px;
+  border-radius: 12px;
+  background: #ffebee;
+  color: #c62828;
+  font-size: 13px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.continue-payment-btn {
+  width: 100%;
+}
+

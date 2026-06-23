@@ -246,12 +246,14 @@ export async function createRental({ locker, duration, isOpenTime, paymentMethod
   // Use the persistent unique locker access token derived from the user's ID
   const qrToken = privateKeyFor(session.userId)
 
+  const isDevicePending = !isOpenTime && paymentMethod === 'Device'
+
   const body = {
     customer_id: session.userId,
     rate_id: rate.rate_id,
     locker_id: locker.dbId,
     start_time: now.toISOString(),
-    status: 'Active',
+    status: isDevicePending ? 'PaymentPending' : 'Active',
     qr_token: qrToken,
   }
 
@@ -273,7 +275,7 @@ export async function createRental({ locker, duration, isOpenTime, paymentMethod
   const transactionId = transactionRows?.[0]?.transaction_id
   const amount = isOpenTime ? 0 : Number(duration) * locker.rate
 
-  if (transactionId) {
+  if (transactionId && !isDevicePending) {
     const payment = {
       transaction_id: transactionId,
       amount,
@@ -290,8 +292,27 @@ export async function createRental({ locker, duration, isOpenTime, paymentMethod
     })
   }
 
-  await updateLockerStatus(locker.dbId, 'Occupied', session.accessToken)
+  const initialLockerStatus = isDevicePending ? 'Payment Required' : 'Occupied'
+  await updateLockerStatus(locker.dbId, initialLockerStatus, session.accessToken)
   return transactionId
+}
+
+export async function fetchTransactionPayments(transactionId, token) {
+  return request(`/rest/v1/payments?transaction_id=eq.${transactionId}&select=amount,payment_method`, {
+    headers: authHeaders(token),
+  })
+}
+
+export async function activateRental(transactionId, lockerId, token) {
+  await request(`/rest/v1/transactions?transaction_id=eq.${transactionId}`, {
+    method: 'PATCH',
+    headers: authHeaders(token, {
+      'Content-Type': 'application/json',
+      Prefer: 'return=minimal',
+    }),
+    body: JSON.stringify({ status: 'Active' }),
+  })
+  await updateLockerStatus(lockerId, 'Occupied', token)
 }
 
 export async function updateLockerStatus(lockerId, status, token) {
