@@ -1802,6 +1802,7 @@ dd {
     grid-template-columns: 1.1fr 0.9fr;
     gap: 16px;
     align-content: start;
+    align-items: start;
   }
 
   .xml-home .page-header,
