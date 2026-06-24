@@ -769,6 +769,34 @@ button {
   background: var(--white);
 }
 
+.home-rental-card {
+  max-width: 520px;
+  justify-self: end;
+  width: 100%;
+}
+
+.home-rental-card .card-heading h2 {
+  font-size: 28px;
+}
+
+.home-rental-card .timer-box {
+  padding: 14px;
+}
+
+.home-rental-card .detail-grid div {
+  padding: 8px 0;
+}
+
+.home-rental-card .card-heading p,
+.home-rental-card .card-heading small,
+.home-rental-card .timer-box span {
+  font-size: 12px;
+}
+
+.home-rental-card .primary-button {
+  padding: 14px 0;
+}
+
 .card-heading {
   display: flex;
   justify-content: space-between;
