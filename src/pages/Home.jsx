@@ -20,6 +20,17 @@ export default function Home({ session, onNavigate, addNotification }) {
   const [insertedAmount, setInsertedAmount] = useState(0)
   const [secondsLeft, setSecondsLeft] = useState(60)
   const [hasTimedOut, setHasTimedOut] = useState(false)
+  const [balance, setBalance] = useState(() => {
+    try {
+      const key = `coincubby.balance.${session?.userId}`
+      const stored = localStorage.getItem(key)
+      if (stored !== null) return Number(stored)
+      localStorage.setItem(key, '50.00')
+      return 50.00
+    } catch {
+      return 50.00
+    }
+  })
 
   const availableCount = useMemo(
     () => lockers.filter((locker) => locker.status === 'Available').length,
@@ -162,6 +173,12 @@ export default function Home({ session, onNavigate, addNotification }) {
       return
     }
 
+    // Check if wallet has sufficient balance
+    if (paymentMethod === 'Wallet' && !isOpenTime && balance < total) {
+      setMessage('Insufficient wallet balance to start rental.')
+      return
+    }
+
     setSaving(true)
     setMessage('')
     try {
@@ -196,6 +213,13 @@ export default function Home({ session, onNavigate, addNotification }) {
           })
         }
 
+        // Deduct from wallet if paid via Wallet
+        if (paymentMethod === 'Wallet' && !isOpenTime) {
+          const finalBalance = Math.max(0, balance - total)
+          localStorage.setItem(`coincubby.balance.${session.userId}`, finalBalance.toFixed(2))
+          setBalance(finalBalance)
+        }
+
         setSelectedLocker(null)
         await loadLockers(selectedModuleId)
         onNavigate('rent')
@@ -225,7 +249,7 @@ export default function Home({ session, onNavigate, addNotification }) {
 
       <section className="xml-balance-card">
         <span>Available Balance</span>
-        <strong>₱ 50.00</strong>
+        <strong>{formatMoney(balance)}</strong>
       </section>
 
       <section className="xml-stats-row">

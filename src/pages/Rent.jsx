@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/set-state-in-effect, react-hooks/preserve-manual-memoization */
 import { useCallback, useEffect, useState } from 'react'
-import { completeRental, fetchActiveRentals, formatMoney, parseTimestamp, sizeFromType } from '../lib/supabase'
+import { completeRental, fetchActiveRentals, fetchTransactionPayments, formatMoney, parseTimestamp, sizeFromType } from '../lib/supabase'
 import { formatDateTime, formatDuration } from '../lib/time'
 
 function mapRental(row) {
@@ -24,12 +24,30 @@ function mapRental(row) {
   }
 }
 
+function calculateOvertimeFee(item, currentTick) {
+  if (item.isOpenTime) {
+    const durationMs = Math.max(0, currentTick - item.startMs)
+    const durationMins = Math.floor(durationMs / 60000)
+    return (durationMins / 60) * item.ratePerHr
+  } else {
+    if (currentTick <= item.endMs) return 0
+    const overtimeMs = currentTick - item.endMs
+    const overtimeMins = Math.floor(overtimeMs / 60000)
+    return (overtimeMins / 60) * item.ratePerHr
+  }
+}
+
 export default function Rent({ session, addNotification }) {
   const [rentals, setRentals] = useState([])
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
   const [tick, setTick] = useState(() => Date.now())
-  const [confirmItem, setConfirmItem] = useState(null)
+  const [activeReturnItem, setActiveReturnItem] = useState(null)
+  const [payMethod, setPayMethod] = useState('Wallet')
+  const [walletBalance, setWalletBalance] = useState(50)
+  const [insertedAmount, setInsertedAmount] = useState(0)
+  const [secondsLeft, setSecondsLeft] = useState(60)
+  const [hasTimedOut, setHasTimedOut] = useState(false)
 
   useEffect(() => {
     const id = setInterval(() => setTick(Date.now()), 1000)
@@ -59,24 +77,143 @@ export default function Rent({ session, addNotification }) {
     loadRentals()
   }, [loadRentals])
 
-  async function returnLocker(item) {
-    setMessage('')
-    try {
-      await completeRental(item, session.accessToken)
-      
-      // Trigger notification
-      if (addNotification) {
-        addNotification({
-          title: 'Locker Returned',
-          content: `Locker ${item.lockerNumber} has been successfully returned.`,
-          type: 'rental_end',
+  // Countdown timer for return overtime pay at device
+  useEffect(() => {
+    if (!activeReturnItem || payMethod !== 'Device' || hasTimedOut || secondsLeft <= 0) return
+
+    const timer = setTimeout(() => {
+      setSecondsLeft((prev) => {
+        if (prev <= 1) {
+          setHasTimedOut(true)
+          return 0
+        }
+        return prev - 1
+      })
+    }, 1000)
+
+    return () => clearTimeout(timer)
+  }, [activeReturnItem, payMethod, secondsLeft, hasTimedOut])
+
+  // Polling for cash insertions at the device during return
+  useEffect(() => {
+    if (!activeReturnItem || payMethod !== 'Device' || hasTimedOut) return
+
+    let isMounted = true
+    const interval = setInterval(async () => {
+      try {
+        const payments = await fetchTransactionPayments(activeReturnItem.transactionId, session.accessToken)
+        if (!isMounted) return
+
+        const sum = (payments || []).reduce((acc, p) => acc + Number(p.amount || 0), 0)
+        
+        setInsertedAmount((prev) => {
+          if (sum > prev) {
+            setSecondsLeft(60) // reset timer
+          }
+          return sum
         })
+
+        const fee = calculateOvertimeFee(activeReturnItem, Date.now())
+        if (sum >= fee) {
+          clearInterval(interval)
+          
+          await completeRental(activeReturnItem, session.accessToken, fee, 'Device')
+          
+          if (addNotification) {
+            addNotification({
+              title: 'Locker Returned',
+              content: `Locker ${activeReturnItem.lockerNumber} has been successfully returned.`,
+              type: 'rental_end',
+            })
+          }
+
+          setActiveReturnItem(null)
+          await loadRentals()
+        }
+      } catch (err) {
+        console.error('Error polling return payments:', err)
+      }
+    }, 1500)
+
+    return () => {
+      isMounted = false
+      clearInterval(interval)
+    }
+  }, [activeReturnItem, payMethod, hasTimedOut, session?.accessToken, loadRentals, addNotification])
+
+  function handleContinuePayment() {
+    setSecondsLeft(60)
+    setHasTimedOut(false)
+  }
+
+  function initiateReturn(item) {
+    setMessage('')
+    const fee = calculateOvertimeFee(item, tick)
+    setActiveReturnItem({
+      ...item,
+      overtimeFee: fee,
+    })
+    setPayMethod('Wallet')
+    setInsertedAmount(0)
+    setSecondsLeft(60)
+    setHasTimedOut(false)
+
+    try {
+      const key = `coincubby.balance.${session?.userId}`
+      const stored = localStorage.getItem(key)
+      setWalletBalance(stored ? Number(stored) : 50.00)
+    } catch {
+      setWalletBalance(50.00)
+    }
+  }
+
+  async function handleConfirmReturn() {
+    if (!activeReturnItem) return
+    setMessage('')
+
+    const fee = calculateOvertimeFee(activeReturnItem, tick)
+    if (fee > 0 && payMethod === 'Wallet') {
+      if (walletBalance < fee) {
+        return
       }
 
-      setMessage(`Locker ${item.lockerNumber} returned.`)
-      await loadRentals()
-    } catch (err) {
-      setMessage(err.message || 'Could not return locker.')
+      try {
+        const finalBalance = Math.max(0, walletBalance - fee)
+        localStorage.setItem(`coincubby.balance.${session.userId}`, finalBalance.toFixed(2))
+        setWalletBalance(finalBalance)
+
+        await completeRental(activeReturnItem, session.accessToken, fee, 'Wallet')
+
+        if (addNotification) {
+          addNotification({
+            title: 'Locker Returned',
+            content: `Locker ${activeReturnItem.lockerNumber} has been successfully returned.`,
+            type: 'rental_end',
+          })
+        }
+
+        setActiveReturnItem(null)
+        await loadRentals()
+      } catch (err) {
+        setMessage(err.message || 'Failed to complete wallet payment return.')
+      }
+    } else if (fee === 0) {
+      try {
+        await completeRental(activeReturnItem, session.accessToken, 0, 'Device')
+
+        if (addNotification) {
+          addNotification({
+            title: 'Locker Returned',
+            content: `Locker ${activeReturnItem.lockerNumber} has been successfully returned.`,
+            type: 'rental_end',
+          })
+        }
+
+        setActiveReturnItem(null)
+        await loadRentals()
+      } catch (err) {
+        setMessage(err.message || 'Failed to complete return.')
+      }
     }
   }
 
@@ -146,7 +283,7 @@ export default function Rent({ session, addNotification }) {
                 </div>
               </dl>
 
-              <button className="primary-button xml-black-button" type="button" onClick={() => setConfirmItem(item)}>
+              <button className="primary-button xml-black-button" type="button" onClick={() => initiateReturn(item)}>
                 Return Locker
               </button>
             </article>
@@ -154,49 +291,179 @@ export default function Rent({ session, addNotification }) {
         })}
       </section>
 
-      {confirmItem && (
-        <div className="modal-backdrop" role="presentation" onClick={(e) => e.target === e.currentTarget && setConfirmItem(null)}>
-          <div className="rent-sheet xml-rent-sheet">
-            <div className="sheet-title">
-              <div>
-                <h2>Return Locker {confirmItem.lockerNumber}?</h2>
-                <p className="muted">
-                  Size: {confirmItem.sizeName} | {currentCost(confirmItem)}
-                </p>
+      {activeReturnItem && (() => {
+        const overtimeMs = activeReturnItem.isOpenTime 
+          ? Math.max(0, tick - activeReturnItem.startMs)
+          : Math.max(0, tick - activeReturnItem.endMs)
+        const overtimeFee = calculateOvertimeFee(activeReturnItem, tick)
+        const hasOvertime = overtimeFee > 0
+
+        return (
+          <div className="modal-backdrop" role="presentation">
+            <div className="rent-sheet xml-rent-sheet">
+              <div className="sheet-title">
+                <div>
+                  <h2>Return Locker {activeReturnItem.lockerNumber}</h2>
+                  <p className="muted">Size: {activeReturnItem.sizeName}</p>
+                </div>
+                <button className="icon-button" type="button" onClick={() => setActiveReturnItem(null)}>
+                  X
+                </button>
               </div>
-              <button className="icon-button" type="button" onClick={() => setConfirmItem(null)}>
-                X
-              </button>
-            </div>
 
-            <p style={{ textAlign: 'center', margin: '14px 0', fontSize: '13px', color: '#555555', lineHeight: '1.5' }}>
-              Are you sure you want to return this locker? 
-              <br />
-              This will deactivate your access token and end your rental session.
-            </p>
+              <div className="return-details-card" style={{ display: 'grid', gap: '8px', padding: '14px', background: 'var(--white)', borderRadius: '12px', border: '1px solid var(--line)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
+                  <span style={{ color: 'var(--gray)' }}>Prepaid Period:</span>
+                  <strong>{activeReturnItem.isOpenTime ? 'None (Open Time)' : `${formatDuration(activeReturnItem.endMs - activeReturnItem.startMs)} prepaid`}</strong>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
+                  <span style={{ color: 'var(--gray)' }}>Status:</span>
+                  <strong style={{ color: hasOvertime ? '#c62828' : '#2e7d32' }}>
+                    {hasOvertime ? 'Overtime Accrued' : 'Within Prepaid Time'}
+                  </strong>
+                </div>
+                {hasOvertime && (
+                  <>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
+                      <span style={{ color: 'var(--gray)' }}>Overtime Duration:</span>
+                      <strong>{formatDuration(overtimeMs)}</strong>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
+                      <span style={{ color: 'var(--gray)' }}>Overtime Fee:</span>
+                      <strong style={{ color: '#c62828' }}>{formatMoney(overtimeFee)}</strong>
+                    </div>
+                  </>
+                )}
+              </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '8px' }}>
-              <button 
-                className="secondary-button" 
-                type="button" 
-                onClick={() => setConfirmItem(null)}
-              >
-                Cancel
-              </button>
-              <button 
-                className="primary-button xml-black-button" 
-                type="button" 
-                onClick={() => {
-                  returnLocker(confirmItem)
-                  setConfirmItem(null)
-                }}
-              >
-                Yes, Return
-              </button>
+              {hasOvertime ? (
+                <>
+                  <p className="xml-section-label">Payment Method</p>
+                  <div className="payment-options xml-payment-options">
+                    <button
+                      type="button"
+                      className={`payment-opt-btn ${payMethod === 'Wallet' ? 'selected' : ''}`}
+                      onClick={() => setPayMethod('Wallet')}
+                      style={{
+                        padding: '12px',
+                        borderRadius: '10px',
+                        border: payMethod === 'Wallet' ? '2px solid var(--dark)' : '1px solid var(--line)',
+                        background: payMethod === 'Wallet' ? 'var(--label-green)' : 'var(--white)',
+                        fontWeight: '700',
+                        cursor: 'pointer',
+                        textAlign: 'left'
+                      }}
+                    >
+                      Pay via Wallet (Balance: {formatMoney(walletBalance)})
+                    </button>
+                    <button
+                      type="button"
+                      className={`payment-opt-btn ${payMethod === 'Device' ? 'selected' : ''}`}
+                      onClick={() => {
+                        setPayMethod('Device')
+                        setInsertedAmount(0)
+                        setSecondsLeft(60)
+                        setHasTimedOut(false)
+                      }}
+                      style={{
+                        padding: '12px',
+                        borderRadius: '10px',
+                        border: payMethod === 'Device' ? '2px solid var(--dark)' : '1px solid var(--line)',
+                        background: payMethod === 'Device' ? 'var(--label-green)' : 'var(--white)',
+                        fontWeight: '700',
+                        cursor: 'pointer',
+                        textAlign: 'left'
+                      }}
+                    >
+                      Pay at Device
+                    </button>
+                  </div>
+
+                  {payMethod === 'Wallet' && (
+                    <>
+                      {walletBalance < overtimeFee ? (
+                        <div className="alert alert-danger" style={{ background: '#ffebee', color: '#c62828', padding: '12px', borderRadius: '12px', fontSize: '13px', fontWeight: '700', textAlign: 'center', marginTop: '12px' }}>
+                          Insufficient wallet balance. Please insert coins at the device to pay.
+                        </div>
+                      ) : (
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '12px' }}>
+                          <button className="secondary-button" type="button" onClick={() => setActiveReturnItem(null)}>
+                            Cancel
+                          </button>
+                          <button className="primary-button xml-black-button" type="button" onClick={handleConfirmReturn}>
+                            Pay & Return
+                          </button>
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  {payMethod === 'Device' && (
+                    <div style={{ display: 'grid', gap: '12px', marginTop: '8px' }}>
+                      <div className="payment-status-card" style={{ margin: '0' }}>
+                        <div className="amount-stat">
+                          <span>Overtime Due</span>
+                          <strong>{formatMoney(overtimeFee)}</strong>
+                        </div>
+                        <div className="amount-stat">
+                          <span>Inserted</span>
+                          <strong className="inserted-text">{formatMoney(insertedAmount)}</strong>
+                        </div>
+                        <div className="amount-stat">
+                          <span>Remaining</span>
+                          <strong className="remaining-text">
+                            {formatMoney(Math.max(0, overtimeFee - insertedAmount))}
+                          </strong>
+                        </div>
+                      </div>
+
+                      {hasTimedOut ? (
+                        <div className="timeout-container">
+                          <p className="alert">Payment session timed out. No cash was detected.</p>
+                          <button
+                            className="primary-button xml-black-button continue-payment-btn"
+                            type="button"
+                            onClick={handleContinuePayment}
+                          >
+                            Continue
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="timer-container">
+                          <div className="progress-bar-bg">
+                            <div 
+                              className="progress-bar-fill" 
+                              style={{ width: `${(secondsLeft / 60) * 100}%` }}
+                            ></div>
+                          </div>
+                          <p className="timer-text">
+                            Please insert cash. Time remaining: <strong>{secondsLeft}s</strong>
+                          </p>
+                        </div>
+                      )}
+
+                      <div className="action-row" style={{ marginTop: '8px' }}>
+                        <button className="secondary-button" style={{ width: '100%' }} type="button" onClick={() => setActiveReturnItem(null)}>
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '12px' }}>
+                  <button className="secondary-button" type="button" onClick={() => setActiveReturnItem(null)}>
+                    Cancel
+                  </button>
+                  <button className="primary-button xml-black-button" type="button" onClick={handleConfirmReturn}>
+                    Confirm Free Return
+                  </button>
+                </div>
+              )}
             </div>
           </div>
-        </div>
-      )}
+        )
+      })()}
     </main>
   )
 }

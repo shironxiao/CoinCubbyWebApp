@@ -356,15 +356,13 @@ export async function fetchRentalHistory(customerId, token) {
   )
 }
 
-export async function completeRental(item, token) {
+export async function completeRental(item, token, overtimeFee = 0, paymentMethod = 'Device') {
   const now = new Date()
-  let durationMinutes = item.durationMinutes
-  let finalAmount = 0
-
-  if (item.isOpenTime) {
-    durationMinutes = Math.max(60, Math.floor((now.getTime() - item.startMs) / 60000))
-    finalAmount = (durationMinutes / 60) * item.ratePerHr
-  }
+  
+  const totalDurationMinutes = Math.max(
+    item.durationMinutes || 60,
+    Math.floor((now.getTime() - item.startMs) / 60000)
+  )
 
   await request(`/rest/v1/transactions?transaction_id=eq.${item.transactionId}`, {
     method: 'PATCH',
@@ -375,11 +373,16 @@ export async function completeRental(item, token) {
     body: JSON.stringify({
       status: 'Completed',
       end_time: now.toISOString(),
-      duration_minutes: durationMinutes,
+      duration_minutes: totalDurationMinutes,
     }),
   })
 
-  if (item.isOpenTime) {
+  let finalPaymentAmount = overtimeFee
+  if (finalPaymentAmount <= 0 && item.isOpenTime) {
+    finalPaymentAmount = (totalDurationMinutes / 60) * item.ratePerHr
+  }
+
+  if (finalPaymentAmount > 0) {
     await request('/rest/v1/payments', {
       method: 'POST',
       headers: authHeaders(token, {
@@ -388,8 +391,8 @@ export async function completeRental(item, token) {
       }),
       body: JSON.stringify({
         transaction_id: item.transactionId,
-        amount: finalAmount,
-        payment_method: 'Device',
+        amount: finalPaymentAmount,
+        payment_method: paymentMethod,
       }),
     })
   }
