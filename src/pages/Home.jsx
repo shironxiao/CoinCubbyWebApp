@@ -290,7 +290,7 @@ export default function Home({ session, onNavigate, addNotification }) {
   const total = selectedLocker ? Number(duration || 0) * selectedLocker.rate : 0
 
   return (
-    <main className="page xml-page xml-home">
+    <main className={`page xml-page xml-home ${!activeRental ? 'no-active-rental' : ''}`}>
       <section className="page-header">
         <div>
           <h1 className="xml-app-title">CoinCubby</h1>
@@ -355,7 +355,9 @@ export default function Home({ session, onNavigate, addNotification }) {
         </section>
       )}
 
-
+      <section className="xml-balance-card">
+        <span>Available Balance</span>
+        <strong>₱ 50.00</strong>
       </section>
 
       <section className="xml-stats-row">

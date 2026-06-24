@@ -1805,8 +1805,13 @@ dd {
   }
 
   .xml-home .page-header,
+  .xml-home .xml-balance-card,
   .xml-home .xml-stats-row,
   .xml-home .xml-locker-panel {
+    grid-column: 1 / -1;
+  }
+
+  .xml-home.no-active-rental .xml-welcome-card {
     grid-column: 1 / -1;
   }
 
