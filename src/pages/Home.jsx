@@ -297,14 +297,13 @@ export default function Home({ session, onNavigate, addNotification }) {
         </div>
       </section>
 
-      <section className="home-hero-row">
-        <section className="xml-welcome-card">
-          <p>WELCOME!</p>
-          <h2>Pick your locker</h2>
-          <span>Green means you're good to go.<br />Check status indicator below.</span>
-        </section>
+      <section className="xml-welcome-card">
+        <p>WELCOME!</p>
+        <h2>Pick your locker</h2>
+        <span>Green means you're good to go.<br />Check status indicator below.</span>
+      </section>
 
-        {activeRental && (
+      {activeRental && (
           <section className="rental-card home-rental-card">
           <div className="card-heading">
             <div>
@@ -356,11 +355,7 @@ export default function Home({ session, onNavigate, addNotification }) {
         </section>
       )}
 
-      </section>
 
-      <section className="xml-balance-card">
-        <span>Available Balance</span>
-        <strong>₱ 50.00</strong>
       </section>
 
       <section className="xml-stats-row">

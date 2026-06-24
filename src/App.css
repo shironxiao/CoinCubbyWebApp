@@ -1802,23 +1802,6 @@ dd {
     grid-template-columns: 1.1fr 0.9fr;
     gap: 16px;
     align-content: start;
-    align-items: start;
-  }
-
-  .home-hero-row {
-    display: grid;
-    grid-template-columns: 1.1fr 0.9fr;
-    gap: 16px;
-    align-items: start;
-  }
-
-  .home-rental-card {
-    max-width: 520px;
-    width: 100%;
-  }
-
-  .xml-home .xml-balance-card {
-    grid-column: 1 / -1;
   }
 
   .xml-home .page-header,
