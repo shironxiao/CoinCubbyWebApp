@@ -769,6 +769,34 @@ button {
   background: var(--white);
 }
 
+.home-rental-card {
+  max-width: 520px;
+  justify-self: end;
+  width: 100%;
+}
+
+.home-rental-card .card-heading h2 {
+  font-size: 28px;
+}
+
+.home-rental-card .timer-box {
+  padding: 14px;
+}
+
+.home-rental-card .detail-grid div {
+  padding: 8px 0;
+}
+
+.home-rental-card .card-heading p,
+.home-rental-card .card-heading small,
+.home-rental-card .timer-box span {
+  font-size: 12px;
+}
+
+.home-rental-card .primary-button {
+  padding: 14px 0;
+}
+
 .card-heading {
   display: flex;
   justify-content: space-between;
@@ -1107,6 +1135,188 @@ dd {
   background: var(--label-green);
   color: var(--dark);
   font-size: 18px;
+}
+
+/* Login Page - Fresh Mint Green */
+.login-page {
+  background: radial-gradient(circle at top left, rgba(109, 199, 141, 0.25), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(133, 211, 157, 0.18), transparent 26%),
+    #f6fbf4;
+}
+
+.login-page .auth-panel {
+  background: rgba(255, 255, 255, 0.96);
+  padding: 46px 32px;
+  border-radius: 38px;
+  box-shadow: 0 32px 90px rgba(47, 86, 40, 0.12);
+  margin: 22px 16px;
+  position: relative;
+  overflow: hidden;
+}
+
+.login-page .auth-panel::before {
+  content: '';
+  position: absolute;
+  top: -36px;
+  right: -26px;
+  width: 132px;
+  height: 132px;
+  border-radius: 50%;
+  background: rgba(92, 196, 130, 0.16);
+  z-index: 0;
+}
+
+.login-page .auth-panel::after {
+  content: '';
+  position: absolute;
+  bottom: -32px;
+  left: -24px;
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  background: rgba(107, 196, 140, 0.12);
+  z-index: 0;
+}
+
+.login-page .auth-logo {
+  width: 88px;
+  height: 88px;
+  margin: 0 auto 24px;
+  position: relative;
+  z-index: 1;
+}
+
+.login-page .auth-panel h1,
+.login-page .muted,
+.login-page .xml-field,
+.login-page .form-stack,
+.login-page .auth-switch,
+.login-page .alert,
+.login-page .success {
+  position: relative;
+  z-index: 1;
+}
+
+.login-page .auth-panel h1 {
+  color: #1a5038;
+  font-size: 32px;
+  font-weight: 900;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.login-page .muted {
+  color: #5b7666;
+  font-size: 14px;
+  text-align: center;
+  margin-bottom: 28px;
+  line-height: 1.6;
+}
+
+.login-page .xml-field {
+  display: grid;
+  gap: 8px;
+}
+
+.login-page .xml-field > span {
+  color: #3d7156;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.login-page input {
+  width: 100%;
+  height: 50px;
+  border: 1px solid #dae9de;
+  border-radius: 14px;
+  padding: 0 18px;
+  background: #ffffff;
+  color: #22312b;
+  font: inherit;
+  font-size: 15px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.login-page input:focus {
+  outline: none;
+  border-color: #7cc58d;
+  box-shadow: 0 0 0 4px rgba(124, 197, 141, 0.16);
+}
+
+.login-page input::placeholder {
+  color: #99aa92;
+}
+
+.login-page .form-stack {
+  display: grid;
+  gap: 18px;
+  margin-top: 18px;
+}
+
+.login-page .xml-black-button {
+  background: linear-gradient(135deg, #4db66f 0%, #378650 100%);
+  color: var(--white);
+  min-height: 52px;
+  font-weight: 800;
+  font-size: 15px;
+  border-radius: 16px;
+  border: none;
+  transition: transform 0.15s ease, box-shadow 0.2s ease, background 0.2s ease;
+  box-shadow: 0 16px 28px rgba(57, 105, 57, 0.18);
+}
+
+.login-page .xml-black-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #42a05f 0%, #336c4e 100%);
+  box-shadow: 0 18px 34px rgba(45, 84, 45, 0.24);
+}
+
+.login-page .xml-black-button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.login-page .xml-black-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.login-page .auth-switch {
+  color: #5f7367;
+  font-size: 14px;
+  text-align: center;
+  margin-top: 24px;
+  line-height: 1.8;
+}
+
+.login-page .auth-switch button {
+  color: #3c7c55;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-weight: 800;
+  transition: color 0.2s ease;
+  padding: 0;
+}
+
+.login-page .auth-switch button:hover {
+  color: #2f6343;
+}
+
+.login-page .alert {
+  background: #fff4f4;
+  color: #b42318;
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.login-page .success {
+  background: #e8f6ec;
+  color: #1d6f40;
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 .xml-list-row {
@@ -1592,6 +1802,23 @@ dd {
     grid-template-columns: 1.1fr 0.9fr;
     gap: 16px;
     align-content: start;
+    align-items: start;
+  }
+
+  .home-hero-row {
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 16px;
+    align-items: start;
+  }
+
+  .home-rental-card {
+    max-width: 520px;
+    width: 100%;
+  }
+
+  .xml-home .xml-balance-card {
+    grid-column: 1 / -1;
   }
 
   .xml-home .page-header,

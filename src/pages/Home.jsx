@@ -1,5 +1,18 @@
 import { useEffect, useMemo, useState } from 'react'
-import { activateRental, createRental, fetchLockers, fetchModules, fetchTransactionPayments, formatMoney, updateLockerStatus } from '../lib/supabase'
+import {
+  activateRental,
+  completeRental,
+  createRental,
+  fetchActiveRentals,
+  fetchLockers,
+  fetchModules,
+  fetchTransactionPayments,
+  formatMoney,
+  parseTimestamp,
+  sizeFromType,
+  updateLockerStatus,
+} from '../lib/supabase'
+import { formatDateTime, formatDuration } from '../lib/time'
 
 function statusClass(status) {
   return String(status || 'Available').toLowerCase().replaceAll(' ', '-')
@@ -31,6 +44,8 @@ export default function Home({ session, onNavigate, addNotification }) {
       return 50.00
     }
   })
+  const [activeRental, setActiveRental] = useState(null)
+  const [tick, setTick] = useState(() => Date.now())
 
   const availableCount = useMemo(
     () => lockers.filter((locker) => locker.status === 'Available').length,
@@ -51,6 +66,36 @@ export default function Home({ session, onNavigate, addNotification }) {
       loadLockers(selectedModuleId)
     }
   }, [selectedModuleId])
+
+  useEffect(() => {
+    if (!session?.userId || !session?.accessToken) {
+      setActiveRental(null)
+      return
+    }
+
+    let isMounted = true
+    async function loadActiveRental() {
+      try {
+        const rows = await fetchActiveRentals(session.userId, session.accessToken)
+        if (!isMounted) return
+        const rental = (rows || [])[0] || null
+        setActiveRental(rental)
+      } catch (err) {
+        setActiveRental(null)
+        console.error('Failed to load active rental:', err)
+      }
+    }
+
+    loadActiveRental()
+    return () => {
+      isMounted = false
+    }
+  }, [session?.accessToken, session?.userId])
+
+  useEffect(() => {
+    const timer = setInterval(() => setTick(Date.now()), 1000)
+    return () => clearInterval(timer)
+  }, [])
 
   // Countdown timer for Pay at Device
   useEffect(() => {
@@ -151,6 +196,41 @@ export default function Home({ session, onNavigate, addNotification }) {
     }
   }
 
+  async function returnActiveRental() {
+    if (!activeRental) return
+    setMessage('')
+
+    const startMs = parseTimestamp(activeRental.start_time)
+    const ratePerHr = Number(activeRental.rates?.price_per_minute || 0.17) * 60
+    const item = {
+      transactionId: activeRental.transaction_id,
+      lockerId: activeRental.locker_id,
+      lockerNumber: activeRental.lockers?.locker_number || activeRental.locker_id,
+      durationMinutes: activeRental.duration_minutes || 0,
+      isOpenTime: !activeRental.end_time,
+      ratePerHr,
+      startMs,
+    }
+
+    try {
+      await completeRental(item, session.accessToken)
+
+      if (addNotification) {
+        addNotification({
+          title: 'Locker Returned',
+          content: `Locker ${item.lockerNumber} has been returned successfully.`,
+          type: 'rental_end',
+        })
+      }
+
+      setMessage(`Locker ${item.lockerNumber} returned.`)
+      setActiveRental(null)
+      await loadLockers(selectedModuleId)
+    } catch (err) {
+      setMessage(err.message || 'Could not return locker.')
+    }
+  }
+
   function openRental(locker) {
     if (locker.status !== 'Available') {
       setMessage(`Locker ${locker.id} is not available.`)
@@ -241,10 +321,65 @@ export default function Home({ session, onNavigate, addNotification }) {
         </div>
       </section>
 
-      <section className="xml-welcome-card">
-        <p>WELCOME!</p>
-        <h2>Pick your locker</h2>
-        <span>Green means you're good to go.<br />Check status indicator below.</span>
+      <section className="home-hero-row">
+        <section className="xml-welcome-card">
+          <p>WELCOME!</p>
+          <h2>Pick your locker</h2>
+          <span>Green means you're good to go.<br />Check status indicator below.</span>
+        </section>
+
+        {activeRental && (
+          <section className="rental-card home-rental-card">
+          <div className="card-heading">
+            <div>
+              <small>Locker</small>
+              <h2>{activeRental.lockers?.locker_number || activeRental.locker_id}</h2>
+              <p>{sizeFromType(activeRental.lockers?.size_type_id).label}</p>
+            </div>
+            <span>Active</span>
+          </div>
+
+          <div className="timer-box">
+            <small>{activeRental.end_time ? 'TIME REMAINING' : 'ELAPSED TIME'}</small>
+            <strong>
+              {activeRental.end_time
+                ? formatDuration(Math.max(0, parseTimestamp(activeRental.end_time) - tick))
+                : formatDuration(Math.max(0, tick - parseTimestamp(activeRental.start_time)))}
+            </strong>
+            <span>
+              {activeRental.end_time
+                ? `Prepaid: ${formatMoney(
+                    (Math.max(0, parseTimestamp(activeRental.end_time) - parseTimestamp(activeRental.start_time)) / 3600000) *
+                      (Number(activeRental.rates?.price_per_minute || 0.17) * 60)
+                  )}`
+                : `Current Bill: ${formatMoney(
+                    (Math.max(0, tick - parseTimestamp(activeRental.start_time)) / 3600000) *
+                      (Number(activeRental.rates?.price_per_minute || 0.17) * 60)
+                  )}`}
+            </span>
+          </div>
+
+          <dl className="detail-grid">
+            <div>
+              <dt>Started</dt>
+              <dd>{formatDateTime(parseTimestamp(activeRental.start_time))}</dd>
+            </div>
+            <div>
+              <dt>Expires</dt>
+              <dd>{activeRental.end_time ? formatDateTime(parseTimestamp(activeRental.end_time)) : 'N/A (Open Time)'}</dd>
+            </div>
+            <div>
+              <dt>Access Token</dt>
+              <dd>{activeRental.qr_token || 'COIN-XXXXXX'}</dd>
+            </div>
+          </dl>
+
+          <button className="primary-button xml-black-button" type="button" onClick={returnActiveRental}>
+            Return Locker
+          </button>
+        </section>
+      )}
+
       </section>
 
       <section className="xml-balance-card">
