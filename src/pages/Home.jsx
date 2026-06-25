@@ -346,16 +346,20 @@ export default function Home({ session, onNavigate, addNotification }) {
                 </span>
               </div>
 
-          <dl className="detail-grid">
-            <div>
-              <dt>Started</dt>
-              <dd>{formatDateTime(parseTimestamp(activeRental.start_time))}</dd>
-            </div>
-            <div>
-              <dt>Expires</dt>
-              <dd>{activeRental.end_time ? formatDateTime(parseTimestamp(activeRental.end_time)) : 'N/A (Open Time)'}</dd>
-            </div>
-          </dl>
+              <dl className="detail-grid">
+                <div>
+                  <dt>Started</dt>
+                  <dd>{formatDateTime(parseTimestamp(rental.start_time))}</dd>
+                </div>
+                <div>
+                  <dt>Expires</dt>
+                  <dd>{rental.end_time ? formatDateTime(parseTimestamp(rental.end_time)) : 'N/A (Open Time)'}</dd>
+                </div>
+                <div>
+                  <dt>Access Token</dt>
+                  <dd>{rental.qr_token || 'COIN-XXXXXX'}</dd>
+                </div>
+              </dl>
 
               <button className="primary-button xml-black-button" type="button" onClick={() => returnActiveRental(rental)}>
                 Return Locker
