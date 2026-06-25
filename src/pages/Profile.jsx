@@ -32,6 +32,7 @@ export default function Profile({ session, onLogout, onNavigate, addNotification
   const [passkeyError, setPasskeyError] = useState('')
   const [passkeyNotice, setPasskeyNotice] = useState('')
   const [loadingPasskey, setLoadingPasskey] = useState(false)
+  const [loadingProfile, setLoadingProfile] = useState(true)
 
   function updatePasswordFields(event) {
     setPasswordForm((current) => ({ ...current, [event.target.name]: event.target.value }))
@@ -153,6 +154,7 @@ export default function Profile({ session, onLogout, onNavigate, addNotification
   const loadProfile = useCallback(async () => {
     if (!session?.accessToken) return
 
+    setLoadingProfile(true)
     try {
       const { user, customer } = await fetchProfile(session)
       console.log('Profile component loaded profile data:', { user, customer })
@@ -165,6 +167,8 @@ export default function Profile({ session, onLogout, onNavigate, addNotification
     } catch (err) {
       console.error('Profile component fetchProfile error:', err)
       setMessage(err.message || 'Showing cached profile only.')
+    } finally {
+      setLoadingProfile(false)
     }
   }, [session])
 
@@ -203,7 +207,12 @@ export default function Profile({ session, onLogout, onNavigate, addNotification
           Your PassKey is a 4-digit PIN used to link your physical locker transactions at the kiosk to your web app account.
         </p>
 
-        {!profile.passkey ? (
+        {loadingProfile ? (
+          <div className="xml-loading" style={{ minHeight: '80px', padding: '10px 0' }}>
+            <span></span>
+            <p>Checking PassKey status...</p>
+          </div>
+        ) : !profile.passkey ? (
           /* Case 1: Existing User setting their PassKey for the first time */
           <form className="form-stack" onSubmit={handleSetOrChangePasskey}>
             <p className="notice-sub" style={{ fontSize: '0.85rem', color: '#ffb300', marginBottom: '12px' }}>
