@@ -150,6 +150,7 @@ export default function Profile({ session, onLogout, onNavigate, addNotification
 
     try {
       const { user, customer } = await fetchProfile(session)
+      console.log('Profile component loaded profile data:', { user, customer })
       setProfile({
         fullName: customer?.full_name || user.user_metadata?.full_name || session.fullName || 'User',
         contact: customer?.email || user.email || session.email || '',
@@ -157,6 +158,7 @@ export default function Profile({ session, onLogout, onNavigate, addNotification
         passkey: customer?.passkey || '',
       })
     } catch (err) {
+      console.error('Profile component fetchProfile error:', err)
       setMessage(err.message || 'Showing cached profile only.')
     }
   }, [session])

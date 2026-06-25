@@ -337,6 +337,8 @@ export async function fetchProfile(session) {
     { headers: authHeaders(session?.accessToken, { Accept: 'application/json' }) },
   )
 
+  console.log('API fetchProfile result:', { user, customer: customers?.[0] })
+
   return {
     user,
     customer: customers?.[0] || null,
