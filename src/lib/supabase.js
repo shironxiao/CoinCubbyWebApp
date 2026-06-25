@@ -242,9 +242,9 @@ export async function createRental({ locker, duration, isOpenTime, paymentMethod
   if (!rate) throw new Error(`Rate not found for ${locker.size}.`)
 
   const now = new Date()
-  
-  // Use the persistent unique locker access token derived from the user's ID
-  const qrToken = privateKeyFor(session.userId)
+
+  // Generate a globally unique 6-digit PIN for this transaction
+  const qrToken = await generateUniquePin()
 
   const isDevicePending = !isOpenTime && paymentMethod === 'Device'
 
@@ -294,7 +294,7 @@ export async function createRental({ locker, duration, isOpenTime, paymentMethod
 
   const initialLockerStatus = isDevicePending ? 'Payment Required' : 'Occupied'
   await updateLockerStatus(locker.dbId, initialLockerStatus, session.accessToken)
-  return transactionId
+  return { transactionId, qrToken }
 }
 
 export async function fetchTransactionPayments(transactionId, token) {
@@ -403,6 +403,23 @@ export async function completeRental(item, token, overtimeFee = 0, paymentMethod
 export function privateKeyFor(userId) {
   if (!userId) return '-'
   return `COIN-${userId.slice(0, 8).toUpperCase()}`
+}
+
+/**
+ * Generates a globally unique 6-digit numeric PIN for a locker transaction.
+ * Retries up to 10 times if the generated PIN already exists in the DB.
+ */
+async function generateUniquePin(retries = 10) {
+  for (let i = 0; i < retries; i++) {
+    const pin = String(Math.floor(100000 + Math.random() * 900000))
+    const existing = await request(
+      `/rest/v1/transactions?qr_token=eq.${pin}&select=transaction_id&limit=1`,
+      { headers: authHeaders() },
+    ).catch(() => null)
+    if (!existing || existing.length === 0) return pin
+  }
+  // Fallback: timestamp-based 6-digit suffix (extremely unlikely collision)
+  return String(Date.now()).slice(-6)
 }
 
 export function parseTimestamp(value) {

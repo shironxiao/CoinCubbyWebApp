@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 import { useEffect, useMemo, useState } from 'react'
 import {
   activateRental,
@@ -140,7 +141,7 @@ export default function Home({ session, onNavigate, addNotification }) {
           if (addNotification) {
             addNotification({
               title: 'Locker Rented',
-              content: `Locker ${paymentTx.lockerNumber} is active. Key: COIN-${session.userId.slice(0, 8).toUpperCase()}`,
+              content: `Locker ${paymentTx.lockerNumber} is active. PIN: ${paymentTx.qrToken}`,
               type: 'rental_start',
             })
           }
@@ -262,7 +263,7 @@ export default function Home({ session, onNavigate, addNotification }) {
     setSaving(true)
     setMessage('')
     try {
-      const transactionId = await createRental({
+      const { transactionId, qrToken } = await createRental({
         locker: selectedLocker,
         duration,
         isOpenTime,
@@ -275,6 +276,7 @@ export default function Home({ session, onNavigate, addNotification }) {
       if (isDevicePending) {
         setPaymentTx({
           transactionId,
+          qrToken,
           lockerId: selectedLocker.dbId,
           lockerNumber: selectedLocker.id,
           totalAmount: total,
@@ -288,7 +290,7 @@ export default function Home({ session, onNavigate, addNotification }) {
         if (addNotification) {
           addNotification({
             title: 'Locker Rented',
-            content: `Locker ${selectedLocker.id} (${selectedLocker.size}) is active. Key: COIN-${session.userId.slice(0, 8).toUpperCase()}`,
+            content: `Locker ${selectedLocker.id} (${selectedLocker.size}) is active. PIN: ${qrToken}`,
             type: 'rental_start',
           })
         }

@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { fetchProfile, logout, privateKeyFor, changePassword } from '../lib/supabase'
+import { fetchProfile, logout, changePassword } from '../lib/supabase'
 
 export default function Profile({ session, onLogout, onNavigate, addNotification }) {
   const [profile, setProfile] = useState({
@@ -110,9 +110,9 @@ export default function Profile({ session, onLogout, onNavigate, addNotification
       {message && <p className="alert">{message}</p>}
 
       <section className="info-panel">
-        <p>Your Private Key</p>
-        <strong>{privateKeyFor(profile.userId)}</strong>
-        <small>Use this key for quick locker access</small>
+        <p>Access Token</p>
+        <strong style={{ letterSpacing: '0.1em' }}>Per-Transaction PIN</strong>
+        <small>A unique 6-digit PIN is generated for each locker rental. View it on your active rental card.</small>
       </section>
 
       {!isChangingPassword ? (
