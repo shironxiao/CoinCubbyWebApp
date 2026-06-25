@@ -314,6 +314,33 @@ button {
   font-size: 14px;
 }
 
+.quick-rent-button {
+  margin-top: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--white);
+  color: var(--green);
+  border: 0;
+  border-radius: 12px;
+  padding: 10px 18px;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.quick-rent-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+.quick-rent-button:active {
+  transform: translateY(1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
 .xml-balance-card {
   display: grid;
   place-items: center;
@@ -767,6 +794,12 @@ button {
   padding: 20px;
   border-radius: 24px;
   background: var(--white);
+}
+
+.home-rentals-container {
+  display: grid;
+  gap: 16px;
+  width: 100%;
 }
 
 .home-rental-card {
