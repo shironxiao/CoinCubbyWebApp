@@ -103,8 +103,8 @@ export async function registerAccount({ firstName, lastName, email, password, pa
     }),
   })
 
-  const userId = body.user?.id || ''
-  const token = body.access_token || SUPABASE_ANON
+  const userId = body.id || body.user?.id || ''
+  const token = body.access_token || body.session?.access_token || SUPABASE_ANON
 
   if (userId) {
     await request('/rest/v1/customers', {
