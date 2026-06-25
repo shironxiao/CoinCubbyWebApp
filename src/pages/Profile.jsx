@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { fetchProfile, logout, changePassword, verifyUserPassword, isPasskeyTaken, updatePasskey } from '../lib/supabase'
+import { fetchProfile, logout, changePassword, verifyUserPassword, isPasskeyTaken, updatePasskey, hashPasskey, recoverPasskey } from '../lib/supabase'
 
 export default function Profile({ session, onLogout, onNavigate, addNotification }) {
   const [profile, setProfile] = useState({
@@ -23,6 +23,7 @@ export default function Profile({ session, onLogout, onNavigate, addNotification
   const [isVerifyingReveal, setIsVerifyingReveal] = useState(false)
   const [revealPassword, setRevealPassword] = useState('')
   const [revealError, setRevealError] = useState('')
+  const [revealedPin, setRevealedPin] = useState('')
 
   const [isChangingPasskey, setIsChangingPasskey] = useState(false)
   const [newPasskey, setNewPasskey] = useState('')
@@ -79,6 +80,8 @@ export default function Profile({ session, onLogout, onNavigate, addNotification
     setLoadingPasskey(true)
     try {
       await verifyUserPassword(profile.contact, revealPassword)
+      const pin = await recoverPasskey(profile.passkey)
+      setRevealedPin(pin)
       setIsVerified(true)
       setIsVerifyingReveal(false)
       setRevealPassword('')
@@ -112,7 +115,9 @@ export default function Profile({ session, onLogout, onNavigate, addNotification
       // 3. Update the passkey in database
       await updatePasskey(profile.userId, newPasskey, session?.accessToken)
 
-      setProfile((current) => ({ ...current, passkey: newPasskey }))
+      const hashed = await hashPasskey(newPasskey)
+      setProfile((current) => ({ ...current, passkey: hashed }))
+      setRevealedPin(newPasskey)
       setPasskeyNotice(profile.passkey ? 'PassKey changed successfully.' : 'PassKey set successfully.')
       setNewPasskey('')
       setConfirmPassword('')
@@ -292,14 +297,17 @@ export default function Profile({ session, onLogout, onNavigate, addNotification
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', background: 'rgba(255, 255, 255, 0.05)', borderRadius: '8px', marginBottom: '12px', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
                   <span style={{ fontSize: '1.4rem', letterSpacing: '0.4em', color: '#4cd964', fontWeight: 'bold', fontFamily: 'monospace' }}>
-                    {profile.passkey.split('').join(' ')}
+                    {(revealedPin || '••••').split('').join(' ')}
                   </span>
                   <span style={{ background: '#4cd964', fontSize: '0.75rem', padding: '2px 8px', borderRadius: '4px', color: '#000' }}>Active</span>
                 </div>
 
                 {!isChangingPasskey ? (
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                    <button className="secondary-button" type="button" onClick={() => setIsVerified(false)}>
+                    <button className="secondary-button" type="button" onClick={() => {
+                      setIsVerified(false)
+                      setRevealedPin('')
+                    }}>
                       Hide PIN
                     </button>
                     <button className="secondary-button" type="button" onClick={() => setIsChangingPasskey(true)}>

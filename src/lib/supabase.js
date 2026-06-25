@@ -107,6 +107,7 @@ export async function registerAccount({ firstName, lastName, email, password, pa
   const token = body.access_token || body.session?.access_token || SUPABASE_ANON
 
   if (userId) {
+    const hashed = await hashPasskey(passkey)
     await request('/rest/v1/customers', {
       method: 'POST',
       headers: authHeaders(token, {
@@ -117,7 +118,7 @@ export async function registerAccount({ firstName, lastName, email, password, pa
         customer_id: userId,
         full_name: fullName.slice(0, 50),
         email,
-        passkey,
+        passkey: hashed,
       }),
     })
   }
@@ -451,21 +452,44 @@ export async function verifyUserPassword(email, password) {
   return true
 }
 
+export async function hashPasskey(passkey) {
+  if (!passkey) return ''
+  const encoder = new TextEncoder()
+  const data = encoder.encode(passkey)
+  const hashBuffer = await window.crypto.subtle.digest('SHA-256', data)
+  const hashArray = Array.from(new Uint8Array(hashBuffer))
+  return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('')
+}
+
+export async function recoverPasskey(hash) {
+  if (!hash || hash.length !== 64) return ''
+  for (let i = 0; i <= 9999; i++) {
+    const pin = String(i).padStart(4, '0')
+    const hashed = await hashPasskey(pin)
+    if (hashed === hash) {
+      return pin
+    }
+  }
+  return ''
+}
+
 export async function isPasskeyTaken(passkey) {
+  const hashed = await hashPasskey(passkey)
   const existing = await request(
-    `/rest/v1/customers?passkey=eq.${passkey}&select=customer_id&limit=1`,
+    `/rest/v1/customers?passkey=eq.${hashed}&select=customer_id&limit=1`,
     { headers: authHeaders() }
   ).catch(() => null)
   return !!(existing && existing.length > 0)
 }
 
 export async function updatePasskey(customerId, passkey, token) {
+  const hashed = await hashPasskey(passkey)
   return request(`/rest/v1/customers?customer_id=eq.${customerId}`, {
     method: 'PATCH',
     headers: authHeaders(token, {
       'Content-Type': 'application/json',
       Prefer: 'return=minimal',
     }),
-    body: JSON.stringify({ passkey }),
+    body: JSON.stringify({ passkey: hashed }),
   })
 }
