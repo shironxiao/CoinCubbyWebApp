@@ -357,6 +357,14 @@ export default function Home({ session, onNavigate, addNotification }) {
                   <span className="hbar-timer">{timer}</span>
                   <span className="hbar-bill">{isOpen ? `Bill: ${bill}` : `Paid: ${bill}`}</span>
                 </div>
+                {/* return button */}
+                <button
+                  className="hbar-return-btn"
+                  type="button"
+                  onClick={() => returnActiveRental(rental)}
+                >
+                  Return Locker
+                </button>
               </div>
             )
           })}

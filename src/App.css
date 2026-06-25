@@ -932,6 +932,28 @@ button {
   color: var(--green);
 }
 
+.hbar-return-btn {
+  width: 100%;
+  padding: 9px 0;
+  border-radius: 10px;
+  border: none;
+  background: var(--dark);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  cursor: pointer;
+  transition: opacity 0.15s ease, transform 0.1s ease;
+}
+
+.hbar-return-btn:hover {
+  opacity: 0.85;
+}
+
+.hbar-return-btn:active {
+  transform: scale(0.98);
+}
+
 .home-rental-card .card-heading h2 {
   font-size: 28px;
 }
