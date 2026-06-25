@@ -117,7 +117,7 @@ export default function Rent({ session, addNotification }) {
         if (sum >= fee) {
           clearInterval(interval)
           
-          await completeRental(activeReturnItem, session.accessToken, fee, 'Device')
+          await completeRental({ ...activeReturnItem, userId: session.userId }, session.accessToken, fee, 'Device')
           
           if (addNotification) {
             addNotification({
@@ -125,6 +125,13 @@ export default function Rent({ session, addNotification }) {
               content: `Locker ${activeReturnItem.lockerNumber} has been successfully returned.`,
               type: 'rental_end',
             })
+          }
+
+          // Reload wallet balance state from localStorage
+          if (session?.userId) {
+            const balanceKey = `coincubby.balance.${session.userId}`
+            const stored = localStorage.getItem(balanceKey)
+            if (stored !== null) setWalletBalance(Number(stored))
           }
 
           setActiveReturnItem(null)
@@ -182,7 +189,7 @@ export default function Rent({ session, addNotification }) {
         localStorage.setItem(`coincubby.balance.${session.userId}`, finalBalance.toFixed(2))
         setWalletBalance(finalBalance)
 
-        await completeRental(activeReturnItem, session.accessToken, fee, 'Wallet')
+        await completeRental({ ...activeReturnItem, userId: session.userId }, session.accessToken, fee, 'Wallet')
 
         if (addNotification) {
           addNotification({
@@ -192,6 +199,13 @@ export default function Rent({ session, addNotification }) {
           })
         }
 
+        // Reload wallet balance state from localStorage
+        if (session?.userId) {
+          const balanceKey = `coincubby.balance.${session.userId}`
+          const stored = localStorage.getItem(balanceKey)
+          if (stored !== null) setWalletBalance(Number(stored))
+        }
+
         setActiveReturnItem(null)
         await loadRentals()
       } catch (err) {
@@ -199,7 +213,7 @@ export default function Rent({ session, addNotification }) {
       }
     } else if (fee === 0) {
       try {
-        await completeRental(activeReturnItem, session.accessToken, 0, 'Device')
+        await completeRental({ ...activeReturnItem, userId: session.userId }, session.accessToken, 0, 'Device')
 
         if (addNotification) {
           addNotification({
@@ -207,6 +221,13 @@ export default function Rent({ session, addNotification }) {
             content: `Locker ${activeReturnItem.lockerNumber} has been successfully returned.`,
             type: 'rental_end',
           })
+        }
+
+        // Reload wallet balance state from localStorage
+        if (session?.userId) {
+          const balanceKey = `coincubby.balance.${session.userId}`
+          const stored = localStorage.getItem(balanceKey)
+          if (stored !== null) setWalletBalance(Number(stored))
         }
 
         setActiveReturnItem(null)

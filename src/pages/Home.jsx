@@ -211,6 +211,8 @@ export default function Home({ session, onNavigate, addNotification }) {
       isOpenTime: !activeRental.end_time,
       ratePerHr,
       startMs,
+      endMs: activeRental.end_time ? parseTimestamp(activeRental.end_time) : null,
+      userId: session?.userId,
     }
 
     try {
@@ -222,6 +224,15 @@ export default function Home({ session, onNavigate, addNotification }) {
           content: `Locker ${item.lockerNumber} has been returned successfully.`,
           type: 'rental_end',
         })
+      }
+
+      // Reload wallet balance state from localStorage
+      if (session?.userId) {
+        const balanceKey = `coincubby.balance.${session.userId}`
+        const stored = localStorage.getItem(balanceKey)
+        if (stored !== null) {
+          setBalance(Number(stored))
+        }
       }
 
       setMessage(`Locker ${item.lockerNumber} returned.`)

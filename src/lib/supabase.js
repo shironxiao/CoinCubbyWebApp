@@ -381,6 +381,42 @@ export async function completeRental(item, token, overtimeFee = 0, paymentMethod
     }),
   })
 
+  // Calculate refund for early return on fixed-duration rentals (all payment methods)
+  if (!item.isOpenTime && item.endMs && item.userId) {
+    const currentTime = now.getTime()
+    if (currentTime < item.endMs) {
+      const unusedMs = item.endMs - currentTime
+      const unusedMinutes = Math.floor(unusedMs / 60000)
+      const refundAmount = Number((unusedMinutes * (item.ratePerHr / 60)).toFixed(2))
+
+      if (refundAmount > 0) {
+        // 1. Credit the user's digital wallet in localStorage
+        const balanceKey = `coincubby.balance.${item.userId}`
+        const currentBalance = Number(localStorage.getItem(balanceKey) || 50.0)
+        const newBalance = currentBalance + refundAmount
+        localStorage.setItem(balanceKey, newBalance.toFixed(2))
+
+        // 2. Insert a negative payment record in the database
+        try {
+          await request('/rest/v1/payments', {
+            method: 'POST',
+            headers: authHeaders(token, {
+              'Content-Type': 'application/json',
+              Prefer: 'return=minimal',
+            }),
+            body: JSON.stringify({
+              transaction_id: item.transactionId,
+              amount: -refundAmount,
+              payment_method: 'Wallet',
+            }),
+          })
+        } catch (err) {
+          console.error('Failed to log database refund payment:', err)
+        }
+      }
+    }
+  }
+
   let finalPaymentAmount = overtimeFee
   if (finalPaymentAmount <= 0 && item.isOpenTime) {
     finalPaymentAmount = (totalDurationMinutes / 60) * item.ratePerHr
