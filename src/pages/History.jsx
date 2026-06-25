@@ -29,6 +29,48 @@ export default function History({ session }) {
   const [timeFilter, setTimeFilter] = useState('all') // 'all', 'today', 'week', 'month'
   const [statusFilter, setStatusFilter] = useState('all') // 'all', 'active', 'completed'
   const [selectedItem, setSelectedItem] = useState(null)
+  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false)
+  const [isConfirmingClearAll, setIsConfirmingClearAll] = useState(false)
+  const [deletedIds, setDeletedIds] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem(`coincubby.deleted_transactions.${session?.userId}`)) || []
+    } catch {
+      return []
+    }
+  })
+
+  useEffect(() => {
+    if (session?.userId) {
+      try {
+        const stored = JSON.parse(localStorage.getItem(`coincubby.deleted_transactions.${session.userId}`)) || []
+        setDeletedIds(stored)
+      } catch {
+        setDeletedIds([])
+      }
+    } else {
+      setDeletedIds([])
+    }
+  }, [session?.userId])
+
+  function handleDeleteItem(id) {
+    const updated = [...deletedIds, id]
+    setDeletedIds(updated)
+    if (session?.userId) {
+      localStorage.setItem(`coincubby.deleted_transactions.${session.userId}`, JSON.stringify(updated))
+    }
+    setSelectedItem(null)
+    setIsConfirmingDelete(false)
+  }
+
+  function handleClearAll() {
+    const allIds = filteredItems.map((item) => item.id)
+    const updated = [...new Set([...deletedIds, ...allIds])]
+    setDeletedIds(updated)
+    if (session?.userId) {
+      localStorage.setItem(`coincubby.deleted_transactions.${session.userId}`, JSON.stringify(updated))
+    }
+    setIsConfirmingClearAll(false)
+  }
 
   const loadHistory = useCallback(async () => {
     if (!session?.userId) {
@@ -62,6 +104,11 @@ export default function History({ session }) {
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime()
 
     return items.filter((item) => {
+      // Exclude soft-deleted transactions
+      if (deletedIds.includes(item.id)) {
+        return false
+      }
+
       // 1. Status Filter
       if (statusFilter !== 'all') {
         if (item.status.toLowerCase() !== statusFilter.toLowerCase()) {
@@ -87,7 +134,7 @@ export default function History({ session }) {
 
       return true
     })
-  }, [items, timeFilter, statusFilter])
+  }, [items, timeFilter, statusFilter, deletedIds])
 
   const summary = useMemo(
     () => ({
@@ -99,8 +146,18 @@ export default function History({ session }) {
 
   return (
     <main className="page xml-page xml-history">
-      <section className="xml-screen-header">
+      <section className="xml-screen-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
         <h1>Rental History</h1>
+        {filteredItems.length > 0 && (
+          <button
+            type="button"
+            className="secondary-button"
+            style={{ fontSize: '11px', padding: '6px 12px', borderColor: '#ff3b30', color: '#ff3b30', borderRadius: '20px', background: 'transparent' }}
+            onClick={() => setIsConfirmingClearAll(true)}
+          >
+            Clear All
+          </button>
+        )}
       </section>
 
       <section className="history-summary">
@@ -210,76 +267,161 @@ export default function History({ session }) {
       </section>
 
       {selectedItem && (
-        <div className="modal-backdrop" role="presentation" onClick={() => setSelectedItem(null)}>
+        <div className="modal-backdrop" role="presentation" onClick={() => {
+          setSelectedItem(null)
+          setIsConfirmingDelete(false)
+        }}>
           <div className="rent-sheet xml-rent-sheet" onClick={(e) => e.stopPropagation()} style={{ padding: '24px', gap: '16px' }}>
             <div className="sheet-title" style={{ borderBottom: '1px solid rgba(0, 0, 0, 0.08)', paddingBottom: '12px', marginBottom: '8px' }}>
-              <h2>Transaction Details</h2>
+              <h2>{isConfirmingDelete ? 'Delete Record?' : 'Transaction Details'}</h2>
               <p className="muted" style={{ fontFamily: 'monospace', wordBreak: 'break-all', marginTop: '4px' }}>ID: {selectedItem.id}</p>
-              <button className="icon-button" type="button" onClick={() => setSelectedItem(null)}>
+              <button className="icon-button" type="button" onClick={() => {
+                setSelectedItem(null)
+                setIsConfirmingDelete(false)
+              }}>
                 X
               </button>
             </div>
 
-            <div style={{ display: 'grid', gap: '14px', color: 'var(--dark)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ color: '#888', fontSize: '13px' }}>Locker</span>
-                <strong style={{ fontSize: '15px' }}>Locker #{selectedItem.lockerNumber} ({selectedItem.sizeName})</strong>
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ color: '#888', fontSize: '13px' }}>Status</span>
-                <span className={`status-badge ${selectedItem.status.toLowerCase()}`} style={{ margin: 0, padding: '4px 10px', borderRadius: '6px', fontWeight: 'bold' }}>
-                  {selectedItem.status}
-                </span>
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ color: '#888', fontSize: '13px' }}>Start Time</span>
-                <span style={{ fontSize: '13px', fontWeight: '500' }}>{formatDateTime(selectedItem.startTime)}</span>
-              </div>
-
-              {selectedItem.endTime && (
+            {!isConfirmingDelete ? (
+              <div style={{ display: 'grid', gap: '14px', color: 'var(--dark)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ color: '#888', fontSize: '13px' }}>End Time</span>
-                  <span style={{ fontSize: '13px', fontWeight: '500' }}>{formatDateTime(selectedItem.endTime)}</span>
+                  <span style={{ color: '#888', fontSize: '13px' }}>Locker</span>
+                  <strong style={{ fontSize: '15px' }}>Locker #{selectedItem.lockerNumber} ({selectedItem.sizeName})</strong>
                 </div>
-              )}
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ color: '#888', fontSize: '13px' }}>Duration</span>
-                <span style={{ fontSize: '13px', fontWeight: '500' }}>
-                  {selectedItem.durationMinutes ? formatMinutes(selectedItem.durationMinutes) : 'Open-Ended'}
-                </span>
-              </div>
-
-              <div style={{ borderTop: '1px dashed rgba(0, 0, 0, 0.08)', marginTop: '8px', paddingTop: '12px' }} />
-
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ color: '#888', fontSize: '13px' }}>Payment Method</span>
-                <span style={{ fontSize: '13px', fontWeight: '500' }}>{selectedItem.paymentMethod}</span>
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ color: '#888', fontSize: '13px', fontWeight: '600' }}>Total Amount Paid</span>
-                <strong style={{ fontSize: '16px', color: '#4cd964' }}>{formatMoney(selectedItem.amount)}</strong>
-              </div>
-
-              {selectedItem.paymentsList && selectedItem.paymentsList.length > 1 && (
-                <div style={{ marginTop: '4px', background: 'rgba(0, 0, 0, 0.02)', padding: '10px', borderRadius: '8px', border: '1px solid rgba(0, 0, 0, 0.05)' }}>
-                  <span style={{ fontSize: '10px', color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 'bold', display: 'block', marginBottom: '6px' }}>Payment Breakdown</span>
-                  {selectedItem.paymentsList.map((p, idx) => (
-                    <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', marginBottom: '4px', color: '#555' }}>
-                      <span>Payment #{idx + 1} ({p.payment_method || 'Device'})</span>
-                      <strong>{formatMoney(p.amount)}</strong>
-                    </div>
-                  ))}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ color: '#888', fontSize: '13px' }}>Status</span>
+                  <span className={`status-badge ${selectedItem.status.toLowerCase()}`} style={{ margin: 0, padding: '4px 10px', borderRadius: '6px', fontWeight: 'bold' }}>
+                    {selectedItem.status}
+                  </span>
                 </div>
-              )}
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ color: '#888', fontSize: '13px' }}>Start Time</span>
+                  <span style={{ fontSize: '13px', fontWeight: '500' }}>{formatDateTime(selectedItem.startTime)}</span>
+                </div>
+
+                {selectedItem.endTime && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ color: '#888', fontSize: '13px' }}>End Time</span>
+                    <span style={{ fontSize: '13px', fontWeight: '500' }}>{formatDateTime(selectedItem.endTime)}</span>
+                  </div>
+                )}
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ color: '#888', fontSize: '13px' }}>Duration</span>
+                  <span style={{ fontSize: '13px', fontWeight: '500' }}>
+                    {selectedItem.durationMinutes ? formatMinutes(selectedItem.durationMinutes) : 'Open-Ended'}
+                  </span>
+                </div>
+
+                <div style={{ borderTop: '1px dashed rgba(0, 0, 0, 0.08)', marginTop: '8px', paddingTop: '12px' }} />
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ color: '#888', fontSize: '13px' }}>Payment Method</span>
+                  <span style={{ fontSize: '13px', fontWeight: '500' }}>{selectedItem.paymentMethod}</span>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ color: '#888', fontSize: '13px', fontWeight: '600' }}>Total Amount Paid</span>
+                  <strong style={{ fontSize: '16px', color: '#4cd964' }}>{formatMoney(selectedItem.amount)}</strong>
+                </div>
+
+                {selectedItem.paymentsList && selectedItem.paymentsList.length > 1 && (
+                  <div style={{ marginTop: '4px', background: 'rgba(0, 0, 0, 0.02)', padding: '10px', borderRadius: '8px', border: '1px solid rgba(0, 0, 0, 0.05)' }}>
+                    <span style={{ fontSize: '10px', color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 'bold', display: 'block', marginBottom: '6px' }}>Payment Breakdown</span>
+                    {selectedItem.paymentsList.map((p, idx) => (
+                      <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', marginBottom: '4px', color: '#555' }}>
+                        <span>Payment #{idx + 1} ({p.payment_method || 'Device'})</span>
+                        <strong>{formatMoney(p.amount)}</strong>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '8px' }}>
+                  <button className="secondary-button" type="button" onClick={() => setSelectedItem(null)}>
+                    Close
+                  </button>
+                  <button
+                    className="danger-button"
+                    type="button"
+                    onClick={() => setIsConfirmingDelete(true)}
+                    style={{ background: '#ff3b30', color: '#fff', border: 'none', borderRadius: '12px', padding: '10px', fontWeight: 'bold', cursor: 'pointer' }}
+                  >
+                    Delete Record
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div style={{ display: 'grid', gap: '16px', textAlign: 'center', color: 'var(--dark)', padding: '10px 0' }}>
+                <span style={{ fontSize: '2.5rem' }}>⚠️</span>
+                <p className="muted" style={{ fontSize: '13px', lineHeight: '1.4' }}>
+                  Are you sure you want to remove this transaction from your history view?
+                  <br />
+                  <strong style={{ color: '#ff3b30' }}>This will only hide it from your view and does not delete the database record.</strong>
+                </p>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '10px' }}>
+                  <button
+                    className="secondary-button"
+                    type="button"
+                    onClick={() => setIsConfirmingDelete(false)}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    className="danger-button"
+                    type="button"
+                    onClick={() => handleDeleteItem(selectedItem.id)}
+                    style={{ background: '#ff3b30', color: '#fff', border: 'none', borderRadius: '12px', padding: '10px', fontWeight: 'bold', cursor: 'pointer' }}
+                  >
+                    Yes, Delete
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {isConfirmingClearAll && (
+        <div className="modal-backdrop" role="presentation" onClick={() => setIsConfirmingClearAll(false)}>
+          <div className="rent-sheet xml-rent-sheet" onClick={(e) => e.stopPropagation()} style={{ padding: '24px', gap: '16px', textAlign: 'center' }}>
+            <div className="sheet-title" style={{ borderBottom: '1px solid rgba(0, 0, 0, 0.08)', paddingBottom: '12px', marginBottom: '8px' }}>
+              <h2>Clear Rental History?</h2>
+              <button className="icon-button" type="button" onClick={() => setIsConfirmingClearAll(false)}>
+                X
+              </button>
             </div>
 
-            <button className="primary-button xml-black-button" type="button" onClick={() => setSelectedItem(null)} style={{ marginTop: '8px', width: '100%' }}>
-              Close
-            </button>
+            <div style={{ display: 'grid', gap: '16px', color: 'var(--dark)' }}>
+              <span style={{ fontSize: '2.5rem' }}>⚠️</span>
+              <p className="muted" style={{ fontSize: '13px', lineHeight: '1.4' }}>
+                Are you sure you want to clear all currently filtered rentals from your history view?
+                <br />
+                <strong style={{ color: '#ff3b30' }}>This will only hide them from your view and does not delete database records.</strong>
+              </p>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '8px' }}>
+                <button
+                  className="secondary-button"
+                  type="button"
+                  onClick={() => setIsConfirmingClearAll(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="danger-button xml-black-button"
+                  type="button"
+                  onClick={handleClearAll}
+                  style={{ background: '#ff3b30', color: '#fff', border: 'none' }}
+                >
+                  Yes, Clear All
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
