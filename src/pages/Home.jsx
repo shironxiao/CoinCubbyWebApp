@@ -369,10 +369,6 @@ export default function Home({ session, onNavigate, addNotification }) {
               <dt>Expires</dt>
               <dd>{activeRental.end_time ? formatDateTime(parseTimestamp(activeRental.end_time)) : 'N/A (Open Time)'}</dd>
             </div>
-            <div>
-              <dt>Access Token</dt>
-              <dd>{activeRental.qr_token || 'COIN-XXXXXX'}</dd>
-            </div>
           </dl>
 
           <button className="primary-button xml-black-button" type="button" onClick={returnActiveRental}>

@@ -12,12 +12,13 @@ function mapHistory(row) {
     id: row.transaction_id,
     lockerNumber: row.lockers?.locker_number || '?',
     sizeName: size.label,
-    qrToken: row.qr_token || '-',
     amount,
     paymentMethod: payments[0]?.payment_method || 'Device',
     status: row.status || 'Active',
     startTime: row.start_time,
+    endTime: row.end_time,
     durationMinutes: row.duration_minutes || 0,
+    paymentsList: payments,
   }
 }
 
@@ -27,6 +28,7 @@ export default function History({ session }) {
   const [message, setMessage] = useState('')
   const [timeFilter, setTimeFilter] = useState('all') // 'all', 'today', 'week', 'month'
   const [statusFilter, setStatusFilter] = useState('all') // 'all', 'active', 'completed'
+  const [selectedItem, setSelectedItem] = useState(null)
 
   const loadHistory = useCallback(async () => {
     if (!session?.userId) {
@@ -174,7 +176,6 @@ export default function History({ session }) {
 
       <section className="xml-table-head">
         <span>Locker</span>
-        <span>Token</span>
         <span>Amount</span>
         <span>Status</span>
       </section>
@@ -186,12 +187,14 @@ export default function History({ session }) {
 
       <section className="history-list">
         {filteredItems.map((item) => (
-          <article className="history-row" key={item.id}>
+          <article
+            className="history-row"
+            key={item.id}
+            onClick={() => setSelectedItem(item)}
+            style={{ cursor: 'pointer' }}
+          >
             <div>
               <strong>{item.lockerNumber}</strong>
-            </div>
-            <div>
-              <span>{item.qrToken}</span>
             </div>
             <div>
               <strong>{item.amount > 0 ? formatMoney(item.amount) : '-'}</strong>
@@ -199,10 +202,87 @@ export default function History({ session }) {
             <div>
               <strong className={`status-badge ${item.status.toLowerCase()}`}>{item.status}</strong>
             </div>
-            <p>Start: {formatDateTime(item.startTime)} <b>Size: {item.sizeName}</b> {item.durationMinutes ? formatMinutes(item.durationMinutes) : item.paymentMethod}</p>
+            <p style={{ gridColumn: 'span 3', textAlign: 'left', paddingLeft: '12px' }}>
+              Start: {formatDateTime(item.startTime)} <b>Size: {item.sizeName}</b> {item.durationMinutes ? formatMinutes(item.durationMinutes) : item.paymentMethod}
+            </p>
           </article>
         ))}
       </section>
+
+      {selectedItem && (
+        <div className="modal-backdrop" role="presentation" onClick={() => setSelectedItem(null)}>
+          <div className="rent-sheet xml-rent-sheet" onClick={(e) => e.stopPropagation()} style={{ padding: '24px', gap: '16px' }}>
+            <div className="sheet-title" style={{ borderBottom: '1px solid rgba(0, 0, 0, 0.08)', paddingBottom: '12px', marginBottom: '8px' }}>
+              <h2>Transaction Details</h2>
+              <p className="muted" style={{ fontFamily: 'monospace', wordBreak: 'break-all', marginTop: '4px' }}>ID: {selectedItem.id}</p>
+              <button className="icon-button" type="button" onClick={() => setSelectedItem(null)}>
+                X
+              </button>
+            </div>
+
+            <div style={{ display: 'grid', gap: '14px', color: 'var(--dark)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: '#888', fontSize: '13px' }}>Locker</span>
+                <strong style={{ fontSize: '15px' }}>Locker #{selectedItem.lockerNumber} ({selectedItem.sizeName})</strong>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: '#888', fontSize: '13px' }}>Status</span>
+                <span className={`status-badge ${selectedItem.status.toLowerCase()}`} style={{ margin: 0, padding: '4px 10px', borderRadius: '6px', fontWeight: 'bold' }}>
+                  {selectedItem.status}
+                </span>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: '#888', fontSize: '13px' }}>Start Time</span>
+                <span style={{ fontSize: '13px', fontWeight: '500' }}>{formatDateTime(selectedItem.startTime)}</span>
+              </div>
+
+              {selectedItem.endTime && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ color: '#888', fontSize: '13px' }}>End Time</span>
+                  <span style={{ fontSize: '13px', fontWeight: '500' }}>{formatDateTime(selectedItem.endTime)}</span>
+                </div>
+              )}
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: '#888', fontSize: '13px' }}>Duration</span>
+                <span style={{ fontSize: '13px', fontWeight: '500' }}>
+                  {selectedItem.durationMinutes ? formatMinutes(selectedItem.durationMinutes) : 'Open-Ended'}
+                </span>
+              </div>
+
+              <div style={{ borderTop: '1px dashed rgba(0, 0, 0, 0.08)', marginTop: '8px', paddingTop: '12px' }} />
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: '#888', fontSize: '13px' }}>Payment Method</span>
+                <span style={{ fontSize: '13px', fontWeight: '500' }}>{selectedItem.paymentMethod}</span>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: '#888', fontSize: '13px', fontWeight: '600' }}>Total Amount Paid</span>
+                <strong style={{ fontSize: '16px', color: '#4cd964' }}>{formatMoney(selectedItem.amount)}</strong>
+              </div>
+
+              {selectedItem.paymentsList && selectedItem.paymentsList.length > 1 && (
+                <div style={{ marginTop: '4px', background: 'rgba(0, 0, 0, 0.02)', padding: '10px', borderRadius: '8px', border: '1px solid rgba(0, 0, 0, 0.05)' }}>
+                  <span style={{ fontSize: '10px', color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 'bold', display: 'block', marginBottom: '6px' }}>Payment Breakdown</span>
+                  {selectedItem.paymentsList.map((p, idx) => (
+                    <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', marginBottom: '4px', color: '#555' }}>
+                      <span>Payment #{idx + 1} ({p.payment_method || 'Device'})</span>
+                      <strong>{formatMoney(p.amount)}</strong>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <button className="primary-button xml-black-button" type="button" onClick={() => setSelectedItem(null)} style={{ marginTop: '8px', width: '100%' }}>
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </main>
   )
 }

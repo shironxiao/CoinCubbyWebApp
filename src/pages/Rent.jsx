@@ -277,10 +277,6 @@ export default function Rent({ session, addNotification }) {
                   <dt>Expires</dt>
                   <dd>{item.isOpenTime ? 'N/A (Open Time)' : formatDateTime(item.endMs)}</dd>
                 </div>
-                <div>
-                  <dt>Access Token</dt>
-                  <dd>{item.qrToken}</dd>
-                </div>
               </dl>
 
               <button className="primary-button xml-black-button" type="button" onClick={() => initiateReturn(item)}>
