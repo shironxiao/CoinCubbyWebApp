@@ -87,7 +87,7 @@ export async function loginWithPassword(email, password) {
   return session
 }
 
-export async function registerAccount({ firstName, lastName, email, password }) {
+export async function registerAccount({ firstName, lastName, email, password, passkey }) {
   const fullName = `${firstName} ${lastName}`.trim()
   const body = await request('/auth/v1/signup', {
     method: 'POST',
@@ -117,6 +117,7 @@ export async function registerAccount({ firstName, lastName, email, password }) 
         customer_id: userId,
         full_name: fullName.slice(0, 50),
         email,
+        passkey,
       }),
     })
   }
@@ -332,7 +333,7 @@ export async function fetchProfile(session) {
   })
 
   const customers = await request(
-    `/rest/v1/customers?customer_id=eq.${user.id}&select=customer_id,full_name,email`,
+    `/rest/v1/customers?customer_id=eq.${user.id}&select=customer_id,full_name,email,passkey`,
     { headers: authHeaders(session?.accessToken, { Accept: 'application/json' }) },
   )
 
@@ -437,4 +438,32 @@ export function parseTimestamp(value) {
 
 export function formatMoney(value) {
   return `₱${Number(value || 0).toFixed(2)}`
+}
+
+export async function verifyUserPassword(email, password) {
+  await request('/auth/v1/token?grant_type=password', {
+    method: 'POST',
+    headers: authHeaders(null, { 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ email, password }),
+  })
+  return true
+}
+
+export async function isPasskeyTaken(passkey) {
+  const existing = await request(
+    `/rest/v1/customers?passkey=eq.${passkey}&select=customer_id&limit=1`,
+    { headers: authHeaders() }
+  ).catch(() => null)
+  return !!(existing && existing.length > 0)
+}
+
+export async function updatePasskey(customerId, passkey, token) {
+  return request(`/rest/v1/customers?customer_id=eq.${customerId}`, {
+    method: 'PATCH',
+    headers: authHeaders(token, {
+      'Content-Type': 'application/json',
+      Prefer: 'return=minimal',
+    }),
+    body: JSON.stringify({ passkey }),
+  })
 }
