@@ -315,57 +315,51 @@ export default function Home({ session, onNavigate, addNotification }) {
 
       {activeRentals.length > 0 && (
         <div className="home-rentals-container">
-          {activeRentals.map((rental) => (
-            <section className="rental-card home-rental-card" key={rental.transaction_id}>
-              <div className="card-heading">
-                <div>
-                  <small>Locker</small>
-                  <h2>{rental.lockers?.locker_number || rental.locker_id}</h2>
-                  <p>{sizeFromType(rental.lockers?.size_type_id).label}</p>
+          {activeRentals.map((rental) => {
+            const isOpen = !rental.end_time
+            const startMs = parseTimestamp(rental.start_time)
+            const endMs   = parseTimestamp(rental.end_time)
+            const totalMs  = isOpen ? null : Math.max(1, endMs - startMs)
+            const elapsedMs = Math.max(0, tick - startMs)
+            const remainMs  = isOpen ? 0 : Math.max(0, endMs - tick)
+            const progress  = isOpen ? 100 : Math.min(100, (elapsedMs / totalMs) * 100)
+            const timer = isOpen
+              ? formatDuration(elapsedMs)
+              : formatDuration(remainMs)
+            const bill = isOpen
+              ? formatMoney((elapsedMs / 3600000) * (Number(rental.rates?.price_per_minute || 0.17) * 60))
+              : formatMoney((totalMs / 3600000) * (Number(rental.rates?.price_per_minute || 0.17) * 60))
+            const lockerLabel = rental.lockers?.locker_number || rental.locker_id
+            const sizeLabel   = sizeFromType(rental.lockers?.size_type_id).label
+            return (
+              <div className="home-rental-bar-card" key={rental.transaction_id}>
+                {/* top row */}
+                <div className="hbar-top">
+                  <div className="hbar-info">
+                    <span className="hbar-locker">{lockerLabel}</span>
+                    <span className="hbar-size">{sizeLabel}</span>
+                  </div>
+                  <span className="hbar-badge">
+                    <span className="hbar-dot" />
+                    Active
+                  </span>
                 </div>
-                <span>Active</span>
+                {/* progress bar */}
+                <div className="hbar-track">
+                  <div
+                    className={`hbar-fill${isOpen ? ' hbar-fill--open' : ''}`}
+                    style={isOpen ? {} : { width: `${progress}%` }}
+                  />
+                </div>
+                {/* bottom row */}
+                <div className="hbar-bottom">
+                  <span className="hbar-label">{isOpen ? 'ELAPSED' : 'REMAINING'}</span>
+                  <span className="hbar-timer">{timer}</span>
+                  <span className="hbar-bill">{isOpen ? `Bill: ${bill}` : `Paid: ${bill}`}</span>
+                </div>
               </div>
-
-              <div className="timer-box">
-                <small>{rental.end_time ? 'TIME REMAINING' : 'ELAPSED TIME'}</small>
-                <strong>
-                  {rental.end_time
-                    ? formatDuration(Math.max(0, parseTimestamp(rental.end_time) - tick))
-                    : formatDuration(Math.max(0, tick - parseTimestamp(rental.start_time)))}
-                </strong>
-                <span>
-                  {rental.end_time
-                    ? `Prepaid: ${formatMoney(
-                        (Math.max(0, parseTimestamp(rental.end_time) - parseTimestamp(rental.start_time)) / 3600000) *
-                          (Number(rental.rates?.price_per_minute || 0.17) * 60)
-                      )}`
-                    : `Current Bill: ${formatMoney(
-                        (Math.max(0, tick - parseTimestamp(rental.start_time)) / 3600000) *
-                          (Number(rental.rates?.price_per_minute || 0.17) * 60)
-                      )}`}
-                </span>
-              </div>
-
-              <dl className="detail-grid">
-                <div>
-                  <dt>Started</dt>
-                  <dd>{formatDateTime(parseTimestamp(rental.start_time))}</dd>
-                </div>
-                <div>
-                  <dt>Expires</dt>
-                  <dd>{rental.end_time ? formatDateTime(parseTimestamp(rental.end_time)) : 'N/A (Open Time)'}</dd>
-                </div>
-                <div>
-                  <dt>Access Token</dt>
-                  <dd>{rental.qr_token || 'COIN-XXXXXX'}</dd>
-                </div>
-              </dl>
-
-              <button className="primary-button xml-black-button" type="button" onClick={() => returnActiveRental(rental)}>
-                Return Locker
-              </button>
-            </section>
-          ))}
+            )
+          })}
         </div>
       )}
 
