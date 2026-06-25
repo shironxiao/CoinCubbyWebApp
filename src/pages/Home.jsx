@@ -197,50 +197,8 @@ export default function Home({ session, onNavigate, addNotification }) {
     }
   }
 
-  async function returnActiveRental() {
-    if (!activeRental) return
-    setMessage('')
-
-    const startMs = parseTimestamp(activeRental.start_time)
-    const ratePerHr = Number(activeRental.rates?.price_per_minute || 0.17) * 60
-    const item = {
-      transactionId: activeRental.transaction_id,
-      lockerId: activeRental.locker_id,
-      lockerNumber: activeRental.lockers?.locker_number || activeRental.locker_id,
-      durationMinutes: activeRental.duration_minutes || 0,
-      isOpenTime: !activeRental.end_time,
-      ratePerHr,
-      startMs,
-      endMs: activeRental.end_time ? parseTimestamp(activeRental.end_time) : null,
-      userId: session?.userId,
-    }
-
-    try {
-      await completeRental(item, session.accessToken)
-
-      if (addNotification) {
-        addNotification({
-          title: 'Locker Returned',
-          content: `Locker ${item.lockerNumber} has been returned successfully.`,
-          type: 'rental_end',
-        })
-      }
-
-      // Reload wallet balance state from localStorage
-      if (session?.userId) {
-        const balanceKey = `coincubby.balance.${session.userId}`
-        const stored = localStorage.getItem(balanceKey)
-        if (stored !== null) {
-          setBalance(Number(stored))
-        }
-      }
-
-      setMessage(`Locker ${item.lockerNumber} returned.`)
-      setActiveRental(null)
-      await loadLockers(selectedModuleId)
-    } catch (err) {
-      setMessage(err.message || 'Could not return locker.')
-    }
+  function returnActiveRental() {
+    onNavigate('rent')
   }
 
   function openRental(locker) {

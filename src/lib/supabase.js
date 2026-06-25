@@ -529,3 +529,14 @@ export async function updatePasskey(customerId, passkey, token) {
     body: JSON.stringify({ passkey: hashed }),
   })
 }
+
+export async function verifyPasskey(userId, enteredPin, token) {
+  const hashed = await hashPasskey(enteredPin)
+  const rows = await request(
+    `/rest/v1/customers?customer_id=eq.${userId}&select=passkey&limit=1`,
+    { headers: authHeaders(token, { Accept: 'application/json' }) }
+  ).catch(() => null)
+  if (!rows || rows.length === 0) return false
+  if (!rows[0].passkey) return true
+  return rows[0].passkey === hashed
+}
