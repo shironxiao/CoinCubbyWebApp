@@ -87,7 +87,7 @@ export async function loginWithPassword(email, password) {
   return session
 }
 
-export async function registerAccount({ firstName, lastName, email, password }) {
+export async function registerAccount({ firstName, lastName, email, password, passkey }) {
   const fullName = `${firstName} ${lastName}`.trim()
   const body = await request('/auth/v1/signup', {
     method: 'POST',
@@ -103,10 +103,11 @@ export async function registerAccount({ firstName, lastName, email, password }) 
     }),
   })
 
-  const userId = body.user?.id || ''
-  const token = body.access_token || SUPABASE_ANON
+  const userId = body.id || body.user?.id || ''
+  const token = body.access_token || body.session?.access_token || SUPABASE_ANON
 
   if (userId) {
+    const hashed = await hashPasskey(passkey)
     await request('/rest/v1/customers', {
       method: 'POST',
       headers: authHeaders(token, {
@@ -117,6 +118,7 @@ export async function registerAccount({ firstName, lastName, email, password }) 
         customer_id: userId,
         full_name: fullName.slice(0, 50),
         email,
+        passkey: hashed,
       }),
     })
   }
@@ -242,9 +244,9 @@ export async function createRental({ locker, duration, isOpenTime, paymentMethod
   if (!rate) throw new Error(`Rate not found for ${locker.size}.`)
 
   const now = new Date()
-  
-  // Use the persistent unique locker access token derived from the user's ID
-  const qrToken = privateKeyFor(session.userId)
+
+  // Generate a globally unique 6-digit PIN for this transaction
+  const qrToken = await generateUniquePin()
 
   const isDevicePending = !isOpenTime && paymentMethod === 'Device'
 
@@ -294,7 +296,7 @@ export async function createRental({ locker, duration, isOpenTime, paymentMethod
 
   const initialLockerStatus = isDevicePending ? 'Payment Required' : 'Occupied'
   await updateLockerStatus(locker.dbId, initialLockerStatus, session.accessToken)
-  return transactionId
+  return { transactionId, qrToken }
 }
 
 export async function fetchTransactionPayments(transactionId, token) {
@@ -332,9 +334,11 @@ export async function fetchProfile(session) {
   })
 
   const customers = await request(
-    `/rest/v1/customers?customer_id=eq.${user.id}&select=customer_id,full_name,email`,
+    `/rest/v1/customers?customer_id=eq.${user.id}&select=customer_id,full_name,email,passkey`,
     { headers: authHeaders(session?.accessToken, { Accept: 'application/json' }) },
   )
+
+  console.log('API fetchProfile result:', { user, customer: customers?.[0] })
 
   return {
     user,
@@ -377,6 +381,42 @@ export async function completeRental(item, token, overtimeFee = 0, paymentMethod
     }),
   })
 
+  // Calculate refund for early return on fixed-duration rentals (all payment methods)
+  if (!item.isOpenTime && item.endMs && item.userId) {
+    const currentTime = now.getTime()
+    if (currentTime < item.endMs) {
+      const unusedMs = item.endMs - currentTime
+      const unusedMinutes = Math.floor(unusedMs / 60000)
+      const refundAmount = Number((unusedMinutes * (item.ratePerHr / 60)).toFixed(2))
+
+      if (refundAmount > 0) {
+        // 1. Credit the user's digital wallet in localStorage
+        const balanceKey = `coincubby.balance.${item.userId}`
+        const currentBalance = Number(localStorage.getItem(balanceKey) || 50.0)
+        const newBalance = currentBalance + refundAmount
+        localStorage.setItem(balanceKey, newBalance.toFixed(2))
+
+        // 2. Insert a negative payment record in the database
+        try {
+          await request('/rest/v1/payments', {
+            method: 'POST',
+            headers: authHeaders(token, {
+              'Content-Type': 'application/json',
+              Prefer: 'return=minimal',
+            }),
+            body: JSON.stringify({
+              transaction_id: item.transactionId,
+              amount: -refundAmount,
+              payment_method: 'Wallet',
+            }),
+          })
+        } catch (err) {
+          console.error('Failed to log database refund payment:', err)
+        }
+      }
+    }
+  }
+
   let finalPaymentAmount = overtimeFee
   if (finalPaymentAmount <= 0 && item.isOpenTime) {
     finalPaymentAmount = (totalDurationMinutes / 60) * item.ratePerHr
@@ -405,6 +445,23 @@ export function privateKeyFor(userId) {
   return `COIN-${userId.slice(0, 8).toUpperCase()}`
 }
 
+/**
+ * Generates a globally unique 6-digit numeric PIN for a locker transaction.
+ * Retries up to 10 times if the generated PIN already exists in the DB.
+ */
+async function generateUniquePin(retries = 10) {
+  for (let i = 0; i < retries; i++) {
+    const pin = String(Math.floor(100000 + Math.random() * 900000))
+    const existing = await request(
+      `/rest/v1/transactions?qr_token=eq.${pin}&select=transaction_id&limit=1`,
+      { headers: authHeaders() },
+    ).catch(() => null)
+    if (!existing || existing.length === 0) return pin
+  }
+  // Fallback: timestamp-based 6-digit suffix (extremely unlikely collision)
+  return String(Date.now()).slice(-6)
+}
+
 export function parseTimestamp(value) {
   if (!value) return -1
   let str = String(value)
@@ -420,4 +477,66 @@ export function parseTimestamp(value) {
 
 export function formatMoney(value) {
   return `₱${Number(value || 0).toFixed(2)}`
+}
+
+export async function verifyUserPassword(email, password) {
+  await request('/auth/v1/token?grant_type=password', {
+    method: 'POST',
+    headers: authHeaders(null, { 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ email, password }),
+  })
+  return true
+}
+
+export async function hashPasskey(passkey) {
+  if (!passkey) return ''
+  const encoder = new TextEncoder()
+  const data = encoder.encode(passkey)
+  const hashBuffer = await window.crypto.subtle.digest('SHA-256', data)
+  const hashArray = Array.from(new Uint8Array(hashBuffer))
+  return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('')
+}
+
+export async function recoverPasskey(hash) {
+  if (!hash || hash.length !== 64) return ''
+  for (let i = 0; i <= 9999; i++) {
+    const pin = String(i).padStart(4, '0')
+    const hashed = await hashPasskey(pin)
+    if (hashed === hash) {
+      return pin
+    }
+  }
+  return ''
+}
+
+export async function isPasskeyTaken(passkey) {
+  const hashed = await hashPasskey(passkey)
+  const existing = await request(
+    `/rest/v1/customers?passkey=eq.${hashed}&select=customer_id&limit=1`,
+    { headers: authHeaders() }
+  ).catch(() => null)
+  return !!(existing && existing.length > 0)
+}
+
+export async function updatePasskey(customerId, passkey, token) {
+  const hashed = await hashPasskey(passkey)
+  return request(`/rest/v1/customers?customer_id=eq.${customerId}`, {
+    method: 'PATCH',
+    headers: authHeaders(token, {
+      'Content-Type': 'application/json',
+      Prefer: 'return=minimal',
+    }),
+    body: JSON.stringify({ passkey: hashed }),
+  })
+}
+
+export async function verifyPasskey(userId, enteredPin, token) {
+  const hashed = await hashPasskey(enteredPin)
+  const rows = await request(
+    `/rest/v1/customers?customer_id=eq.${userId}&select=passkey&limit=1`,
+    { headers: authHeaders(token, { Accept: 'application/json' }) }
+  ).catch(() => null)
+  if (!rows || rows.length === 0) return false
+  if (!rows[0].passkey) return true
+  return rows[0].passkey === hashed
 }

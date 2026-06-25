@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { registerAccount } from '../lib/supabase'
+import { registerAccount, isPasskeyTaken } from '../lib/supabase'
 
 export default function Register({ onNavigate }) {
   const [form, setForm] = useState({
@@ -8,6 +8,7 @@ export default function Register({ onNavigate }) {
     email: '',
     password: '',
     confirmPassword: '',
+    passkey: '',
   })
   const [notice, setNotice] = useState('')
   const [error, setError] = useState('')
@@ -29,14 +30,24 @@ export default function Register({ onNavigate }) {
     if (!form.password) return setError('Password is required.')
     if (form.password.length < 6) return setError('Password must be at least 6 characters.')
     if (form.password !== form.confirmPassword) return setError('Passwords do not match.')
+    if (!form.passkey) return setError('PassKey PIN is required.')
+    if (form.passkey.length !== 4) return setError('PassKey PIN must be exactly 4 digits.')
 
     setLoading(true)
     try {
+      const taken = await isPasskeyTaken(form.passkey)
+      if (taken) {
+        setError('This PassKey PIN is already taken. Please choose a different 4-digit PIN.')
+        setLoading(false)
+        return
+      }
+
       await registerAccount({
         firstName: form.firstName.trim(),
         lastName: form.lastName.trim(),
         email: form.email.trim(),
         password: form.password,
+        passkey: form.passkey,
       })
       setNotice('Account created successfully. Please check your email if confirmation is required.')
       setTimeout(() => onNavigate('login'), 900)
@@ -97,6 +108,23 @@ export default function Register({ onNavigate }) {
               onChange={updateField}
               placeholder="••••••••"
               autoComplete="new-password"
+            />
+          </label>
+          <label className="xml-field">
+            <span>PassKey PIN (4 Digits)</span>
+            <input
+              name="passkey"
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              maxLength="4"
+              value={form.passkey}
+              onChange={(e) => {
+                const val = e.target.value.replace(/\D/g, '')
+                setForm((current) => ({ ...current, passkey: val }))
+              }}
+              placeholder="1234"
+              required
             />
           </label>
 

@@ -944,7 +944,7 @@ dd {
 .xml-table-head,
 .history-row {
   display: grid;
-  grid-template-columns: 0.8fr 1.5fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
   align-items: center;
   text-align: center;
 }

@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 import { useEffect, useMemo, useState } from 'react'
 import {
   activateRental,
@@ -141,7 +142,7 @@ export default function Home({ session, onNavigate, addNotification }) {
           if (addNotification) {
             addNotification({
               title: 'Locker Rented',
-              content: `Locker ${paymentTx.lockerNumber} is active. Key: COIN-${session.userId.slice(0, 8).toUpperCase()}`,
+              content: `Locker ${paymentTx.lockerNumber} is active. PIN: ${paymentTx.qrToken}`,
               type: 'rental_start',
             })
           }
@@ -197,40 +198,8 @@ export default function Home({ session, onNavigate, addNotification }) {
     }
   }
 
-  async function returnActiveRental(rental) {
-    if (!rental) return
-    setMessage('')
-
-    const startMs = parseTimestamp(rental.start_time)
-    const ratePerHr = Number(rental.rates?.price_per_minute || 0.17) * 60
-    const item = {
-      transactionId: rental.transaction_id,
-      lockerId: rental.locker_id,
-      lockerNumber: rental.lockers?.locker_number || rental.locker_id,
-      durationMinutes: rental.duration_minutes || 0,
-      isOpenTime: !rental.end_time,
-      ratePerHr,
-      startMs,
-    }
-
-    try {
-      await completeRental(item, session.accessToken)
-
-      if (addNotification) {
-        addNotification({
-          title: 'Locker Returned',
-          content: `Locker ${item.lockerNumber} has been returned successfully.`,
-          type: 'rental_end',
-        })
-      }
-
-      setMessage(`Locker ${item.lockerNumber} returned.`)
-      const rows = await fetchActiveRentals(session.userId, session.accessToken)
-      setActiveRentals(rows || [])
-      await loadLockers(selectedModuleId)
-    } catch (err) {
-      setMessage(err.message || 'Could not return locker.')
-    }
+  function returnActiveRental() {
+    onNavigate('rent')
   }
 
   function openRental(locker) {
@@ -273,7 +242,7 @@ export default function Home({ session, onNavigate, addNotification }) {
     setSaving(true)
     setMessage('')
     try {
-      const transactionId = await createRental({
+      const { transactionId, qrToken } = await createRental({
         locker: selectedLocker,
         duration,
         isOpenTime,
@@ -286,6 +255,7 @@ export default function Home({ session, onNavigate, addNotification }) {
       if (isDevicePending) {
         setPaymentTx({
           transactionId,
+          qrToken,
           lockerId: selectedLocker.dbId,
           lockerNumber: selectedLocker.id,
           totalAmount: total,
@@ -299,7 +269,7 @@ export default function Home({ session, onNavigate, addNotification }) {
         if (addNotification) {
           addNotification({
             title: 'Locker Rented',
-            content: `Locker ${selectedLocker.id} (${selectedLocker.size}) is active. Key: COIN-${session.userId.slice(0, 8).toUpperCase()}`,
+            content: `Locker ${selectedLocker.id} (${selectedLocker.size}) is active. PIN: ${qrToken}`,
             type: 'rental_start',
           })
         }
@@ -376,20 +346,16 @@ export default function Home({ session, onNavigate, addNotification }) {
                 </span>
               </div>
 
-              <dl className="detail-grid">
-                <div>
-                  <dt>Started</dt>
-                  <dd>{formatDateTime(parseTimestamp(rental.start_time))}</dd>
-                </div>
-                <div>
-                  <dt>Expires</dt>
-                  <dd>{rental.end_time ? formatDateTime(parseTimestamp(rental.end_time)) : 'N/A (Open Time)'}</dd>
-                </div>
-                <div>
-                  <dt>Access Token</dt>
-                  <dd>{rental.qr_token || 'COIN-XXXXXX'}</dd>
-                </div>
-              </dl>
+          <dl className="detail-grid">
+            <div>
+              <dt>Started</dt>
+              <dd>{formatDateTime(parseTimestamp(activeRental.start_time))}</dd>
+            </div>
+            <div>
+              <dt>Expires</dt>
+              <dd>{activeRental.end_time ? formatDateTime(parseTimestamp(activeRental.end_time)) : 'N/A (Open Time)'}</dd>
+            </div>
+          </dl>
 
               <button className="primary-button xml-black-button" type="button" onClick={() => returnActiveRental(rental)}>
                 Return Locker
