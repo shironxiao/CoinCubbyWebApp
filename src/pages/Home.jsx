@@ -2,18 +2,19 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
   activateRental,
-  completeRental,
+  cancelPaymentSession,
   createRental,
   fetchActiveRentals,
   fetchLockers,
   fetchModules,
+  fetchPaymentSession,
   fetchTransactionPayments,
   formatMoney,
   parseTimestamp,
   sizeFromType,
   updateLockerStatus,
 } from '../lib/supabase'
-import { formatDateTime, formatDuration } from '../lib/time'
+import { formatDuration } from '../lib/time'
 
 function statusClass(status) {
   return String(status || 'Available').toLowerCase().replaceAll(' ', '-')
@@ -123,7 +124,12 @@ export default function Home({ session, onNavigate, addNotification }) {
     let isMounted = true
     const interval = setInterval(async () => {
       try {
-        const payments = await fetchTransactionPayments(paymentTx.transactionId, session.accessToken)
+        const paymentSession = paymentTx.paymentSessionId
+          ? await fetchPaymentSession(paymentTx.paymentSessionId, session.accessToken)
+          : null
+        const payments = paymentSession
+          ? [{ amount: paymentSession.amount_paid }]
+          : await fetchTransactionPayments(paymentTx.transactionId, session.accessToken)
         if (!isMounted) return
 
         const sum = (payments || []).reduce((acc, p) => acc + Number(p.amount || 0), 0)
@@ -135,7 +141,7 @@ export default function Home({ session, onNavigate, addNotification }) {
           return sum
         })
 
-        if (sum >= paymentTx.totalAmount) {
+        if (sum >= paymentTx.totalAmount || paymentSession?.status === 'Paid') {
           clearInterval(interval)
           await activateRental(paymentTx.transactionId, paymentTx.lockerId, session.accessToken)
           
@@ -160,7 +166,7 @@ export default function Home({ session, onNavigate, addNotification }) {
       isMounted = false
       clearInterval(interval)
     }
-  }, [paymentTx, hasTimedOut, session?.accessToken, session?.userId, selectedModuleId, addNotification, onNavigate])
+  }, [paymentTx, hasTimedOut, session?.accessToken, selectedModuleId, addNotification, onNavigate])
 
   function handleContinuePayment() {
     setSecondsLeft(60)
@@ -242,7 +248,7 @@ export default function Home({ session, onNavigate, addNotification }) {
     setSaving(true)
     setMessage('')
     try {
-      const { transactionId, qrToken } = await createRental({
+      const { transactionId, qrToken, paymentSession } = await createRental({
         locker: selectedLocker,
         duration,
         isOpenTime,
@@ -259,6 +265,7 @@ export default function Home({ session, onNavigate, addNotification }) {
           lockerId: selectedLocker.dbId,
           lockerNumber: selectedLocker.id,
           totalAmount: total,
+          paymentSessionId: paymentSession?.payment_session_id,
         })
         setInsertedAmount(0)
         setSecondsLeft(60)
@@ -542,6 +549,7 @@ export default function Home({ session, onNavigate, addNotification }) {
                 type="button" 
                 onClick={async () => {
                   try {
+                    await cancelPaymentSession(paymentTx.paymentSessionId, session.accessToken)
                     await updateLockerStatus(paymentTx.lockerId, 'Available', session.accessToken)
                     await loadLockers(selectedModuleId)
                   } catch (err) {
@@ -602,6 +610,7 @@ export default function Home({ session, onNavigate, addNotification }) {
                 type="button" 
                 onClick={async () => {
                   try {
+                    await cancelPaymentSession(paymentTx.paymentSessionId, session.accessToken)
                     await updateLockerStatus(paymentTx.lockerId, 'Available', session.accessToken)
                     await loadLockers(selectedModuleId)
                   } catch (err) {

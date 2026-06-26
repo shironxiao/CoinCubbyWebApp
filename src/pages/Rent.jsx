@@ -1,6 +1,15 @@
 /* eslint-disable react-hooks/set-state-in-effect, react-hooks/preserve-manual-memoization */
 import { useCallback, useEffect, useState } from 'react'
-import { completeRental, fetchActiveRentals, fetchTransactionPayments, formatMoney, parseTimestamp, sizeFromType, verifyPasskey } from '../lib/supabase'
+import {
+  completeRental,
+  createReturnPaymentSession,
+  fetchActiveRentals,
+  fetchPaymentSession,
+  formatMoney,
+  parseTimestamp,
+  sizeFromType,
+  verifyPinAsPassword,
+} from '../lib/supabase'
 import { formatDateTime, formatDuration } from '../lib/time'
 
 function mapRental(row) {
@@ -14,6 +23,7 @@ function mapRental(row) {
     transactionId: row.transaction_id,
     lockerId: row.locker_id,
     lockerNumber: row.lockers?.locker_number || '?',
+    deviceId: row.lockers?.device_id,
     sizeName: size.label,
     startMs,
     endMs,
@@ -50,37 +60,33 @@ export default function Rent({ session, addNotification }) {
   const [hasTimedOut, setHasTimedOut] = useState(false)
 
   const [isPasskeyVerified, setIsPasskeyVerified] = useState(false)
-  const [enteredPasskey, setEnteredPasskey] = useState('')
-  const [passkeyVerificationError, setPasskeyVerificationError] = useState('')
-  const [verifyingPasskey, setVerifyingPasskey] = useState(false)
+  const [enteredPin, setEnteredPin] = useState('')
+  const [pinVerificationError, setPinVerificationError] = useState('')
+  const [verifyingPin, setVerifyingPin] = useState(false)
 
   function closeReturnModal() {
     setActiveReturnItem(null)
     setIsPasskeyVerified(false)
-    setEnteredPasskey('')
-    setPasskeyVerificationError('')
-    setVerifyingPasskey(false)
+    setEnteredPin('')
+    setPinVerificationError('')
+    setVerifyingPin(false)
   }
 
-  async function handleVerifyPasskeySubmit(event) {
+  async function handleVerifyPinSubmit(event) {
     event.preventDefault()
-    setPasskeyVerificationError('')
-    if (enteredPasskey.length !== 4) {
-      return setPasskeyVerificationError('PIN must be exactly 4 digits.')
+    setPinVerificationError('')
+    if (enteredPin.length !== 6) {
+      return setPinVerificationError('PIN must be exactly 6 digits.')
     }
 
-    setVerifyingPasskey(true)
+    setVerifyingPin(true)
     try {
-      const valid = await verifyPasskey(session.userId, enteredPasskey, session.accessToken)
-      if (valid) {
-        setIsPasskeyVerified(true)
-      } else {
-        setPasskeyVerificationError('Incorrect PassKey PIN. Please try again.')
-      }
-    } catch (err) {
-      setPasskeyVerificationError(err.message || 'Verification failed. Please try again.')
+      await verifyPinAsPassword(session.email, enteredPin)
+      setIsPasskeyVerified(true)
+    } catch {
+      setPinVerificationError('Incorrect PIN. Please try again.')
     } finally {
-      setVerifyingPasskey(false)
+      setVerifyingPin(false)
     }
   }
 
@@ -129,17 +135,77 @@ export default function Rent({ session, addNotification }) {
     return () => clearTimeout(timer)
   }, [activeReturnItem, payMethod, secondsLeft, hasTimedOut])
 
+  useEffect(() => {
+    if (
+      !activeReturnItem ||
+      !isPasskeyVerified ||
+      payMethod !== 'Device' ||
+      activeReturnItem.paymentSessionId ||
+      activeReturnItem.paymentSessionStarting
+    ) {
+      return
+    }
+
+    let isMounted = true
+
+    async function startDeviceReturnPayment() {
+      const fee = calculateOvertimeFee(activeReturnItem, Date.now())
+      if (fee <= 0) return
+
+      setActiveReturnItem((current) =>
+        current?.transactionId === activeReturnItem.transactionId
+          ? { ...current, paymentSessionStarting: true }
+          : current,
+      )
+
+      try {
+        const paymentSession = await createReturnPaymentSession(
+          { ...activeReturnItem, userId: session.userId },
+          session.accessToken,
+          fee,
+        )
+
+        if (!isMounted) return
+
+        setActiveReturnItem((current) =>
+          current?.transactionId === activeReturnItem.transactionId
+            ? {
+                ...current,
+                paymentSessionId: paymentSession?.payment_session_id,
+                paymentSessionStarting: false,
+              }
+            : current,
+        )
+      } catch (err) {
+        if (!isMounted) return
+        setMessage(err.message || 'Could not start device payment.')
+        setPayMethod('Wallet')
+        setActiveReturnItem((current) =>
+          current?.transactionId === activeReturnItem.transactionId
+            ? { ...current, paymentSessionStarting: false }
+            : current,
+        )
+      }
+    }
+
+    startDeviceReturnPayment()
+
+    return () => {
+      isMounted = false
+    }
+  }, [activeReturnItem, isPasskeyVerified, payMethod, session?.accessToken, session?.userId])
+
   // Polling for cash insertions at the device during return
   useEffect(() => {
-    if (!activeReturnItem || payMethod !== 'Device' || hasTimedOut) return
+    if (!activeReturnItem || payMethod !== 'Device' || hasTimedOut || !activeReturnItem.paymentSessionId) return
 
     let isMounted = true
     const interval = setInterval(async () => {
       try {
-        const payments = await fetchTransactionPayments(activeReturnItem.transactionId, session.accessToken)
+        const paymentSession = await fetchPaymentSession(activeReturnItem.paymentSessionId, session.accessToken)
         if (!isMounted) return
 
-        const sum = (payments || []).reduce((acc, p) => acc + Number(p.amount || 0), 0)
+        const sum = Number(paymentSession?.amount_paid || 0)
         
         setInsertedAmount((prev) => {
           if (sum > prev) {
@@ -149,11 +215,9 @@ export default function Rent({ session, addNotification }) {
         })
 
         const fee = calculateOvertimeFee(activeReturnItem, Date.now())
-        if (sum >= fee) {
+        if (sum >= fee || paymentSession?.status === 'Paid') {
           clearInterval(interval)
-          
-          await completeRental({ ...activeReturnItem, userId: session.userId }, session.accessToken, fee, 'Device')
-          
+
           // Reload wallet balance state from localStorage
           if (session?.userId) {
             const balanceKey = `coincubby.balance.${session.userId}`
@@ -173,7 +237,7 @@ export default function Rent({ session, addNotification }) {
       isMounted = false
       clearInterval(interval)
     }
-  }, [activeReturnItem, payMethod, hasTimedOut, session?.accessToken, loadRentals, addNotification])
+  }, [activeReturnItem, payMethod, hasTimedOut, session?.accessToken, session?.userId, loadRentals])
 
   function handleContinuePayment() {
     setSecondsLeft(60)
@@ -348,41 +412,41 @@ export default function Rent({ session, addNotification }) {
               </div>
 
               {!isPasskeyVerified ? (
-                <form onSubmit={handleVerifyPasskeySubmit} className="form-stack" style={{ display: 'grid', gap: '14px', marginTop: '8px' }}>
+                <form onSubmit={handleVerifyPinSubmit} className="form-stack" style={{ display: 'grid', gap: '14px', marginTop: '8px' }}>
                   <p style={{ fontSize: '13px', color: '#666', textAlign: 'center', margin: '0 0 10px 0', lineHeight: '1.4' }}>
-                    For security, please enter your 4-digit PassKey PIN to confirm returning Locker #{activeReturnItem.lockerNumber}.
+                    For security, please enter your 6-digit Account PIN to confirm returning Locker #{activeReturnItem.lockerNumber}.
                   </p>
                   
                   <label className="xml-field">
-                    <span>4-Digit PassKey PIN</span>
+                    <span>6-Digit Account PIN</span>
                     <input
                       type="password"
                       inputMode="numeric"
                       pattern="[0-9]*"
-                      maxLength="4"
-                      value={enteredPasskey}
+                      maxLength="6"
+                      value={enteredPin}
                       onChange={(e) => {
                         const val = e.target.value.replace(/\D/g, '')
-                        setEnteredPasskey(val)
+                        setEnteredPin(val)
                       }}
-                      placeholder="••••"
+                      placeholder="••••••"
                       autoFocus
-                      disabled={verifyingPasskey}
+                      disabled={verifyingPin}
                       required
                       style={{ letterSpacing: '0.5em', textAlign: 'center', fontSize: '1.2rem' }}
                     />
                   </label>
 
-                  {passkeyVerificationError && (
-                    <p className="alert" style={{ margin: '4px 0 0 0', fontSize: '12px' }}>{passkeyVerificationError}</p>
+                  {pinVerificationError && (
+                    <p className="alert" style={{ margin: '4px 0 0 0', fontSize: '12px' }}>{pinVerificationError}</p>
                   )}
 
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '8px' }}>
-                    <button className="secondary-button" type="button" onClick={closeReturnModal} disabled={verifyingPasskey}>
+                    <button className="secondary-button" type="button" onClick={closeReturnModal} disabled={verifyingPin}>
                       Cancel
                     </button>
-                    <button className="primary-button xml-black-button" type="submit" disabled={verifyingPasskey || enteredPasskey.length !== 4}>
-                      {verifyingPasskey ? 'Verifying...' : 'Verify PIN'}
+                    <button className="primary-button xml-black-button" type="submit" disabled={verifyingPin || enteredPin.length !== 6}>
+                      {verifyingPin ? 'Verifying...' : 'Verify PIN'}
                     </button>
                   </div>
                 </form>
@@ -507,6 +571,9 @@ export default function Rent({ session, addNotification }) {
                             </div>
                           ) : (
                             <div className="timer-container">
+                              {activeReturnItem.paymentSessionStarting && (
+                                <p className="timer-text">Preparing the device payment screen...</p>
+                              )}
                               <div className="progress-bar-bg">
                                 <div 
                                   className="progress-bar-fill" 

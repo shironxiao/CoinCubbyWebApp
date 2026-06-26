@@ -8,26 +8,22 @@ export default function ResetPassword({ accessToken, onNavigate }) {
   const [notice, setNotice] = useState('')
   const [loading, setLoading] = useState(false)
 
-  function updateField(event) {
-    setForm((current) => ({ ...current, [event.target.name]: event.target.value }))
-  }
-
   async function handleSubmit(event) {
     event.preventDefault()
     setError('')
     setNotice('')
 
-    if (!form.password) return setError('Password is required.')
-    if (form.password.length < 6) return setError('Password must be at least 6 characters.')
-    if (form.password !== form.confirmPassword) return setError('Passwords do not match.')
+    if (!form.password) return setError('PIN is required.')
+    if (!/^\d{6}$/.test(form.password)) return setError('PIN must be exactly 6 digits.')
+    if (form.password !== form.confirmPassword) return setError('PINs do not match.')
 
     setLoading(true)
     try {
       await changePassword(form.password, accessToken)
-      setNotice('Password updated successfully! Redirecting to login...')
+      setNotice('PIN updated successfully! Redirecting to login...')
       setTimeout(() => onNavigate('login'), 2000)
     } catch (err) {
-      setError(err.message || 'Failed to reset password. The link may have expired.')
+      setError(err.message || 'Failed to reset PIN. The link may have expired.')
     } finally {
       setLoading(false)
     }
@@ -38,30 +34,40 @@ export default function ResetPassword({ accessToken, onNavigate }) {
       <section className="auth-panel xml-login-panel">
         <img className="auth-logo" src={logo} alt="CoinCubby logo" />
         <div>
-          <h1>Set New Password</h1>
-          <p className="muted">Enter your new password below</p>
+          <h1>Set New PIN</h1>
+          <p className="muted">Enter your new 6-digit PIN below</p>
         </div>
 
         <form className="form-stack" onSubmit={handleSubmit}>
           <label className="xml-field">
-            <span>New Password</span>
+            <span>New 6-Digit PIN</span>
             <input
               name="password"
               type="password"
+              inputMode="numeric"
+              maxLength="6"
               value={form.password}
-              onChange={updateField}
-              placeholder="••••••••"
+              onChange={(e) => {
+                const val = e.target.value.replace(/\D/g, '')
+                setForm((current) => ({ ...current, password: val }))
+              }}
+              placeholder="••••••"
               autoComplete="new-password"
             />
           </label>
           <label className="xml-field">
-            <span>Confirm Password</span>
+            <span>Confirm New 6-Digit PIN</span>
             <input
               name="confirmPassword"
               type="password"
+              inputMode="numeric"
+              maxLength="6"
               value={form.confirmPassword}
-              onChange={updateField}
-              placeholder="••••••••"
+              onChange={(e) => {
+                const val = e.target.value.replace(/\D/g, '')
+                setForm((current) => ({ ...current, confirmPassword: val }))
+              }}
+              placeholder="••••••"
               autoComplete="new-password"
             />
           </label>
@@ -70,7 +76,7 @@ export default function ResetPassword({ accessToken, onNavigate }) {
           {notice && <p className="success">{notice}</p>}
 
           <button className="primary-button xml-black-button" type="submit" disabled={loading}>
-            {loading ? 'Updating...' : 'Reset Password'}
+            {loading ? 'Updating...' : 'Reset PIN'}
           </button>
         </form>
 

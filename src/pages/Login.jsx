@@ -85,13 +85,18 @@ export default function Login({ onNavigate, onLogin }) {
                 />
               </label>
               <label className="xml-field">
-                <span>Password</span>
+                <span>6-Digit PIN</span>
                 <input
                   name="password"
                   type="password"
+                  inputMode="numeric"
+                  maxLength="6"
                   value={form.password}
-                  onChange={updateField}
-                  placeholder="••••••••"
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\D/g, '')
+                    setForm((current) => ({ ...current, password: val }))
+                  }}
+                  placeholder="••••••"
                   autoComplete="current-password"
                 />
               </label>
@@ -113,7 +118,7 @@ export default function Login({ onNavigate, onLogin }) {
                   setResetNotice('')
                 }}
               >
-                Forgot password?
+                Forgot your PIN?
               </button>
             </p>
 
@@ -127,7 +132,7 @@ export default function Login({ onNavigate, onLogin }) {
         ) : (
           <>
             <div>
-              <h1>Reset Password</h1>
+              <h1>Reset PIN</h1>
               <p className="muted">Enter your email and we&apos;ll send you a reset link</p>
             </div>
 

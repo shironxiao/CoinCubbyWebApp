@@ -87,7 +87,7 @@ export async function loginWithPassword(email, password) {
   return session
 }
 
-export async function registerAccount({ firstName, lastName, email, password, passkey }) {
+export async function registerAccount({ firstName, lastName, email, password, userId }) {
   const fullName = `${firstName} ${lastName}`.trim()
   const body = await request('/auth/v1/signup', {
     method: 'POST',
@@ -103,11 +103,10 @@ export async function registerAccount({ firstName, lastName, email, password, pa
     }),
   })
 
-  const userId = body.id || body.user?.id || ''
+  const customerId = body.id || body.user?.id || ''
   const token = body.access_token || body.session?.access_token || SUPABASE_ANON
 
-  if (userId) {
-    const hashed = await hashPasskey(passkey)
+  if (customerId) {
     await request('/rest/v1/customers', {
       method: 'POST',
       headers: authHeaders(token, {
@@ -115,10 +114,10 @@ export async function registerAccount({ firstName, lastName, email, password, pa
         Prefer: 'return=minimal',
       }),
       body: JSON.stringify({
-        customer_id: userId,
+        customer_id: customerId,
         full_name: fullName.slice(0, 50),
         email,
-        passkey: hashed,
+        user_id: userId,
       }),
     })
   }
@@ -188,7 +187,7 @@ export async function fetchModules() {
 export async function fetchLockers(moduleId) {
   const moduleFilter = moduleId ? `module_id=eq.${moduleId}&` : ''
   const rows = await request(
-    `/rest/v1/lockers?${moduleFilter}select=locker_id,locker_number,status,size_type_id,module_id&order=locker_id.asc`,
+    `/rest/v1/lockers?${moduleFilter}select=locker_id,locker_number,status,size_type_id,module_id,device_id&order=locker_id.asc`,
     { headers: authHeaders() },
   )
 
@@ -202,6 +201,7 @@ export async function fetchLockers(moduleId) {
       rate: size.rate,
       sizeTypeId: row.size_type_id,
       moduleId: row.module_id,
+      deviceId: row.device_id,
     }
   })
 }
@@ -296,7 +296,171 @@ export async function createRental({ locker, duration, isOpenTime, paymentMethod
 
   const initialLockerStatus = isDevicePending ? 'Payment Required' : 'Occupied'
   await updateLockerStatus(locker.dbId, initialLockerStatus, session.accessToken)
-  return { transactionId, qrToken }
+
+  let paymentSession = null
+  if (transactionId && isDevicePending) {
+    paymentSession = await createPaymentSession({
+      transactionId,
+      customerId: session.userId,
+      lockerId: locker.dbId,
+      deviceId: locker.deviceId,
+      sessionType: 'rental_payment',
+      amountDue: amount,
+      token: session.accessToken,
+    })
+
+    await createDeviceCommand({
+      deviceId: paymentSession.device_id,
+      lockerId: locker.dbId,
+      transactionId,
+      paymentSessionId: paymentSession.payment_session_id,
+      command: 'display_payment',
+      payload: {
+        amount_due: amount,
+        locker_number: locker.id,
+      },
+      token: session.accessToken,
+    })
+  } else if (transactionId) {
+    await createDeviceCommand({
+      deviceId: locker.deviceId,
+      lockerId: locker.dbId,
+      transactionId,
+      command: 'unlock_locker',
+      payload: {
+        locker_number: locker.id,
+      },
+      token: session.accessToken,
+    })
+  }
+
+  return { transactionId, qrToken, paymentSession }
+}
+
+export async function fetchDefaultDevice(token) {
+  const rows = await request('/rest/v1/devices?select=device_id,device_code&order=device_id.asc&limit=1', {
+    headers: authHeaders(token),
+  })
+  return rows?.[0] || null
+}
+
+export async function resolveDeviceId(deviceId, token) {
+  if (deviceId) return deviceId
+  const device = await fetchDefaultDevice(token)
+  if (!device?.device_id) throw new Error('No locker device is configured yet.')
+  return device.device_id
+}
+
+export async function createPaymentSession({
+  transactionId,
+  customerId,
+  lockerId,
+  deviceId,
+  sessionType,
+  amountDue,
+  token,
+}) {
+  const resolvedDeviceId = await resolveDeviceId(deviceId, token)
+  const expiresAt = new Date(Date.now() + 60 * 1000).toISOString()
+
+  const rows = await request('/rest/v1/payment_sessions?select=payment_session_id,device_id,amount_due,amount_paid,status', {
+    method: 'POST',
+    headers: authHeaders(token, {
+      'Content-Type': 'application/json',
+      Prefer: 'return=representation',
+    }),
+    body: JSON.stringify({
+      transaction_id: transactionId,
+      customer_id: customerId,
+      locker_id: lockerId,
+      device_id: resolvedDeviceId,
+      session_type: sessionType,
+      amount_due: Number(amountDue || 0).toFixed(2),
+      amount_paid: 0,
+      status: 'Pending',
+      expires_at: expiresAt,
+    }),
+  })
+
+  return rows?.[0] || null
+}
+
+export async function fetchPaymentSession(paymentSessionId, token) {
+  const rows = await request(
+    `/rest/v1/payment_sessions?payment_session_id=eq.${paymentSessionId}&select=payment_session_id,amount_due,amount_paid,status`,
+    { headers: authHeaders(token) },
+  )
+  return rows?.[0] || null
+}
+
+export async function cancelPaymentSession(paymentSessionId, token) {
+  if (!paymentSessionId) return
+  return request(`/rest/v1/payment_sessions?payment_session_id=eq.${paymentSessionId}`, {
+    method: 'PATCH',
+    headers: authHeaders(token, {
+      'Content-Type': 'application/json',
+      Prefer: 'return=minimal',
+    }),
+    body: JSON.stringify({ status: 'Cancelled', updated_at: new Date().toISOString() }),
+  })
+}
+
+export async function createDeviceCommand({
+  deviceId,
+  lockerId,
+  transactionId,
+  paymentSessionId = null,
+  command,
+  payload = {},
+  token,
+}) {
+  const resolvedDeviceId = await resolveDeviceId(deviceId, token)
+
+  const rows = await request('/rest/v1/device_commands?select=command_id', {
+    method: 'POST',
+    headers: authHeaders(token, {
+      'Content-Type': 'application/json',
+      Prefer: 'return=representation',
+    }),
+    body: JSON.stringify({
+      device_id: resolvedDeviceId,
+      locker_id: lockerId,
+      transaction_id: transactionId,
+      payment_session_id: paymentSessionId,
+      command,
+      payload,
+      status: 'Pending',
+    }),
+  })
+
+  return rows?.[0] || null
+}
+
+export async function createReturnPaymentSession(item, token, amountDue) {
+  const paymentSession = await createPaymentSession({
+    transactionId: item.transactionId,
+    customerId: item.userId,
+    lockerId: item.lockerId,
+    deviceId: item.deviceId,
+    sessionType: 'overtime_payment',
+    amountDue,
+    token,
+  })
+
+  await createDeviceCommand({
+    deviceId: paymentSession.device_id,
+    lockerId: item.lockerId,
+    transactionId: item.transactionId,
+    paymentSessionId: paymentSession.payment_session_id,
+    command: 'display_payment',
+    payload: {
+      amount_due: amountDue,
+      locker_number: item.lockerNumber,
+    },
+    token,
+  })
+
+  return paymentSession
 }
 
 export async function fetchTransactionPayments(transactionId, token) {
@@ -334,7 +498,7 @@ export async function fetchProfile(session) {
   })
 
   const customers = await request(
-    `/rest/v1/customers?customer_id=eq.${user.id}&select=customer_id,full_name,email,passkey`,
+    `/rest/v1/customers?customer_id=eq.${user.id}&select=customer_id,full_name,email,user_id`,
     { headers: authHeaders(session?.accessToken, { Accept: 'application/json' }) },
   )
 
@@ -348,7 +512,7 @@ export async function fetchProfile(session) {
 
 export async function fetchActiveRentals(customerId, token) {
   return request(
-    `/rest/v1/transactions?customer_id=eq.${customerId}&status=eq.Active&select=transaction_id,locker_id,start_time,end_time,duration_minutes,qr_token,status,lockers(locker_number,size_type_id),rates(price_per_minute,min_charge_minutes)&order=start_time.desc`,
+    `/rest/v1/transactions?customer_id=eq.${customerId}&status=eq.Active&select=transaction_id,locker_id,start_time,end_time,duration_minutes,qr_token,status,lockers(locker_number,size_type_id,device_id),rates(price_per_minute,min_charge_minutes)&order=start_time.desc`,
     { headers: authHeaders(token) },
   )
 }
@@ -438,6 +602,17 @@ export async function completeRental(item, token, overtimeFee = 0, paymentMethod
   }
 
   await updateLockerStatus(item.lockerId, 'Available', token)
+
+  await createDeviceCommand({
+    deviceId: item.deviceId,
+    lockerId: item.lockerId,
+    transactionId: item.transactionId,
+    command: 'release_locker',
+    payload: {
+      locker_number: item.lockerNumber,
+    },
+    token,
+  })
 }
 
 export function privateKeyFor(userId) {
@@ -488,55 +663,35 @@ export async function verifyUserPassword(email, password) {
   return true
 }
 
-export async function hashPasskey(passkey) {
-  if (!passkey) return ''
-  const encoder = new TextEncoder()
-  const data = encoder.encode(passkey)
-  const hashBuffer = await window.crypto.subtle.digest('SHA-256', data)
-  const hashArray = Array.from(new Uint8Array(hashBuffer))
-  return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('')
+/**
+ * Verifies the user's 6-digit PIN by re-authenticating against Supabase Auth.
+ * Used for locker return security verification.
+ */
+export async function verifyPinAsPassword(email, pin) {
+  return verifyUserPassword(email, pin)
 }
 
-export async function recoverPasskey(hash) {
-  if (!hash || hash.length !== 64) return ''
-  for (let i = 0; i <= 9999; i++) {
-    const pin = String(i).padStart(4, '0')
-    const hashed = await hashPasskey(pin)
-    if (hashed === hash) {
-      return pin
-    }
-  }
-  return ''
-}
-
-export async function isPasskeyTaken(passkey) {
-  const hashed = await hashPasskey(passkey)
+/**
+ * Checks if a 6-digit User ID is already taken in the customers table.
+ */
+export async function isUserIdTaken(userId) {
   const existing = await request(
-    `/rest/v1/customers?passkey=eq.${hashed}&select=customer_id&limit=1`,
-    { headers: authHeaders() }
+    `/rest/v1/customers?user_id=eq.${userId}&select=customer_id&limit=1`,
+    { headers: authHeaders() },
   ).catch(() => null)
   return !!(existing && existing.length > 0)
 }
 
-export async function updatePasskey(customerId, passkey, token) {
-  const hashed = await hashPasskey(passkey)
-  return request(`/rest/v1/customers?customer_id=eq.${customerId}`, {
-    method: 'PATCH',
-    headers: authHeaders(token, {
-      'Content-Type': 'application/json',
-      Prefer: 'return=minimal',
-    }),
-    body: JSON.stringify({ passkey: hashed }),
-  })
-}
-
-export async function verifyPasskey(userId, enteredPin, token) {
-  const hashed = await hashPasskey(enteredPin)
-  const rows = await request(
-    `/rest/v1/customers?customer_id=eq.${userId}&select=passkey&limit=1`,
-    { headers: authHeaders(token, { Accept: 'application/json' }) }
-  ).catch(() => null)
-  if (!rows || rows.length === 0) return false
-  if (!rows[0].passkey) return true
-  return rows[0].passkey === hashed
+/**
+ * Generates a globally unique 6-digit numeric User ID.
+ * Retries up to 10 times on collision.
+ */
+export async function generateUniqueUserId(retries = 10) {
+  for (let i = 0; i < retries; i++) {
+    const id = String(Math.floor(100000 + Math.random() * 900000))
+    const taken = await isUserIdTaken(id)
+    if (!taken) return id
+  }
+  // Fallback: timestamp-based suffix (extremely unlikely collision)
+  return String(Date.now()).slice(-6)
 }
