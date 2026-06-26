@@ -45,7 +45,7 @@ export default function Home({ session, onNavigate, addNotification }) {
       return 50.00
     }
   })
-  const [activeRental, setActiveRental] = useState(null)
+  const [activeRentals, setActiveRentals] = useState([])
   const [tick, setTick] = useState(() => Date.now())
 
   const availableCount = useMemo(
@@ -70,24 +70,25 @@ export default function Home({ session, onNavigate, addNotification }) {
 
   useEffect(() => {
     if (!session?.userId || !session?.accessToken) {
-      setActiveRental(null)
+      setActiveRentals([])
       return
     }
 
     let isMounted = true
-    async function loadActiveRental() {
+    async function loadActiveRentals() {
       try {
         const rows = await fetchActiveRentals(session.userId, session.accessToken)
         if (!isMounted) return
-        const rental = (rows || [])[0] || null
-        setActiveRental(rental)
+        setActiveRentals(rows || [])
       } catch (err) {
-        setActiveRental(null)
-        console.error('Failed to load active rental:', err)
+        if (isMounted) {
+          setActiveRentals([])
+        }
+        console.error('Failed to load active rentals:', err)
       }
     }
 
-    loadActiveRental()
+    loadActiveRentals()
     return () => {
       isMounted = false
     }
@@ -213,6 +214,15 @@ export default function Home({ session, onNavigate, addNotification }) {
     setPaymentMethod('Wallet')
   }
 
+  function handleQuickRent() {
+    const firstAvailable = lockers.find((locker) => locker.status === 'Available')
+    if (firstAvailable) {
+      openRental(firstAvailable)
+    } else {
+      setMessage('No lockers are currently available.')
+    }
+  }
+
   async function confirmRental(event) {
     event.preventDefault()
     if (!selectedLocker) return
@@ -285,7 +295,7 @@ export default function Home({ session, onNavigate, addNotification }) {
   const total = selectedLocker ? Number(duration || 0) * selectedLocker.rate : 0
 
   return (
-    <main className={`page xml-page xml-home ${!activeRental ? 'no-active-rental' : ''}`}>
+    <main className={`page xml-page xml-home ${activeRentals.length === 0 ? 'no-active-rental' : ''}`}>
       <section className="page-header">
         <div>
           <h1 className="xml-app-title">CoinCubby</h1>
@@ -296,54 +306,69 @@ export default function Home({ session, onNavigate, addNotification }) {
         <p>WELCOME!</p>
         <h2>Pick your locker</h2>
         <span>Green means you're good to go.<br />Check status indicator below.</span>
+        {availableCount > 0 && (
+          <button className="quick-rent-button" type="button" onClick={handleQuickRent}>
+            Rent Now (Auto-Select)
+          </button>
+        )}
       </section>
 
-      {activeRental && (
-          <section className="rental-card home-rental-card">
-          <div className="card-heading">
-            <div>
-              <small>Locker</small>
-              <h2>{activeRental.lockers?.locker_number || activeRental.locker_id}</h2>
-              <p>{sizeFromType(activeRental.lockers?.size_type_id).label}</p>
-            </div>
-            <span>Active</span>
-          </div>
-
-          <div className="timer-box">
-            <small>{activeRental.end_time ? 'TIME REMAINING' : 'ELAPSED TIME'}</small>
-            <strong>
-              {activeRental.end_time
-                ? formatDuration(Math.max(0, parseTimestamp(activeRental.end_time) - tick))
-                : formatDuration(Math.max(0, tick - parseTimestamp(activeRental.start_time)))}
-            </strong>
-            <span>
-              {activeRental.end_time
-                ? `Prepaid: ${formatMoney(
-                    (Math.max(0, parseTimestamp(activeRental.end_time) - parseTimestamp(activeRental.start_time)) / 3600000) *
-                      (Number(activeRental.rates?.price_per_minute || 0.17) * 60)
-                  )}`
-                : `Current Bill: ${formatMoney(
-                    (Math.max(0, tick - parseTimestamp(activeRental.start_time)) / 3600000) *
-                      (Number(activeRental.rates?.price_per_minute || 0.17) * 60)
-                  )}`}
-            </span>
-          </div>
-
-          <dl className="detail-grid">
-            <div>
-              <dt>Started</dt>
-              <dd>{formatDateTime(parseTimestamp(activeRental.start_time))}</dd>
-            </div>
-            <div>
-              <dt>Expires</dt>
-              <dd>{activeRental.end_time ? formatDateTime(parseTimestamp(activeRental.end_time)) : 'N/A (Open Time)'}</dd>
-            </div>
-          </dl>
-
-          <button className="primary-button xml-black-button" type="button" onClick={returnActiveRental}>
-            Return Locker
-          </button>
-        </section>
+      {activeRentals.length > 0 && (
+        <div className="home-rentals-container">
+          {activeRentals.map((rental) => {
+            const isOpen = !rental.end_time
+            const startMs = parseTimestamp(rental.start_time)
+            const endMs   = parseTimestamp(rental.end_time)
+            const totalMs  = isOpen ? null : Math.max(1, endMs - startMs)
+            const elapsedMs = Math.max(0, tick - startMs)
+            const remainMs  = isOpen ? 0 : Math.max(0, endMs - tick)
+            const progress  = isOpen ? 100 : Math.min(100, (elapsedMs / totalMs) * 100)
+            const timer = isOpen
+              ? formatDuration(elapsedMs)
+              : formatDuration(remainMs)
+            const bill = isOpen
+              ? formatMoney((elapsedMs / 3600000) * (Number(rental.rates?.price_per_minute || 0.17) * 60))
+              : formatMoney((totalMs / 3600000) * (Number(rental.rates?.price_per_minute || 0.17) * 60))
+            const lockerLabel = rental.lockers?.locker_number || rental.locker_id
+            const sizeLabel   = sizeFromType(rental.lockers?.size_type_id).label
+            return (
+              <div className="home-rental-bar-card" key={rental.transaction_id}>
+                {/* top row */}
+                <div className="hbar-top">
+                  <div className="hbar-info">
+                    <span className="hbar-locker">{lockerLabel}</span>
+                    <span className="hbar-size">{sizeLabel}</span>
+                  </div>
+                  <span className="hbar-badge">
+                    <span className="hbar-dot" />
+                    Active
+                  </span>
+                </div>
+                {/* progress bar */}
+                <div className="hbar-track">
+                  <div
+                    className={`hbar-fill${isOpen ? ' hbar-fill--open' : ''}`}
+                    style={isOpen ? {} : { width: `${progress}%` }}
+                  />
+                </div>
+                {/* bottom row */}
+                <div className="hbar-bottom">
+                  <span className="hbar-label">{isOpen ? 'ELAPSED' : 'REMAINING'}</span>
+                  <span className="hbar-timer">{timer}</span>
+                  <span className="hbar-bill">{isOpen ? `Bill: ${bill}` : `Paid: ${bill}`}</span>
+                </div>
+                {/* return button */}
+                <button
+                  className="hbar-return-btn"
+                  type="button"
+                  onClick={() => returnActiveRental(rental)}
+                >
+                  Return Locker
+                </button>
+              </div>
+            )
+          })}
+        </div>
       )}
 
       <section className="xml-balance-card">
