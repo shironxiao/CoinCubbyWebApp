@@ -77,7 +77,7 @@ export default function Rent({ session, addNotification }) {
       if (valid) {
         setIsPasskeyVerified(true)
       } else {
-        setPasskeyVerificationError('Incorrect PassKey PIN. Please try again.')
+        setPasskeyVerificationError('Incorrect PIN ID. Please try again.')
       }
     } catch (err) {
       setPasskeyVerificationError(err.message || 'Verification failed. Please try again.')
@@ -374,11 +374,11 @@ export default function Rent({ session, addNotification }) {
               {!isPasskeyVerified ? (
                 <form onSubmit={handleVerifyPasskeySubmit} className="form-stack" style={{ display: 'grid', gap: '14px', marginTop: '8px' }}>
                   <p style={{ fontSize: '13px', color: '#666', textAlign: 'center', margin: '0 0 10px 0', lineHeight: '1.4' }}>
-                    For security, please enter your 4-digit PassKey PIN to confirm returning Locker #{activeReturnItem.lockerNumber}.
+                    For security, please enter your 4-digit PIN ID to confirm returning Locker #{activeReturnItem.lockerNumber}.
                   </p>
                   
                   <label className="xml-field">
-                    <span>4-Digit PassKey PIN</span>
+                    <span>4-Digit PIN ID</span>
                     <input
                       type="password"
                       inputMode="numeric"

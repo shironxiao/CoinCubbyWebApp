@@ -30,14 +30,14 @@ export default function Register({ onNavigate }) {
     if (!form.password) return setError('Password is required.')
     if (form.password.length < 6) return setError('Password must be at least 6 characters.')
     if (form.password !== form.confirmPassword) return setError('Passwords do not match.')
-    if (!form.passkey) return setError('PassKey PIN is required.')
-    if (form.passkey.length !== 4) return setError('PassKey PIN must be exactly 4 digits.')
+    if (!form.passkey) return setError('PIN ID is required.')
+    if (form.passkey.length !== 4) return setError('PIN ID must be exactly 4 digits.')
 
     setLoading(true)
     try {
       const taken = await isPasskeyTaken(form.passkey)
       if (taken) {
-        setError('This PassKey PIN is already taken. Please choose a different 4-digit PIN.')
+        setError('This PIN ID is already taken. Please choose a different 4-digit PIN.')
         setLoading(false)
         return
       }
@@ -111,7 +111,7 @@ export default function Register({ onNavigate }) {
             />
           </label>
           <label className="xml-field">
-            <span>PassKey PIN (4 Digits)</span>
+            <span>PIN ID (4 Digits)</span>
             <input
               name="passkey"
               type="text"

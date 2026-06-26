@@ -98,8 +98,8 @@ export default function Profile({ session, onLogout, onNavigate, addNotification
     setPasskeyError('')
     setPasskeyNotice('')
 
-    if (!newPasskey) return setPasskeyError('PassKey PIN is required.')
-    if (newPasskey.length !== 4) return setPasskeyError('PassKey must be exactly 4 digits.')
+    if (!newPasskey) return setPasskeyError('PIN ID is required.')
+    if (newPasskey.length !== 4) return setPasskeyError('PIN ID must be exactly 4 digits.')
     if (!confirmPassword) return setPasskeyError('Account password is required.')
 
     setLoadingPasskey(true)
@@ -110,7 +110,7 @@ export default function Profile({ session, onLogout, onNavigate, addNotification
       // 2. Check if the passkey is taken
       const taken = await isPasskeyTaken(newPasskey)
       if (taken) {
-        throw new Error('This PassKey PIN is already taken. Please choose a different 4-digit PIN.')
+        throw new Error('This PIN ID is already taken. Please choose a different 4-digit PIN.')
       }
 
       // 3. Update the passkey in database
@@ -119,7 +119,7 @@ export default function Profile({ session, onLogout, onNavigate, addNotification
       const hashed = await hashPasskey(newPasskey)
       setProfile((current) => ({ ...current, passkey: hashed }))
       setRevealedPin(newPasskey)
-      setPasskeyNotice(profile.passkey ? 'PassKey changed successfully.' : 'PassKey set successfully.')
+      setPasskeyNotice(profile.passkey ? 'PIN ID changed successfully.' : 'PIN ID set successfully.')
       setNewPasskey('')
       setConfirmPassword('')
       setIsChangingPasskey(false)
@@ -127,15 +127,15 @@ export default function Profile({ session, onLogout, onNavigate, addNotification
 
       if (addNotification) {
         addNotification({
-          title: 'PassKey Updated',
-          content: 'Your transaction-link PassKey PIN was updated successfully.',
+          title: 'PIN ID Updated',
+          content: 'Your transaction-link PIN ID was updated successfully.',
           type: 'security',
         })
       }
 
       setTimeout(() => setPasskeyNotice(''), 2000)
     } catch (err) {
-      setPasskeyError(err.message || 'Failed to update PassKey. Please try again.')
+      setPasskeyError(err.message || 'Failed to update PIN ID. Please try again.')
     } finally {
       setLoadingPasskey(false)
     }
@@ -201,25 +201,25 @@ export default function Profile({ session, onLogout, onNavigate, addNotification
 
       <section className="info-panel passkey-panel" style={{ padding: '20px', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.08)', marginBottom: '16px', background: 'rgba(255, 255, 255, 0.02)' }}>
         <h2 style={{ fontSize: '1.1rem', fontWeight: 'bold', margin: '0 0 8px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span>🔑</span> PassKey (Kiosk Link)
+          <span>🔑</span> PIN ID (Kiosk Link)
         </h2>
         <p style={{ margin: '0 0 16px 0', fontSize: '0.85rem', color: '#888', lineHeight: '1.4' }}>
-          Your PassKey is a 4-digit PIN used to link your physical locker transactions at the kiosk to your web app account.
+          Your PIN ID is a 4-digit PIN used to link your physical locker transactions at the kiosk to your web app account.
         </p>
 
         {loadingProfile ? (
           <div className="xml-loading" style={{ minHeight: '80px', padding: '10px 0' }}>
             <span></span>
-            <p>Checking PassKey status...</p>
+            <p>Checking PIN ID status...</p>
           </div>
         ) : !profile.passkey ? (
           /* Case 1: Existing User setting their PassKey for the first time */
           <form className="form-stack" onSubmit={handleSetOrChangePasskey}>
             <p className="notice-sub" style={{ fontSize: '0.85rem', color: '#ffb300', marginBottom: '12px' }}>
-              ⚠️ You don't have a PassKey set yet. Please choose a 4-digit PIN below.
+              ⚠️ You don't have a PIN ID set yet. Please choose a 4-digit PIN below.
             </p>
             <label className="xml-field">
-              <span>Choose 4-Digit PassKey PIN</span>
+              <span>Choose 4-Digit PIN ID</span>
               <input
                 type="text"
                 inputMode="numeric"
@@ -248,7 +248,7 @@ export default function Profile({ session, onLogout, onNavigate, addNotification
             {passkeyNotice && <p className="success" style={{ marginTop: '8px' }}>{passkeyNotice}</p>}
 
             <button className="primary-button xml-black-button" type="submit" disabled={loadingPasskey} style={{ marginTop: '12px', width: '100%' }}>
-              {loadingPasskey ? 'Saving...' : 'Set PassKey'}
+               {loadingPasskey ? 'Saving...' : 'Set PIN ID'}
             </button>
           </form>
         ) : (
@@ -264,7 +264,7 @@ export default function Profile({ session, onLogout, onNavigate, addNotification
 
                 {!isVerifyingReveal ? (
                   <button className="secondary-button" type="button" onClick={() => setIsVerifyingReveal(true)} style={{ width: '100%' }}>
-                    Reveal PassKey
+                     Reveal PIN ID
                   </button>
                 ) : (
                   <form onSubmit={handleVerifyReveal} style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '8px' }}>
@@ -320,13 +320,13 @@ export default function Profile({ session, onLogout, onNavigate, addNotification
                       Hide PIN
                     </button>
                     <button className="secondary-button" type="button" onClick={() => setIsChangingPasskey(true)}>
-                      Change PassKey
+                      Change PIN ID
                     </button>
                   </div>
                 ) : (
                   <form className="form-stack" onSubmit={handleSetOrChangePasskey} style={{ marginTop: '12px' }}>
                     <label className="xml-field">
-                      <span>New 4-Digit PassKey PIN</span>
+                      <span>New 4-Digit PIN ID</span>
                       <input
                         type="text"
                         inputMode="numeric"
