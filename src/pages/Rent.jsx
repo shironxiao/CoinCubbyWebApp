@@ -10,7 +10,7 @@ function mapRental(row) {
   const isOpenTime = !row.end_time
   // Use DB rate if available, otherwise fall back to the size-tier rate (₱10/20/30 per hr)
   const dbRatePerMin = Number(row.rates?.price_per_minute || 0)
-  const ratePerHr = dbRatePerMin > 0 ? dbRatePerMin * 60 : size.rate
+  const ratePerHr = dbRatePerMin > 0 ? Math.round(dbRatePerMin * 60) : size.rate
 
   return {
     transactionId: row.transaction_id,
@@ -268,10 +268,10 @@ export default function Rent({ session, addNotification }) {
       if (tick > item.endMs) {
         const overtimeMs = Math.max(0, tick - item.endMs)
         const overtimeCost = Math.floor((overtimeMs / 3600000) * item.ratePerHr)
-        return `Total Bill: ${formatMoney(prepaid + overtimeCost, false)}`
+        return `Overtime Due: ${formatMoney(overtimeCost, false)}`
       }
 
-      return `Prepaid: ${formatMoney(prepaid)}`
+      return `Prepaid: ${formatMoney(prepaid, false)}`
     }
 
     // Open time: accumulate live every second based on elapsed time
@@ -420,17 +420,17 @@ export default function Rent({ session, addNotification }) {
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
                       <span style={{ color: 'var(--gray)' }}>Status:</span>
                       <strong style={{ color: hasOvertime ? '#c62828' : '#2e7d32' }}>
-                        {hasOvertime ? 'Overtime Accrued' : 'Within Prepaid Time'}
+                        {hasOvertime ? 'Payment Due' : activeReturnItem.isOpenTime ? 'No Charge' : 'Within Prepaid Time'}
                       </strong>
                     </div>
                     {hasOvertime && (
                       <>
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
-                          <span style={{ color: 'var(--gray)' }}>Overtime Duration:</span>
+                          <span style={{ color: 'var(--gray)' }}>{activeReturnItem.isOpenTime ? 'Elapsed Duration' : 'Overtime Duration'}:</span>
                           <strong>{formatDuration(overtimeMs)}</strong>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
-                          <span style={{ color: 'var(--gray)' }}>Overtime Fee:</span>
+                          <span style={{ color: 'var(--gray)' }}>Amount Due:</span>
                           <strong style={{ color: '#c62828' }}>{formatMoney(overtimeFee, false)}</strong>
                         </div>
                       </>
@@ -503,7 +503,7 @@ export default function Rent({ session, addNotification }) {
                         <div style={{ display: 'grid', gap: '12px', marginTop: '8px' }}>
                           <div className="payment-status-card" style={{ margin: '0' }}>
                             <div className="amount-stat">
-                              <span>Overtime Due</span>
+                              <span>Amount Due</span>
                               <strong>{formatMoney(overtimeFee, false)}</strong>
                             </div>
                             <div className="amount-stat">

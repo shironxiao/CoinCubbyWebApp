@@ -4,6 +4,7 @@ import {
   activateRental,
   completeRental,
   createRental,
+  ensureCorrectRates,
   fetchActiveRentals,
   fetchLockers,
   fetchModules,
@@ -61,6 +62,7 @@ export default function Home({ session, onNavigate, addNotification }) {
 
   useEffect(() => {
     loadModules()
+    ensureCorrectRates()
   }, [])
 
   useEffect(() => {
@@ -340,7 +342,7 @@ export default function Home({ session, onNavigate, addNotification }) {
 
             const sizeInfo     = sizeFromType(rental.lockers?.size_type_id)
             const dbRatePerMin = Number(rental.rates?.price_per_minute || 0)
-            const ratePerHr    = dbRatePerMin > 0 ? dbRatePerMin * 60 : sizeInfo.rate
+            const ratePerHr    = dbRatePerMin > 0 ? Math.round(dbRatePerMin * 60) : sizeInfo.rate
 
             // Timer: elapsed for open, overtime elapsed for overdue, remaining for fixed-in-time
             const timerMs = isOpen ? elapsedMs : isOverdue ? overtimeMs : remainMs
@@ -354,8 +356,8 @@ export default function Home({ session, onNavigate, addNotification }) {
             const billLabel = isOpen
               ? `Bill: ${formatMoney(openCost, false)}`
               : isOverdue
-                ? `Total: ${formatMoney(prepaidCost + overtimeCost, false)}`
-                : `Paid: ${formatMoney(prepaidCost)}`
+                ? `Overtime Due: ${formatMoney(overtimeCost, false)}`
+                : `Paid: ${formatMoney(prepaidCost, false)}`
 
             const lockerLabel = rental.lockers?.locker_number || rental.locker_id
             const sizeLabel   = sizeInfo.label

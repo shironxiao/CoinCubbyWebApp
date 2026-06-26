@@ -212,6 +212,32 @@ export async function fetchRates() {
   })
 }
 
+export async function ensureCorrectRates() {
+  try {
+    const rates = await fetchRates()
+    const correctRates = {
+      1: 10 / 60, // Small: ₱10/hr
+      2: 20 / 60, // Medium: ₱20/hr
+      3: 30 / 60, // Large: ₱30/hr
+    }
+
+    for (const rate of (rates || [])) {
+      const correctPrice = correctRates[rate.size_type_id]
+      if (correctPrice !== undefined) {
+        if (Math.abs(Number(rate.price_per_minute) - correctPrice) > 0.001) {
+          await request(`/rest/v1/rates?rate_id=eq.${rate.rate_id}`, {
+            method: 'PATCH',
+            headers: authHeaders(null, { 'Content-Type': 'application/json' }),
+            body: JSON.stringify({ price_per_minute: correctPrice }),
+          })
+        }
+      }
+    }
+  } catch (err) {
+    console.error('Failed to ensure correct rates in DB:', err)
+  }
+}
+
 export async function upsertCustomer(session) {
   if (!session?.userId) return
 
