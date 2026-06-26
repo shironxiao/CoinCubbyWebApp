@@ -146,7 +146,7 @@ export default function History({ session }) {
 
   return (
     <main className="page xml-page xml-history">
-      <section className="xml-screen-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+      <section className="xml-screen-header" style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: '16px', width: '100%', flexWrap: 'wrap' }}>
         <h1>Rental History</h1>
         {filteredItems.length > 0 && (
           <button
