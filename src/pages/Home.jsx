@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/set-state-in-effect */
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   activateRental,
   completeRental,
@@ -20,6 +20,7 @@ function statusClass(status) {
 }
 
 export default function Home({ session, onNavigate, addNotification }) {
+  const lockerPanelRef = useRef(null)
   const [modules, setModules] = useState([])
   const [selectedModuleId, setSelectedModuleId] = useState('')
   const [lockers, setLockers] = useState([])
@@ -306,11 +307,22 @@ export default function Home({ session, onNavigate, addNotification }) {
         <p>WELCOME!</p>
         <h2>Pick your locker</h2>
         <span>Green means you're good to go.<br />Check status indicator below.</span>
-        {availableCount > 0 && (
-          <button className="quick-rent-button" type="button" onClick={handleQuickRent}>
-            Rent Now (Auto-Select)
-          </button>
-        )}
+
+        {/* Rate chips */}
+        <div className="welcome-rates">
+          <span className="rate-chip"><b>S</b> ₱10/hr</span>
+          <span className="rate-chip"><b>M</b> ₱20/hr</span>
+          <span className="rate-chip"><b>L</b> ₱30/hr</span>
+        </div>
+
+        {/* Rent Now button */}
+        <button
+          className="rent-now-button"
+          type="button"
+          onClick={() => lockerPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+        >
+          Rent Now
+        </button>
       </section>
 
       {activeRentals.length > 0 && (
@@ -411,7 +423,7 @@ export default function Home({ session, onNavigate, addNotification }) {
         </div>
       </section>
 
-      <section className="xml-locker-panel">
+      <section className="xml-locker-panel" ref={lockerPanelRef}>
         <div className="xml-locker-panel-head">
           <span className="xml-dark-circle locker-glyph light" aria-hidden="true"></span>
           <div>
