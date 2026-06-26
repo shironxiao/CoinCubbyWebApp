@@ -30,12 +30,12 @@ function calculateOvertimeFee(item, currentTick) {
   if (item.isOpenTime) {
     const durationMs = Math.max(0, currentTick - item.startMs)
     const durationMins = Math.floor(durationMs / 60000)
-    return (durationMins / 60) * item.ratePerHr
+    return Math.floor((durationMins / 60) * item.ratePerHr)
   } else {
     if (currentTick <= item.endMs) return 0
     const overtimeMs = currentTick - item.endMs
     const overtimeMins = Math.floor(overtimeMs / 60000)
-    return (overtimeMins / 60) * item.ratePerHr
+    return Math.floor((overtimeMins / 60) * item.ratePerHr)
   }
 }
 
@@ -267,8 +267,8 @@ export default function Rent({ session, addNotification }) {
       // Past end time → show accumulating overtime on top of prepaid
       if (tick > item.endMs) {
         const overtimeMs = Math.max(0, tick - item.endMs)
-        const overtimeCost = (overtimeMs / 3600000) * item.ratePerHr
-        return `Total Bill: ${formatMoney(prepaid + overtimeCost)}`
+        const overtimeCost = Math.floor((overtimeMs / 3600000) * item.ratePerHr)
+        return `Total Bill: ${formatMoney(prepaid + overtimeCost, false)}`
       }
 
       return `Prepaid: ${formatMoney(prepaid)}`
@@ -276,8 +276,8 @@ export default function Rent({ session, addNotification }) {
 
     // Open time: accumulate live every second based on elapsed time
     const elapsedMs = Math.max(0, tick - item.startMs)
-    const cost = (elapsedMs / 3600000) * item.ratePerHr
-    return `Current Bill: ${formatMoney(cost)}`
+    const cost = Math.floor((elapsedMs / 3600000) * item.ratePerHr)
+    return `Current Bill: ${formatMoney(cost, false)}`
   }
 
   return (
@@ -431,7 +431,7 @@ export default function Rent({ session, addNotification }) {
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
                           <span style={{ color: 'var(--gray)' }}>Overtime Fee:</span>
-                          <strong style={{ color: '#c62828' }}>{formatMoney(overtimeFee)}</strong>
+                          <strong style={{ color: '#c62828' }}>{formatMoney(overtimeFee, false)}</strong>
                         </div>
                       </>
                     )}
@@ -504,16 +504,16 @@ export default function Rent({ session, addNotification }) {
                           <div className="payment-status-card" style={{ margin: '0' }}>
                             <div className="amount-stat">
                               <span>Overtime Due</span>
-                              <strong>{formatMoney(overtimeFee)}</strong>
+                              <strong>{formatMoney(overtimeFee, false)}</strong>
                             </div>
                             <div className="amount-stat">
                               <span>Inserted</span>
-                              <strong className="inserted-text">{formatMoney(insertedAmount)}</strong>
+                              <strong className="inserted-text">{formatMoney(insertedAmount, false)}</strong>
                             </div>
                             <div className="amount-stat">
                               <span>Remaining</span>
                               <strong className="remaining-text">
-                                {formatMoney(Math.max(0, overtimeFee - insertedAmount))}
+                                {formatMoney(Math.max(0, overtimeFee - insertedAmount), false)}
                               </strong>
                             </div>
                           </div>

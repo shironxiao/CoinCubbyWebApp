@@ -419,7 +419,7 @@ export async function completeRental(item, token, overtimeFee = 0, paymentMethod
 
   let finalPaymentAmount = overtimeFee
   if (finalPaymentAmount <= 0 && item.isOpenTime) {
-    finalPaymentAmount = (totalDurationMinutes / 60) * item.ratePerHr
+    finalPaymentAmount = Math.floor((totalDurationMinutes / 60) * item.ratePerHr)
   }
 
   if (finalPaymentAmount > 0) {
@@ -475,7 +475,10 @@ export function parseTimestamp(value) {
   return Number.isNaN(time) ? -1 : time
 }
 
-export function formatMoney(value) {
+export function formatMoney(value, includeCentavos = true) {
+  if (!includeCentavos) {
+    return `₱${Math.floor(Number(value || 0))}`
+  }
   return `₱${Number(value || 0).toFixed(2)}`
 }
 

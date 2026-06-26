@@ -349,12 +349,12 @@ export default function Home({ session, onNavigate, addNotification }) {
 
             // Bill: for overdue, show prepaid + accumulating overtime total
             const prepaidCost = isOpen ? 0 : (totalMs / 3600000) * ratePerHr
-            const overtimeCost = (overtimeMs / 3600000) * ratePerHr
-            const openCost     = (elapsedMs / 3600000) * ratePerHr
+            const overtimeCost = Math.floor((overtimeMs / 3600000) * ratePerHr)
+            const openCost     = Math.floor((elapsedMs / 3600000) * ratePerHr)
             const billLabel = isOpen
-              ? `Bill: ${formatMoney(openCost)}`
+              ? `Bill: ${formatMoney(openCost, false)}`
               : isOverdue
-                ? `Total: ${formatMoney(prepaidCost + overtimeCost)}`
+                ? `Total: ${formatMoney(prepaidCost + overtimeCost, false)}`
                 : `Paid: ${formatMoney(prepaidCost)}`
 
             const lockerLabel = rental.lockers?.locker_number || rental.locker_id
@@ -479,7 +479,7 @@ export default function Home({ session, onNavigate, addNotification }) {
               <div>
                 <h2>Rent Locker {selectedLocker.id}</h2>
                 <p className="muted">
-                  Size: {selectedLocker.size} | Rate: {formatMoney(selectedLocker.rate)}/hr
+                  Size: {selectedLocker.size} | Rate: {formatMoney(selectedLocker.rate, false)}/hr
                 </p>
               </div>
               <button className="icon-button" type="button" onClick={() => setSelectedLocker(null)}>
