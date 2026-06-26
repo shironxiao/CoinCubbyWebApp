@@ -321,41 +321,60 @@ export default function Home({ session, onNavigate, addNotification }) {
             const endMs   = parseTimestamp(rental.end_time)
             const totalMs  = isOpen ? null : Math.max(1, endMs - startMs)
             const elapsedMs = Math.max(0, tick - startMs)
+            const isOverdue = !isOpen && tick > endMs
+            const overtimeMs = isOverdue ? Math.max(0, tick - endMs) : 0
             const remainMs  = isOpen ? 0 : Math.max(0, endMs - tick)
             const progress  = isOpen ? 100 : Math.min(100, (elapsedMs / totalMs) * 100)
-            const timer = isOpen
-              ? formatDuration(elapsedMs)
-              : formatDuration(remainMs)
-            const bill = isOpen
-              ? formatMoney((elapsedMs / 3600000) * (Number(rental.rates?.price_per_minute || 0.17) * 60))
-              : formatMoney((totalMs / 3600000) * (Number(rental.rates?.price_per_minute || 0.17) * 60))
+
+            const sizeInfo     = sizeFromType(rental.lockers?.size_type_id)
+            const dbRatePerMin = Number(rental.rates?.price_per_minute || 0)
+            const ratePerHr    = dbRatePerMin > 0 ? dbRatePerMin * 60 : sizeInfo.rate
+
+            // Timer: elapsed for open, overtime elapsed for overdue, remaining for fixed-in-time
+            const timerMs = isOpen ? elapsedMs : isOverdue ? overtimeMs : remainMs
+            const timer   = formatDuration(timerMs)
+            const timerLabel = isOpen ? 'ELAPSED' : isOverdue ? 'OVERTIME' : 'REMAINING'
+
+            // Bill: for overdue, show prepaid + accumulating overtime total
+            const prepaidCost = isOpen ? 0 : (totalMs / 3600000) * ratePerHr
+            const overtimeCost = (overtimeMs / 3600000) * ratePerHr
+            const openCost     = (elapsedMs / 3600000) * ratePerHr
+            const billLabel = isOpen
+              ? `Bill: ${formatMoney(openCost)}`
+              : isOverdue
+                ? `Total: ${formatMoney(prepaidCost + overtimeCost)}`
+                : `Paid: ${formatMoney(prepaidCost)}`
+
             const lockerLabel = rental.lockers?.locker_number || rental.locker_id
-            const sizeLabel   = sizeFromType(rental.lockers?.size_type_id).label
+            const sizeLabel   = sizeInfo.label
             return (
-              <div className="home-rental-bar-card" key={rental.transaction_id}>
+              <div
+                className={`home-rental-bar-card${isOverdue ? ' home-rental-bar-card--overdue' : ''}`}
+                key={rental.transaction_id}
+              >
                 {/* top row */}
                 <div className="hbar-top">
                   <div className="hbar-info">
                     <span className="hbar-locker">{lockerLabel}</span>
                     <span className="hbar-size">{sizeLabel}</span>
                   </div>
-                  <span className="hbar-badge">
+                  <span className={`hbar-badge${isOverdue ? ' hbar-badge--overdue' : ''}`}>
                     <span className="hbar-dot" />
-                    Active
+                    {isOverdue ? 'Overdue' : 'Active'}
                   </span>
                 </div>
                 {/* progress bar */}
                 <div className="hbar-track">
                   <div
-                    className={`hbar-fill${isOpen ? ' hbar-fill--open' : ''}`}
-                    style={isOpen ? {} : { width: `${progress}%` }}
+                    className={`hbar-fill${isOpen ? ' hbar-fill--open' : ''}${isOverdue ? ' hbar-fill--overdue' : ''}`}
+                    style={isOpen || isOverdue ? {} : { width: `${progress}%` }}
                   />
                 </div>
                 {/* bottom row */}
                 <div className="hbar-bottom">
-                  <span className="hbar-label">{isOpen ? 'ELAPSED' : 'REMAINING'}</span>
+                  <span className="hbar-label">{timerLabel}</span>
                   <span className="hbar-timer">{timer}</span>
-                  <span className="hbar-bill">{isOpen ? `Bill: ${bill}` : `Paid: ${bill}`}</span>
+                  <span className={`hbar-bill${isOverdue ? ' hbar-bill--overdue' : ''}`}>{billLabel}</span>
                 </div>
                 {/* return button */}
                 <button

@@ -8,7 +8,9 @@ function mapRental(row) {
   const startMs = parseTimestamp(row.start_time)
   const endMs = parseTimestamp(row.end_time)
   const isOpenTime = !row.end_time
-  const ratePerHr = Number(row.rates?.price_per_minute || 0.17) * 60
+  // Use DB rate if available, otherwise fall back to the size-tier rate (₱10/20/30 per hr)
+  const dbRatePerMin = Number(row.rates?.price_per_minute || 0)
+  const ratePerHr = dbRatePerMin > 0 ? dbRatePerMin * 60 : size.rate
 
   return {
     transactionId: row.transaction_id,
@@ -259,12 +261,23 @@ export default function Rent({ session, addNotification }) {
 
   function currentCost(item) {
     if (!item.isOpenTime) {
-      const hours = Math.max(0, item.endMs - item.startMs) / 3600000
-      return `Prepaid: ${formatMoney(hours * item.ratePerHr)}`
+      const prepaidHours = Math.max(0, item.endMs - item.startMs) / 3600000
+      const prepaid = prepaidHours * item.ratePerHr
+
+      // Past end time → show accumulating overtime on top of prepaid
+      if (tick > item.endMs) {
+        const overtimeMs = Math.max(0, tick - item.endMs)
+        const overtimeCost = (overtimeMs / 3600000) * item.ratePerHr
+        return `Total Bill: ${formatMoney(prepaid + overtimeCost)}`
+      }
+
+      return `Prepaid: ${formatMoney(prepaid)}`
     }
 
-    const hours = Math.max(tick - item.startMs, 3600000) / 3600000
-    return `Current Bill: ${formatMoney(hours * item.ratePerHr)}`
+    // Open time: accumulate live every second based on elapsed time
+    const elapsedMs = Math.max(0, tick - item.startMs)
+    const cost = (elapsedMs / 3600000) * item.ratePerHr
+    return `Current Bill: ${formatMoney(cost)}`
   }
 
   return (
@@ -286,24 +299,35 @@ export default function Rent({ session, addNotification }) {
       {!loading && rentals.length === 0 && <p className="empty-state">No active rentals yet.</p>}
 
       <section className="rental-list">
-        {rentals.map((item) => {
-          const timer = item.isOpenTime
-            ? formatDuration(tick - item.startMs)
-            : formatDuration(item.endMs - tick)
+      {rentals.map((item) => {
+          const isOverdue = !item.isOpenTime && tick > item.endMs
+
+          // Timer display: elapsed for open/overdue, remaining for fixed-within-time
+          const timerMs = item.isOpenTime
+            ? tick - item.startMs
+            : isOverdue
+              ? tick - item.endMs   // overtime elapsed
+              : item.endMs - tick   // time remaining
+          const timer = formatDuration(timerMs)
+          const timerLabel = item.isOpenTime
+            ? 'ELAPSED TIME'
+            : isOverdue
+              ? 'OVERTIME'
+              : 'TIME REMAINING'
 
           return (
-            <article className="rental-card" key={item.transactionId}>
+            <article className={`rental-card${isOverdue ? ' rental-card--overdue' : ''}`} key={item.transactionId}>
               <div className="card-heading">
                 <div>
                   <small>Locker</small>
                   <h2>{item.lockerNumber}</h2>
                   <p>{item.sizeName}</p>
                 </div>
-                <span>Active</span>
+                <span className={isOverdue ? 'badge-overdue' : ''}>{isOverdue ? 'Overdue' : 'Active'}</span>
               </div>
 
               <div className="timer-box">
-                <small>{item.isOpenTime ? 'ELAPSED TIME' : 'TIME REMAINING'}</small>
+                <small>{timerLabel}</small>
                 <strong>{timer}</strong>
                 <span>{currentCost(item)}</span>
               </div>
@@ -325,7 +349,7 @@ export default function Rent({ session, addNotification }) {
             </article>
           )
         })}
-      </section>
+        </section>
 
       {activeReturnItem && (() => {
         const overtimeMs = activeReturnItem.isOpenTime 

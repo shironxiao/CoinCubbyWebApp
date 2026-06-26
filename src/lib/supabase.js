@@ -173,9 +173,9 @@ export async function sendPasswordResetEmail(email) {
 
 
 export function sizeFromType(sizeTypeId) {
-  if (Number(sizeTypeId) === 2) return { label: 'Medium', rate: 20 }
-  if (Number(sizeTypeId) === 3) return { label: 'Large', rate: 30 }
-  return { label: 'Small', rate: 10 }
+  if (Number(sizeTypeId) === 2) return { label: 'Medium', rate: 20, price_per_minute: 20 / 60 }
+  if (Number(sizeTypeId) === 3) return { label: 'Large', rate: 30, price_per_minute: 30 / 60 }
+  return { label: 'Small', rate: 10, price_per_minute: 10 / 60 }
 }
 
 export async function fetchModules() {
