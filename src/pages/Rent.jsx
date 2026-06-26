@@ -8,9 +8,7 @@ function mapRental(row) {
   const startMs = parseTimestamp(row.start_time)
   const endMs = parseTimestamp(row.end_time)
   const isOpenTime = !row.end_time
-  // Use DB rate if available, otherwise fall back to the size-tier rate (₱10/20/30 per hr)
-  const dbRatePerMin = Number(row.rates?.price_per_minute || 0)
-  const ratePerHr = dbRatePerMin > 0 ? Math.round(dbRatePerMin * 60) : size.rate
+  const ratePerHr = size.rate
 
   return {
     transactionId: row.transaction_id,

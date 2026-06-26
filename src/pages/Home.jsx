@@ -4,7 +4,6 @@ import {
   activateRental,
   completeRental,
   createRental,
-  ensureCorrectRates,
   fetchActiveRentals,
   fetchLockers,
   fetchModules,
@@ -62,7 +61,6 @@ export default function Home({ session, onNavigate, addNotification }) {
 
   useEffect(() => {
     loadModules()
-    ensureCorrectRates()
   }, [])
 
   useEffect(() => {
@@ -341,8 +339,7 @@ export default function Home({ session, onNavigate, addNotification }) {
             const progress  = isOpen ? 100 : Math.min(100, (elapsedMs / totalMs) * 100)
 
             const sizeInfo     = sizeFromType(rental.lockers?.size_type_id)
-            const dbRatePerMin = Number(rental.rates?.price_per_minute || 0)
-            const ratePerHr    = dbRatePerMin > 0 ? Math.round(dbRatePerMin * 60) : sizeInfo.rate
+            const ratePerHr    = sizeInfo.rate
 
             // Timer: elapsed for open, overtime elapsed for overdue, remaining for fixed-in-time
             const timerMs = isOpen ? elapsedMs : isOverdue ? overtimeMs : remainMs
