@@ -46,18 +46,19 @@ export default function Register({ onNavigate }) {
     if (!form.lastName.trim()) return setError('Last name is required.')
     if (!form.email.trim()) return setError('Email is required.')
     if (!/^\S+@\S+\.\S+$/.test(form.email)) return setError('Enter a valid email address.')
-    if (!form.password) return setError('Password is required.')
-    if (form.password.length < 6) return setError('Password must be at least 6 characters.')
-    if (form.password !== form.confirmPassword) return setError('Passwords do not match.')
-    if (!form.passkey) return setError('PIN ID is required.')
-    if (form.passkey.length !== 4) return setError('PIN ID must be exactly 4 digits.')
+    if (!form.password) return setError('6-digit PIN is required.')
+    if (!/^\d{6}$/.test(form.password)) return setError('PIN must be exactly 6 digits.')
+    if (form.password !== form.confirmPassword) return setError('PINs do not match.')
+    if (!userId) return setError('User ID is not ready yet. Please wait.')
 
     setLoading(true)
     try {
       // Double-check uniqueness right before submission
       const taken = await isUserIdTaken(userId)
       if (taken) {
-        setError('This PIN ID is already taken. Please choose a different 4-digit PIN.')
+        const newId = await generateUniqueUserId()
+        setUserId(newId)
+        setError('Your User ID had a conflict. A new one has been generated. Please submit again.')
         setLoading(false)
         return
       }
@@ -154,17 +155,6 @@ export default function Register({ onNavigate }) {
             <input
               name="confirmPassword"
               type="password"
-              value={form.confirmPassword}
-              onChange={updateField}
-              placeholder="••••••••"
-              autoComplete="new-password"
-            />
-          </label>
-          <label className="xml-field">
-            <span>PIN ID (4 Digits)</span>
-            <input
-              name="passkey"
-              type="text"
               inputMode="numeric"
               maxLength="6"
               value={form.confirmPassword}
