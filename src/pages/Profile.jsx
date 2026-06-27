@@ -64,6 +64,74 @@ export default function Profile({ session, onLogout, onNavigate, addNotification
     }
   }
 
+  async function handleVerifyReveal(event) {
+    event.preventDefault()
+    setRevealError('')
+    if (!revealPassword) return setRevealError('Password is required.')
+
+    setLoadingPasskey(true)
+    try {
+      await verifyUserPassword(profile.contact, revealPassword)
+      const pin = await recoverPasskey(profile.passkey)
+      setRevealedPin(pin)
+      setIsVerified(true)
+      setIsVerifyingReveal(false)
+      setRevealPassword('')
+    } catch (err) {
+      setRevealError(err.message || 'Incorrect password. Please try again.')
+    } finally {
+      setLoadingPasskey(false)
+    }
+  }
+
+  async function handleSetOrChangePasskey(event) {
+    event.preventDefault()
+    setPasskeyError('')
+    setPasskeyNotice('')
+
+    if (!newPasskey) return setPasskeyError('PassKey PIN is required.')
+    if (newPasskey.length !== 4) return setPasskeyError('PassKey must be exactly 4 digits.')
+    if (!confirmPassword) return setPasskeyError('Account password is required.')
+
+    setLoadingPasskey(true)
+    try {
+      // 1. Verify account password
+      await verifyUserPassword(profile.contact, confirmPassword)
+
+      // 2. Check if the passkey is taken
+      const taken = await isPasskeyTaken(newPasskey)
+      if (taken) {
+        throw new Error('This PassKey PIN is already taken. Please choose a different 4-digit PIN.')
+      }
+
+      // 3. Update the passkey in database
+      await updatePasskey(profile.userId, newPasskey, session?.accessToken)
+
+      const hashed = await hashPasskey(newPasskey)
+      setProfile((current) => ({ ...current, passkey: hashed }))
+      setRevealedPin(newPasskey)
+      setPasskeyNotice(profile.passkey ? 'PassKey changed successfully.' : 'PassKey set successfully.')
+      setNewPasskey('')
+      setConfirmPassword('')
+      setIsChangingPasskey(false)
+      setIsVerified(true) // Show the newly set/updated passkey
+
+      if (addNotification) {
+        addNotification({
+          title: 'PassKey Updated',
+          content: 'Your transaction-link PassKey PIN was updated successfully.',
+          type: 'security',
+        })
+      }
+
+      setTimeout(() => setPasskeyNotice(''), 2000)
+    } catch (err) {
+      setPasskeyError(err.message || 'Failed to update PassKey. Please try again.')
+    } finally {
+      setLoadingPasskey(false)
+    }
+  }
+
   const initials = useMemo(() => {
     const name = profile.fullName || profile.contact || 'User'
     return name
@@ -119,29 +187,186 @@ export default function Profile({ session, onLogout, onNavigate, addNotification
         <h1>{profile.fullName || 'Loading...'}</h1>
         <p>{profile.contact}</p>
 
-        {/* User ID Badge */}
+      {message && <p className="alert">{message}</p>}
+
+      <section className="info-panel passkey-panel" style={{ padding: '20px', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.08)', marginBottom: '16px', background: 'rgba(255, 255, 255, 0.02)' }}>
+        <h2 style={{ fontSize: '1.1rem', fontWeight: 'bold', margin: '0 0 8px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span>🔑</span> PassKey (Kiosk Link)
+        </h2>
+        <p style={{ margin: '0 0 16px 0', fontSize: '0.85rem', color: '#888', lineHeight: '1.4' }}>
+          Your PassKey is a 4-digit PIN used to link your physical locker transactions at the kiosk to your web app account.
+        </p>
+
         {loadingProfile ? (
-          <div style={{ marginTop: '10px', fontSize: '12px', color: '#888' }}>Loading User ID...</div>
-        ) : profile.coinUserId ? (
-          <div style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '6px',
-            marginTop: '10px',
-            padding: '6px 14px',
-            background: 'var(--dark)',
-            borderRadius: '999px',
-            fontSize: '13px',
-            fontWeight: '700',
-            color: 'var(--label-green)',
-            letterSpacing: '0.15em',
-            fontFamily: 'monospace',
-          }}>
-            <span style={{ opacity: 0.6, fontSize: '11px', fontWeight: 400, letterSpacing: 0 }}>User ID</span>
-            {profile.coinUserId}
+          <div className="xml-loading" style={{ minHeight: '80px', padding: '10px 0' }}>
+            <span></span>
+            <p>Checking PassKey status...</p>
           </div>
+        ) : !profile.passkey ? (
+          /* Case 1: Existing User setting their PassKey for the first time */
+          <form className="form-stack" onSubmit={handleSetOrChangePasskey}>
+            <p className="notice-sub" style={{ fontSize: '0.85rem', color: '#ffb300', marginBottom: '12px' }}>
+              ⚠️ You don't have a PassKey set yet. Please choose a 4-digit PIN below.
+            </p>
+            <label className="xml-field">
+              <span>Choose 4-Digit PassKey PIN</span>
+              <input
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength="4"
+                value={newPasskey}
+                onChange={(e) => setNewPasskey(e.target.value.replace(/\D/g, ''))}
+                placeholder="1234"
+                disabled={loadingPasskey}
+                required
+              />
+            </label>
+            <label className="xml-field">
+              <span>Account Password (To Verify)</span>
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="••••••••"
+                disabled={loadingPasskey}
+                required
+              />
+            </label>
+
+            {passkeyError && <p className="alert" style={{ marginTop: '8px' }}>{passkeyError}</p>}
+            {passkeyNotice && <p className="success" style={{ marginTop: '8px' }}>{passkeyNotice}</p>}
+
+            <button className="primary-button xml-black-button" type="submit" disabled={loadingPasskey} style={{ marginTop: '12px', width: '100%' }}>
+              {loadingPasskey ? 'Saving...' : 'Set PassKey'}
+            </button>
+          </form>
         ) : (
-          <div style={{ marginTop: '10px', fontSize: '12px', color: '#aaa' }}>No User ID assigned</div>
+          /* Case 2: PassKey exists */
+          <div>
+            {!isVerified ? (
+              /* PassKey is Hidden/Locked */
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', background: 'rgba(0, 0, 0, 0.2)', borderRadius: '8px', marginBottom: '12px' }}>
+                  <span style={{ fontSize: '1.25rem', letterSpacing: '0.4em', color: '#666', fontWeight: 'bold' }}>••••</span>
+                  <span style={{ background: '#ff3b30', fontSize: '0.75rem', padding: '2px 8px', borderRadius: '4px', color: '#fff' }}>Locked</span>
+                </div>
+
+                {!isVerifyingReveal ? (
+                  <button className="secondary-button" type="button" onClick={() => setIsVerifyingReveal(true)} style={{ width: '100%' }}>
+                    Reveal PassKey
+                  </button>
+                ) : (
+                  <form onSubmit={handleVerifyReveal} style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '8px' }}>
+                    <label className="xml-field">
+                      <span>Enter Account Password</span>
+                      <input
+                        type="password"
+                        value={revealPassword}
+                        onChange={(e) => setRevealPassword(e.target.value)}
+                        placeholder="••••••••"
+                        disabled={loadingPasskey}
+                        autoFocus
+                        required
+                      />
+                    </label>
+                    {revealError && <p className="alert">{revealError}</p>}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                      <button
+                        className="secondary-button"
+                        type="button"
+                        onClick={() => {
+                          setIsVerifyingReveal(false)
+                          setRevealPassword('')
+                          setRevealError('')
+                        }}
+                        disabled={loadingPasskey}
+                      >
+                        Cancel
+                      </button>
+                      <button className="primary-button xml-black-button" type="submit" disabled={loadingPasskey}>
+                        {loadingPasskey ? 'Verifying...' : 'Verify'}
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </div>
+            ) : (
+              /* PassKey is Revealed */
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px', background: 'rgba(255, 255, 255, 0.05)', borderRadius: '8px', marginBottom: '12px', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                  <span style={{ fontSize: '1.4rem', letterSpacing: '0.4em', color: '#4cd964', fontWeight: 'bold', fontFamily: 'monospace' }}>
+                    {(revealedPin || '••••').split('').join(' ')}
+                  </span>
+                  <span style={{ background: '#4cd964', fontSize: '0.75rem', padding: '2px 8px', borderRadius: '4px', color: '#000' }}>Active</span>
+                </div>
+
+                {!isChangingPasskey ? (
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <button className="secondary-button" type="button" onClick={() => {
+                      setIsVerified(false)
+                      setRevealedPin('')
+                    }}>
+                      Hide PIN
+                    </button>
+                    <button className="secondary-button" type="button" onClick={() => setIsChangingPasskey(true)}>
+                      Change PassKey
+                    </button>
+                  </div>
+                ) : (
+                  <form className="form-stack" onSubmit={handleSetOrChangePasskey} style={{ marginTop: '12px' }}>
+                    <label className="xml-field">
+                      <span>New 4-Digit PassKey PIN</span>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        maxLength="4"
+                        value={newPasskey}
+                        onChange={(e) => setNewPasskey(e.target.value.replace(/\D/g, ''))}
+                        placeholder="1234"
+                        disabled={loadingPasskey}
+                        required
+                      />
+                    </label>
+                    <label className="xml-field">
+                      <span>Confirm Account Password</span>
+                      <input
+                        type="password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        placeholder="••••••••"
+                        disabled={loadingPasskey}
+                        required
+                      />
+                    </label>
+
+                    {passkeyError && <p className="alert">{passkeyError}</p>}
+                    {passkeyNotice && <p className="success">{passkeyNotice}</p>}
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '12px' }}>
+                      <button
+                        className="secondary-button"
+                        type="button"
+                        disabled={loadingPasskey}
+                        onClick={() => {
+                          setIsChangingPasskey(false)
+                          setNewPasskey('')
+                          setConfirmPassword('')
+                          setPasskeyError('')
+                        }}
+                      >
+                        Cancel
+                      </button>
+                      <button className="primary-button xml-black-button" type="submit" disabled={loadingPasskey}>
+                        {loadingPasskey ? 'Saving...' : 'Save PIN'}
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </div>
+            )}
+          </div>
         )}
       </section>
 

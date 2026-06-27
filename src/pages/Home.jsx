@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/set-state-in-effect */
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   activateRental,
   cancelPaymentSession,
@@ -21,6 +21,7 @@ function statusClass(status) {
 }
 
 export default function Home({ session, onNavigate, addNotification }) {
+  const lockerPanelRef = useRef(null)
   const [modules, setModules] = useState([])
   const [selectedModuleId, setSelectedModuleId] = useState('')
   const [lockers, setLockers] = useState([])
@@ -313,11 +314,22 @@ export default function Home({ session, onNavigate, addNotification }) {
         <p>WELCOME!</p>
         <h2>Pick your locker</h2>
         <span>Green means you're good to go.<br />Check status indicator below.</span>
-        {availableCount > 0 && (
-          <button className="quick-rent-button" type="button" onClick={handleQuickRent}>
-            Rent Now (Auto-Select)
-          </button>
-        )}
+
+        {/* Rate chips */}
+        <div className="welcome-rates">
+          <span className="rate-chip"><b>S</b> ₱10/hr</span>
+          <span className="rate-chip"><b>M</b> ₱20/hr</span>
+          <span className="rate-chip"><b>L</b> ₱30/hr</span>
+        </div>
+
+        {/* Rent Now button */}
+        <button
+          className="rent-now-button"
+          type="button"
+          onClick={() => lockerPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+        >
+          Rent Now
+        </button>
       </section>
 
       {activeRentals.length > 0 && (
@@ -328,41 +340,59 @@ export default function Home({ session, onNavigate, addNotification }) {
             const endMs   = parseTimestamp(rental.end_time)
             const totalMs  = isOpen ? null : Math.max(1, endMs - startMs)
             const elapsedMs = Math.max(0, tick - startMs)
+            const isOverdue = !isOpen && tick > endMs
+            const overtimeMs = isOverdue ? Math.max(0, tick - endMs) : 0
             const remainMs  = isOpen ? 0 : Math.max(0, endMs - tick)
             const progress  = isOpen ? 100 : Math.min(100, (elapsedMs / totalMs) * 100)
-            const timer = isOpen
-              ? formatDuration(elapsedMs)
-              : formatDuration(remainMs)
-            const bill = isOpen
-              ? formatMoney((elapsedMs / 3600000) * (Number(rental.rates?.price_per_minute || 0.17) * 60))
-              : formatMoney((totalMs / 3600000) * (Number(rental.rates?.price_per_minute || 0.17) * 60))
+
+            const sizeInfo     = sizeFromType(rental.lockers?.size_type_id)
+            const ratePerHr    = sizeInfo.rate
+
+            // Timer: elapsed for open, overtime elapsed for overdue, remaining for fixed-in-time
+            const timerMs = isOpen ? elapsedMs : isOverdue ? overtimeMs : remainMs
+            const timer   = formatDuration(timerMs)
+            const timerLabel = isOpen ? 'ELAPSED' : isOverdue ? 'OVERTIME' : 'REMAINING'
+
+            // Bill: for overdue, show prepaid + accumulating overtime total
+            const prepaidCost = isOpen ? 0 : (totalMs / 3600000) * ratePerHr
+            const overtimeCost = Math.floor((overtimeMs / 3600000) * ratePerHr)
+            const openCost     = Math.floor((elapsedMs / 3600000) * ratePerHr)
+            const billLabel = isOpen
+              ? `Bill: ${formatMoney(openCost, false)}`
+              : isOverdue
+                ? `Overtime Due: ${formatMoney(overtimeCost, false)}`
+                : `Paid: ${formatMoney(prepaidCost, false)}`
+
             const lockerLabel = rental.lockers?.locker_number || rental.locker_id
-            const sizeLabel   = sizeFromType(rental.lockers?.size_type_id).label
+            const sizeLabel   = sizeInfo.label
             return (
-              <div className="home-rental-bar-card" key={rental.transaction_id}>
+              <div
+                className={`home-rental-bar-card${isOverdue ? ' home-rental-bar-card--overdue' : ''}`}
+                key={rental.transaction_id}
+              >
                 {/* top row */}
                 <div className="hbar-top">
                   <div className="hbar-info">
                     <span className="hbar-locker">{lockerLabel}</span>
                     <span className="hbar-size">{sizeLabel}</span>
                   </div>
-                  <span className="hbar-badge">
+                  <span className={`hbar-badge${isOverdue ? ' hbar-badge--overdue' : ''}`}>
                     <span className="hbar-dot" />
-                    Active
+                    {isOverdue ? 'Overdue' : 'Active'}
                   </span>
                 </div>
                 {/* progress bar */}
                 <div className="hbar-track">
                   <div
-                    className={`hbar-fill${isOpen ? ' hbar-fill--open' : ''}`}
-                    style={isOpen ? {} : { width: `${progress}%` }}
+                    className={`hbar-fill${isOpen ? ' hbar-fill--open' : ''}${isOverdue ? ' hbar-fill--overdue' : ''}`}
+                    style={isOpen || isOverdue ? {} : { width: `${progress}%` }}
                   />
                 </div>
                 {/* bottom row */}
                 <div className="hbar-bottom">
-                  <span className="hbar-label">{isOpen ? 'ELAPSED' : 'REMAINING'}</span>
+                  <span className="hbar-label">{timerLabel}</span>
                   <span className="hbar-timer">{timer}</span>
-                  <span className="hbar-bill">{isOpen ? `Bill: ${bill}` : `Paid: ${bill}`}</span>
+                  <span className={`hbar-bill${isOverdue ? ' hbar-bill--overdue' : ''}`}>{billLabel}</span>
                 </div>
                 {/* return button */}
                 <button
@@ -399,7 +429,7 @@ export default function Home({ session, onNavigate, addNotification }) {
         </div>
       </section>
 
-      <section className="xml-locker-panel">
+      <section className="xml-locker-panel" ref={lockerPanelRef}>
         <div className="xml-locker-panel-head">
           <span className="xml-dark-circle locker-glyph light" aria-hidden="true"></span>
           <div>
@@ -455,7 +485,7 @@ export default function Home({ session, onNavigate, addNotification }) {
               <div>
                 <h2>Rent Locker {selectedLocker.id}</h2>
                 <p className="muted">
-                  Size: {selectedLocker.size} | Rate: {formatMoney(selectedLocker.rate)}/hr
+                  Size: {selectedLocker.size} | Rate: {formatMoney(selectedLocker.rate, false)}/hr
                 </p>
               </div>
               <button className="icon-button" type="button" onClick={() => setSelectedLocker(null)}>

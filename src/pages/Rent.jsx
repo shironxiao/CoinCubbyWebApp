@@ -17,7 +17,7 @@ function mapRental(row) {
   const startMs = parseTimestamp(row.start_time)
   const endMs = parseTimestamp(row.end_time)
   const isOpenTime = !row.end_time
-  const ratePerHr = Number(row.rates?.price_per_minute || 0.17) * 60
+  const ratePerHr = size.rate
 
   return {
     transactionId: row.transaction_id,
@@ -38,12 +38,12 @@ function calculateOvertimeFee(item, currentTick) {
   if (item.isOpenTime) {
     const durationMs = Math.max(0, currentTick - item.startMs)
     const durationMins = Math.floor(durationMs / 60000)
-    return (durationMins / 60) * item.ratePerHr
+    return Math.floor((durationMins / 60) * item.ratePerHr)
   } else {
     if (currentTick <= item.endMs) return 0
     const overtimeMs = currentTick - item.endMs
     const overtimeMins = Math.floor(overtimeMs / 60000)
-    return (overtimeMins / 60) * item.ratePerHr
+    return Math.floor((overtimeMins / 60) * item.ratePerHr)
   }
 }
 
@@ -81,10 +81,14 @@ export default function Rent({ session, addNotification }) {
 
     setVerifyingPin(true)
     try {
-      await verifyPinAsPassword(session.email, enteredPin)
-      setIsPasskeyVerified(true)
-    } catch {
-      setPinVerificationError('Incorrect PIN. Please try again.')
+      const valid = await verifyPasskey(session.userId, enteredPasskey, session.accessToken)
+      if (valid) {
+        setIsPasskeyVerified(true)
+      } else {
+        setPasskeyVerificationError('Incorrect PIN ID. Please try again.')
+      }
+    } catch (err) {
+      setPasskeyVerificationError(err.message || 'Verification failed. Please try again.')
     } finally {
       setVerifyingPin(false)
     }
@@ -323,12 +327,23 @@ export default function Rent({ session, addNotification }) {
 
   function currentCost(item) {
     if (!item.isOpenTime) {
-      const hours = Math.max(0, item.endMs - item.startMs) / 3600000
-      return `Prepaid: ${formatMoney(hours * item.ratePerHr)}`
+      const prepaidHours = Math.max(0, item.endMs - item.startMs) / 3600000
+      const prepaid = prepaidHours * item.ratePerHr
+
+      // Past end time → show accumulating overtime on top of prepaid
+      if (tick > item.endMs) {
+        const overtimeMs = Math.max(0, tick - item.endMs)
+        const overtimeCost = Math.floor((overtimeMs / 3600000) * item.ratePerHr)
+        return `Overtime Due: ${formatMoney(overtimeCost, false)}`
+      }
+
+      return `Prepaid: ${formatMoney(prepaid, false)}`
     }
 
-    const hours = Math.max(tick - item.startMs, 3600000) / 3600000
-    return `Current Bill: ${formatMoney(hours * item.ratePerHr)}`
+    // Open time: accumulate live every second based on elapsed time
+    const elapsedMs = Math.max(0, tick - item.startMs)
+    const cost = Math.floor((elapsedMs / 3600000) * item.ratePerHr)
+    return `Current Bill: ${formatMoney(cost, false)}`
   }
 
   return (
@@ -350,24 +365,35 @@ export default function Rent({ session, addNotification }) {
       {!loading && rentals.length === 0 && <p className="empty-state">No active rentals yet.</p>}
 
       <section className="rental-list">
-        {rentals.map((item) => {
-          const timer = item.isOpenTime
-            ? formatDuration(tick - item.startMs)
-            : formatDuration(item.endMs - tick)
+      {rentals.map((item) => {
+          const isOverdue = !item.isOpenTime && tick > item.endMs
+
+          // Timer display: elapsed for open/overdue, remaining for fixed-within-time
+          const timerMs = item.isOpenTime
+            ? tick - item.startMs
+            : isOverdue
+              ? tick - item.endMs   // overtime elapsed
+              : item.endMs - tick   // time remaining
+          const timer = formatDuration(timerMs)
+          const timerLabel = item.isOpenTime
+            ? 'ELAPSED TIME'
+            : isOverdue
+              ? 'OVERTIME'
+              : 'TIME REMAINING'
 
           return (
-            <article className="rental-card" key={item.transactionId}>
+            <article className={`rental-card${isOverdue ? ' rental-card--overdue' : ''}`} key={item.transactionId}>
               <div className="card-heading">
                 <div>
                   <small>Locker</small>
                   <h2>{item.lockerNumber}</h2>
                   <p>{item.sizeName}</p>
                 </div>
-                <span>Active</span>
+                <span className={isOverdue ? 'badge-overdue' : ''}>{isOverdue ? 'Overdue' : 'Active'}</span>
               </div>
 
               <div className="timer-box">
-                <small>{item.isOpenTime ? 'ELAPSED TIME' : 'TIME REMAINING'}</small>
+                <small>{timerLabel}</small>
                 <strong>{timer}</strong>
                 <span>{currentCost(item)}</span>
               </div>
@@ -389,7 +415,7 @@ export default function Rent({ session, addNotification }) {
             </article>
           )
         })}
-      </section>
+        </section>
 
       {activeReturnItem && (() => {
         const overtimeMs = activeReturnItem.isOpenTime 
@@ -414,11 +440,11 @@ export default function Rent({ session, addNotification }) {
               {!isPasskeyVerified ? (
                 <form onSubmit={handleVerifyPinSubmit} className="form-stack" style={{ display: 'grid', gap: '14px', marginTop: '8px' }}>
                   <p style={{ fontSize: '13px', color: '#666', textAlign: 'center', margin: '0 0 10px 0', lineHeight: '1.4' }}>
-                    For security, please enter your 6-digit Account PIN to confirm returning Locker #{activeReturnItem.lockerNumber}.
+                    For security, please enter your 4-digit PIN ID to confirm returning Locker #{activeReturnItem.lockerNumber}.
                   </p>
                   
                   <label className="xml-field">
-                    <span>6-Digit Account PIN</span>
+                    <span>4-Digit PIN ID</span>
                     <input
                       type="password"
                       inputMode="numeric"
@@ -460,18 +486,18 @@ export default function Rent({ session, addNotification }) {
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
                       <span style={{ color: 'var(--gray)' }}>Status:</span>
                       <strong style={{ color: hasOvertime ? '#c62828' : '#2e7d32' }}>
-                        {hasOvertime ? 'Overtime Accrued' : 'Within Prepaid Time'}
+                        {hasOvertime ? 'Payment Due' : activeReturnItem.isOpenTime ? 'No Charge' : 'Within Prepaid Time'}
                       </strong>
                     </div>
                     {hasOvertime && (
                       <>
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
-                          <span style={{ color: 'var(--gray)' }}>Overtime Duration:</span>
+                          <span style={{ color: 'var(--gray)' }}>{activeReturnItem.isOpenTime ? 'Elapsed Duration' : 'Overtime Duration'}:</span>
                           <strong>{formatDuration(overtimeMs)}</strong>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
-                          <span style={{ color: 'var(--gray)' }}>Overtime Fee:</span>
-                          <strong style={{ color: '#c62828' }}>{formatMoney(overtimeFee)}</strong>
+                          <span style={{ color: 'var(--gray)' }}>Amount Due:</span>
+                          <strong style={{ color: '#c62828' }}>{formatMoney(overtimeFee, false)}</strong>
                         </div>
                       </>
                     )}
@@ -543,17 +569,17 @@ export default function Rent({ session, addNotification }) {
                         <div style={{ display: 'grid', gap: '12px', marginTop: '8px' }}>
                           <div className="payment-status-card" style={{ margin: '0' }}>
                             <div className="amount-stat">
-                              <span>Overtime Due</span>
-                              <strong>{formatMoney(overtimeFee)}</strong>
+                              <span>Amount Due</span>
+                              <strong>{formatMoney(overtimeFee, false)}</strong>
                             </div>
                             <div className="amount-stat">
                               <span>Inserted</span>
-                              <strong className="inserted-text">{formatMoney(insertedAmount)}</strong>
+                              <strong className="inserted-text">{formatMoney(insertedAmount, false)}</strong>
                             </div>
                             <div className="amount-stat">
                               <span>Remaining</span>
                               <strong className="remaining-text">
-                                {formatMoney(Math.max(0, overtimeFee - insertedAmount))}
+                                {formatMoney(Math.max(0, overtimeFee - insertedAmount), false)}
                               </strong>
                             </div>
                           </div>

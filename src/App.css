@@ -314,6 +314,70 @@ button {
   font-size: 14px;
 }
 
+/* Rate chips row */
+.welcome-rates {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+
+.rate-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--white);
+  letter-spacing: 0.2px;
+  backdrop-filter: blur(4px);
+}
+
+.rate-chip b {
+  font-size: 11px;
+  font-weight: 900;
+  background: rgba(255,255,255,0.3);
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Rent Now button */
+.rent-now-button {
+  margin-top: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--white);
+  color: var(--green);
+  border: 0;
+  border-radius: 12px;
+  padding: 11px 24px;
+  font-size: 14px;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  letter-spacing: 0.3px;
+}
+
+.rent-now-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.22);
+}
+
+.rent-now-button:active {
+  transform: translateY(1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
 .quick-rent-button {
   margin-top: 16px;
   display: inline-flex;
@@ -796,6 +860,26 @@ button {
   background: var(--white);
 }
 
+.rental-card--overdue {
+  border: 2px solid #ef5350;
+  animation: overdue-pulse-border 1.5s ease-in-out infinite;
+}
+
+@keyframes overdue-pulse-border {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239,83,80,0.25); }
+  50%       { box-shadow: 0 0 0 6px rgba(239,83,80,0.08); }
+}
+
+.badge-overdue {
+  background: #ffebee;
+  color: #c62828;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+}
+
 .home-rentals-container {
   display: grid;
   gap: 8px;
@@ -854,6 +938,22 @@ button {
   letter-spacing: 0.3px;
 }
 
+/* Overdue badge — red pill */
+.hbar-badge--overdue {
+  background: #ffebee;
+  color: #c62828;
+}
+
+.hbar-badge--overdue .hbar-dot {
+  background: #ef5350;
+  animation: pulse-dot-red 1s ease-in-out infinite;
+}
+
+@keyframes pulse-dot-red {
+  0%, 100% { box-shadow: 0 0 0 2px rgba(239,83,80,0.3); }
+  50%       { box-shadow: 0 0 0 5px rgba(239,83,80,0.08); }
+}
+
 .hbar-dot {
   width: 7px;
   height: 7px;
@@ -900,7 +1000,19 @@ button {
 
 @keyframes hbar-shimmer {
   0%   { background-position: 200% 0; }
-100% { background-position: 0% 0; }
+  100% { background-position: 0% 0; }
+}
+
+/* overdue: full red pulsing bar */
+.hbar-fill--overdue {
+  width: 100% !important;
+  background: linear-gradient(90deg, #ef5350, #e57373);
+  animation: hbar-overdue-pulse 1s ease-in-out infinite;
+}
+
+@keyframes hbar-overdue-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.65; }
 }
 
 /* bottom row: label, timer, bill */
@@ -930,6 +1042,23 @@ button {
   font-size: 11px;
   font-weight: 700;
   color: var(--green);
+}
+
+/* Overdue bill — red accumulating total */
+.hbar-bill--overdue {
+  color: #c62828;
+  font-weight: 800;
+}
+
+/* Overdue card border pulse */
+.home-rental-bar-card--overdue {
+  border: 1.5px solid #ef5350;
+  animation: overdue-card-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes overdue-card-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239,83,80,0.2); }
+  50%       { box-shadow: 0 0 0 5px rgba(239,83,80,0.06); }
 }
 
 .hbar-return-btn {
