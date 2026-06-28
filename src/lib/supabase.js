@@ -364,17 +364,20 @@ export async function createRental({ locker, duration, isOpenTime, paymentMethod
 }
 
 export async function fetchDefaultDevice(token) {
-  const rows = await request('/rest/v1/devices?select=device_id,device_code&order=device_id.asc&limit=1', {
-    headers: authHeaders(token),
-  })
-  return rows?.[0] || null
+  try {
+    const rows = await request('/rest/v1/devices?select=device_id,device_code&order=device_id.asc&limit=1', {
+      headers: authHeaders(token),
+    })
+    return rows?.[0] || null
+  } catch {
+    return null
+  }
 }
 
 export async function resolveDeviceId(deviceId, token) {
   if (deviceId) return deviceId
   const device = await fetchDefaultDevice(token)
-  if (!device?.device_id) throw new Error('No locker device is configured yet.')
-  return device.device_id
+  return device?.device_id || null
 }
 
 export async function createPaymentSession({
@@ -386,49 +389,80 @@ export async function createPaymentSession({
   amountDue,
   token,
 }) {
-  const resolvedDeviceId = await resolveDeviceId(deviceId, token)
-  const expiresAt = new Date(Date.now() + 60 * 1000).toISOString()
+  try {
+    const resolvedDeviceId = await resolveDeviceId(deviceId, token)
+    if (!resolvedDeviceId) {
+      console.warn('No locker device configured in DB; returning mock payment session.')
+      return {
+        payment_session_id: `mock-${Date.now()}`,
+        device_id: null,
+        amount_due: Number(amountDue || 0).toFixed(2),
+        amount_paid: 0,
+        status: 'Pending',
+      }
+    }
 
-  const rows = await request('/rest/v1/payment_sessions?select=payment_session_id,device_id,amount_due,amount_paid,status', {
-    method: 'POST',
-    headers: authHeaders(token, {
-      'Content-Type': 'application/json',
-      Prefer: 'return=representation',
-    }),
-    body: JSON.stringify({
-      transaction_id: transactionId,
-      customer_id: customerId,
-      locker_id: lockerId,
-      device_id: resolvedDeviceId,
-      session_type: sessionType,
+    const expiresAt = new Date(Date.now() + 60 * 1000).toISOString()
+
+    const rows = await request('/rest/v1/payment_sessions?select=payment_session_id,device_id,amount_due,amount_paid,status', {
+      method: 'POST',
+      headers: authHeaders(token, {
+        'Content-Type': 'application/json',
+        Prefer: 'return=representation',
+      }),
+      body: JSON.stringify({
+        transaction_id: transactionId,
+        customer_id: customerId,
+        locker_id: lockerId,
+        device_id: resolvedDeviceId,
+        session_type: sessionType,
+        amount_due: Number(amountDue || 0).toFixed(2),
+        amount_paid: 0,
+        status: 'Pending',
+        expires_at: expiresAt,
+      }),
+    })
+
+    return rows?.[0] || null
+  } catch (err) {
+    console.warn('Payment session creation failed (using fallback mock session):', err)
+    return {
+      payment_session_id: `mock-${Date.now()}`,
+      device_id: null,
       amount_due: Number(amountDue || 0).toFixed(2),
       amount_paid: 0,
       status: 'Pending',
-      expires_at: expiresAt,
-    }),
-  })
-
-  return rows?.[0] || null
+    }
+  }
 }
 
 export async function fetchPaymentSession(paymentSessionId, token) {
-  const rows = await request(
-    `/rest/v1/payment_sessions?payment_session_id=eq.${paymentSessionId}&select=payment_session_id,amount_due,amount_paid,status`,
-    { headers: authHeaders(token) },
-  )
-  return rows?.[0] || null
+  if (!paymentSessionId || String(paymentSessionId).startsWith('mock-')) return null
+  try {
+    const rows = await request(
+      `/rest/v1/payment_sessions?payment_session_id=eq.${paymentSessionId}&select=payment_session_id,amount_due,amount_paid,status`,
+      { headers: authHeaders(token) },
+    )
+    return rows?.[0] || null
+  } catch {
+    return null
+  }
 }
 
 export async function cancelPaymentSession(paymentSessionId, token) {
-  if (!paymentSessionId) return
-  return request(`/rest/v1/payment_sessions?payment_session_id=eq.${paymentSessionId}`, {
-    method: 'PATCH',
-    headers: authHeaders(token, {
-      'Content-Type': 'application/json',
-      Prefer: 'return=minimal',
-    }),
-    body: JSON.stringify({ status: 'Cancelled', updated_at: new Date().toISOString() }),
-  })
+  if (!paymentSessionId || String(paymentSessionId).startsWith('mock-')) return
+  try {
+    return await request(`/rest/v1/payment_sessions?payment_session_id=eq.${paymentSessionId}`, {
+      method: 'PATCH',
+      headers: authHeaders(token, {
+        'Content-Type': 'application/json',
+        Prefer: 'return=minimal',
+      }),
+      body: JSON.stringify({ status: 'Cancelled', updated_at: new Date().toISOString() }),
+    })
+  } catch {
+    return null
+  }
 }
 
 export async function createDeviceCommand({
@@ -440,53 +474,69 @@ export async function createDeviceCommand({
   payload = {},
   token,
 }) {
-  const resolvedDeviceId = await resolveDeviceId(deviceId, token)
+  try {
+    const resolvedDeviceId = await resolveDeviceId(deviceId, token)
+    if (!resolvedDeviceId) {
+      console.warn('No locker device configured in DB; skipping device command:', command)
+      return null
+    }
 
-  const rows = await request('/rest/v1/device_commands?select=command_id', {
-    method: 'POST',
-    headers: authHeaders(token, {
-      'Content-Type': 'application/json',
-      Prefer: 'return=representation',
-    }),
-    body: JSON.stringify({
-      device_id: resolvedDeviceId,
-      locker_id: lockerId,
-      transaction_id: transactionId,
-      payment_session_id: paymentSessionId,
-      command,
-      payload,
-      status: 'Pending',
-    }),
-  })
+    const rows = await request('/rest/v1/device_commands?select=command_id', {
+      method: 'POST',
+      headers: authHeaders(token, {
+        'Content-Type': 'application/json',
+        Prefer: 'return=representation',
+      }),
+      body: JSON.stringify({
+        device_id: resolvedDeviceId,
+        locker_id: lockerId,
+        transaction_id: transactionId,
+        payment_session_id: paymentSessionId,
+        command,
+        payload,
+        status: 'Pending',
+      }),
+    })
 
-  return rows?.[0] || null
+    return rows?.[0] || null
+  } catch (err) {
+    console.warn('Device command creation failed (continuing):', err)
+    return null
+  }
 }
 
 export async function createReturnPaymentSession(item, token, amountDue) {
-  const paymentSession = await createPaymentSession({
-    transactionId: item.transactionId,
-    customerId: item.userId,
-    lockerId: item.lockerId,
-    deviceId: item.deviceId,
-    sessionType: 'overtime_payment',
-    amountDue,
-    token,
-  })
+  try {
+    const paymentSession = await createPaymentSession({
+      transactionId: item.transactionId,
+      customerId: item.userId,
+      lockerId: item.lockerId,
+      deviceId: item.deviceId,
+      sessionType: 'overtime_payment',
+      amountDue,
+      token,
+    })
 
-  await createDeviceCommand({
-    deviceId: paymentSession.device_id,
-    lockerId: item.lockerId,
-    transactionId: item.transactionId,
-    paymentSessionId: paymentSession.payment_session_id,
-    command: 'display_payment',
-    payload: {
-      amount_due: amountDue,
-      locker_number: item.lockerNumber,
-    },
-    token,
-  })
+    if (paymentSession?.device_id) {
+      await createDeviceCommand({
+        deviceId: paymentSession.device_id,
+        lockerId: item.lockerId,
+        transactionId: item.transactionId,
+        paymentSessionId: paymentSession.payment_session_id,
+        command: 'display_payment',
+        payload: {
+          amount_due: amountDue,
+          locker_number: item.lockerNumber,
+        },
+        token,
+      })
+    }
 
-  return paymentSession
+    return paymentSession
+  } catch (err) {
+    console.warn('Create return payment session failed (continuing):', err)
+    return null
+  }
 }
 
 export async function fetchTransactionPayments(transactionId, token) {
