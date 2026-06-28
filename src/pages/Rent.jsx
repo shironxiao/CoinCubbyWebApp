@@ -81,14 +81,10 @@ export default function Rent({ session, addNotification }) {
 
     setVerifyingPin(true)
     try {
-      const valid = await verifyPasskey(session.userId, enteredPasskey, session.accessToken)
-      if (valid) {
-        setIsPasskeyVerified(true)
-      } else {
-        setPasskeyVerificationError('Incorrect PIN ID. Please try again.')
-      }
-    } catch (err) {
-      setPasskeyVerificationError(err.message || 'Verification failed. Please try again.')
+      await verifyPinAsPassword(session.email, enteredPin)
+      setIsPasskeyVerified(true)
+    } catch {
+      setPinVerificationError('Incorrect PIN. Please try again.')
     } finally {
       setVerifyingPin(false)
     }
@@ -440,11 +436,11 @@ export default function Rent({ session, addNotification }) {
               {!isPasskeyVerified ? (
                 <form onSubmit={handleVerifyPinSubmit} className="form-stack" style={{ display: 'grid', gap: '14px', marginTop: '8px' }}>
                   <p style={{ fontSize: '13px', color: '#666', textAlign: 'center', margin: '0 0 10px 0', lineHeight: '1.4' }}>
-                    For security, please enter your 4-digit PIN ID to confirm returning Locker #{activeReturnItem.lockerNumber}.
+                    For security, please enter your 6-digit Account PIN to confirm returning Locker #{activeReturnItem.lockerNumber}.
                   </p>
                   
                   <label className="xml-field">
-                    <span>4-Digit PIN ID</span>
+                    <span>6-Digit Account PIN</span>
                     <input
                       type="password"
                       inputMode="numeric"
