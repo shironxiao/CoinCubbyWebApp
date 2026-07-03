@@ -1,10 +1,12 @@
 # CoinCubby Locker Device API Implementation Plan
 
-This plan connects the CoinCubby website, Supabase database, and ESP32 locker kiosk.
+This plan connects the CoinCubby website, Supabase database, and the physical locker controller.
+
+The current recommended hardware is now Raspberry Pi 2GB. The older ESP32/TFT approach remains useful as reference, but Raspberry Pi is now the main physical controller.
 
 The website should handle the user flow. The ESP32 should handle the physical flow:
 
-- Show payment instructions on the TFT screen.
+- Receive payment instructions and payment updates through the API.
 - Detect inserted payment.
 - Unlock or release the locker relay.
 - Report status back to the system.
@@ -15,17 +17,17 @@ The website should handle the user flow. The ESP32 should handle the physical fl
 CoinCubby Website
   -> Supabase / API tables
   -> device_commands + payment_sessions
-  -> ESP32 polling API
-  -> physical locker relay + TFT screen
+  -> Raspberry Pi polling API
+  -> physical locker relay
 ```
 
-For the first version, use simple polling from the ESP32 every 1 to 3 seconds. It is easier to test than realtime sockets or MQTT.
+For the first version, use simple polling from the Raspberry Pi every 1 to 3 seconds. It is easier to test than realtime sockets or MQTT.
 
 ## Important Rule
 
-Do not put the Supabase service role key in the ESP32 code.
+Do not put the Supabase service role key in the Raspberry Pi controller code.
 
-For a prototype, the ESP32 can call Supabase REST with a limited anon key plus a device token stored in the `devices` table. For production, use Supabase Edge Functions so the device only talks to safe API endpoints.
+For a prototype, the Raspberry Pi can call Supabase Edge Functions with a limited anon key plus a device token stored in the `devices` table.
 
 ## Phase 1: Add Device Tables
 
@@ -73,11 +75,11 @@ It also keeps your existing tables such as:
 4. Website/API updates locker to Payment Required.
 5. Website/API creates payment_session.
 6. Website/API creates device command: display_payment.
-7. ESP32 shows the amount due.
-8. ESP32 reports inserted money.
+7. Raspberry Pi receives the payment command.
+8. Raspberry Pi reports inserted money.
 9. When paid in full, website/API activates the rental.
 10. Website/API creates device command: unlock_locker.
-11. ESP32 opens the relay and marks command completed.
+11. Raspberry Pi opens the relay and marks command completed.
 ```
 
 ## Phase 3: Return Flow
@@ -91,7 +93,7 @@ It also keeps your existing tables such as:
 4. Website/API completes the rental.
 5. Website/API updates locker to Available.
 6. Website/API creates device command: release_locker.
-7. ESP32 releases the locker and marks command completed.
+7. Raspberry Pi releases the locker and marks command completed.
 ```
 
 ### Overtime Pay at Device
@@ -103,11 +105,11 @@ It also keeps your existing tables such as:
 4. Website/API calculates overtime fee.
 5. Website/API creates payment_session with type overtime_payment.
 6. Website/API creates device command: display_payment.
-7. ESP32 shows the overtime amount.
-8. ESP32 reports inserted money.
+7. Raspberry Pi shows the overtime amount.
+8. Raspberry Pi reports inserted money.
 9. When paid in full, website/API completes the rental.
 10. Website/API creates device command: release_locker.
-11. ESP32 releases the locker and marks command completed.
+11. Raspberry Pi releases the locker and marks command completed.
 ```
 
 ## Phase 4: API Operations
@@ -125,10 +127,10 @@ These operations can be implemented either as Supabase Edge Functions or fronten
 
 ### Device heartbeat
 
-Purpose: tell the website that the kiosk is online.
+Purpose: tell the website that the physical controller is online.
 
 ```text
-ESP32 -> POST /device-heartbeat
+Raspberry Pi -> POST /device-heartbeat
 ```
 
 Payload:
@@ -150,10 +152,10 @@ devices.status = Online
 
 ### Fetch next command
 
-Purpose: allow the ESP32 to fetch the next pending action.
+Purpose: allow the Raspberry Pi to fetch the next pending action.
 
 ```text
-ESP32 -> GET /device-next-command?device_code=DEVICE001
+Raspberry Pi -> GET /device-next-command?device_code=DEVICE001
 ```
 
 Response example:
@@ -174,10 +176,10 @@ Response example:
 
 ### Report payment progress
 
-Purpose: record cash inserted at the kiosk.
+Purpose: record cash inserted at the physical payment device.
 
 ```text
-ESP32 -> POST /device-payment-progress
+Raspberry Pi -> POST /device-payment-progress
 ```
 
 Payload:
@@ -204,10 +206,10 @@ Expected behavior:
 
 ### Mark command complete
 
-Purpose: let the ESP32 confirm it finished an action.
+Purpose: let the Raspberry Pi confirm it finished an action.
 
 ```text
-ESP32 -> POST /device-command-complete
+Raspberry Pi -> POST /device-command-complete
 ```
 
 Payload:
@@ -248,7 +250,29 @@ Then connect them to:
 - Return overtime pay-at-device flow in `Rent.jsx`
 - No-overtime return flow in `Rent.jsx`
 
-## Phase 6: Arduino IDE Setup
+## Phase 6: Raspberry Pi Controller Setup
+
+Use this folder for the new Raspberry Pi controller:
+
+```text
+raspberry-pi/pi-controller
+```
+
+The Pi controller replaces the Arduino/ESP32 code. It also includes an optional local status page at:
+
+```text
+http://localhost:4177
+```
+
+The old Arduino sketch is still kept here for reference:
+
+```text
+arduino/CoinCubbyLockerDevice/CoinCubbyLockerDevice.ino
+```
+
+Only use it if you go back to ESP32.
+
+## Old ESP32 Arduino Setup
 
 Install these in Arduino IDE:
 
