@@ -630,37 +630,21 @@ export async function completeRental(item, token, overtimeFee = 0, paymentMethod
       const refundAmount = Number((unusedMinutes * (item.ratePerHr / 60)).toFixed(2))
 
       if (refundAmount > 0) {
-        // 1. Credit the user's digital wallet in database and localStorage
-        let currentBalance = 50.00
+        // 1. Credit the user's wallet using the stored RPC function (bypasses RLS)
         try {
-          const dbWallet = await request(`/rest/v1/wallets?customer_id=eq.${item.userId}&select=balance`, {
-            headers: authHeaders(token)
-          })
-          if (dbWallet && dbWallet.length > 0) {
-            currentBalance = Number(dbWallet[0].balance)
-          }
-        } catch (err) {
-          console.warn('Failed to fetch wallet for refund, using localStorage fallback:', err)
-          const balanceKey = `coincubby.balance.${item.userId}`
-          currentBalance = Number(localStorage.getItem(balanceKey) || 50.0)
-        }
-
-        const newBalance = currentBalance + refundAmount
-        
-        // Sync to DB
-        try {
-          await request(`/rest/v1/wallets?customer_id=eq.${item.userId}`, {
-            method: 'PATCH',
+          const result = await request('/rest/v1/rpc/add_wallet_balance', {
+            method: 'POST',
             headers: authHeaders(token, { 'Content-Type': 'application/json' }),
-            body: JSON.stringify({ balance: newBalance, updated_at: new Date().toISOString() })
+            body: JSON.stringify({
+              p_customer_id: item.userId,
+              p_amount: refundAmount
+            })
           })
+          const newBalance = Number(result)
+          localStorage.setItem(`coincubby.balance.${item.userId}`, newBalance.toFixed(2))
         } catch (err) {
-          console.error('Failed to update wallet balance in DB for refund:', err)
+          console.error('Failed to add refund to wallet via RPC:', err)
         }
-
-        // Sync to localStorage
-        const balanceKey = `coincubby.balance.${item.userId}`
-        localStorage.setItem(balanceKey, newBalance.toFixed(2))
 
         // 2. Insert a negative payment record in the database
         try {
@@ -702,38 +686,22 @@ export async function completeRental(item, token, overtimeFee = 0, paymentMethod
       }),
     })
 
-    // Deduct from DB wallet if overtime fee is paid via Wallet
+    // Deduct from DB wallet via RPC if overtime fee is paid via Wallet
     if (paymentMethod === 'Wallet' && item.userId) {
-      let currentBalance = 50.00
       try {
-        const dbWallet = await request(`/rest/v1/wallets?customer_id=eq.${item.userId}&select=balance`, {
-          headers: authHeaders(token)
-        })
-        if (dbWallet && dbWallet.length > 0) {
-          currentBalance = Number(dbWallet[0].balance)
-        }
-      } catch (err) {
-        console.warn('Failed to fetch wallet for deduction, using localStorage fallback:', err)
-        const balanceKey = `coincubby.balance.${item.userId}`
-        currentBalance = Number(localStorage.getItem(balanceKey) || 50.0)
-      }
-
-      const newBalance = Math.max(0, currentBalance - finalPaymentAmount)
-
-      // Sync to DB
-      try {
-        await request(`/rest/v1/wallets?customer_id=eq.${item.userId}`, {
-          method: 'PATCH',
+        const result = await request('/rest/v1/rpc/deduct_wallet_balance', {
+          method: 'POST',
           headers: authHeaders(token, { 'Content-Type': 'application/json' }),
-          body: JSON.stringify({ balance: newBalance, updated_at: new Date().toISOString() })
+          body: JSON.stringify({
+            p_customer_id: item.userId,
+            p_amount: finalPaymentAmount
+          })
         })
+        const newBalance = Number(result)
+        localStorage.setItem(`coincubby.balance.${item.userId}`, newBalance.toFixed(2))
       } catch (err) {
-        console.error('Failed to update wallet balance in DB for overtime deduction:', err)
+        console.error('Failed to deduct wallet via RPC for overtime:', err)
       }
-
-      // Sync to localStorage
-      const balanceKey = `coincubby.balance.${item.userId}`
-      localStorage.setItem(balanceKey, newBalance.toFixed(2))
     }
   }
 
@@ -875,22 +843,31 @@ export async function getOrCreateWallet(session) {
   }
 }
 
+/**
+ * Syncs wallet balance to database using the stored RPC function (bypasses RLS).
+ * Also updates localStorage cache.
+ */
 export async function syncWalletBalance(session, newBalance) {
   if (!session?.userId) return
   localStorage.setItem(`coincubby.balance.${session.userId}`, Number(newBalance).toFixed(2))
   try {
-    await request(`/rest/v1/wallets?customer_id=eq.${session.userId}`, {
-      method: 'PATCH',
-      headers: authHeaders(session.accessToken, {
-        'Content-Type': 'application/json',
-        Prefer: 'return=minimal',
-      }),
-      body: JSON.stringify({
-        balance: newBalance,
-        updated_at: new Date().toISOString()
+    // Compute the delta between current cached balance and the new balance
+    const cached = Number(localStorage.getItem(`coincubby.balance.${session.userId}`) || newBalance)
+    const delta = newBalance - cached
+    if (delta > 0) {
+      await request('/rest/v1/rpc/add_wallet_balance', {
+        method: 'POST',
+        headers: authHeaders(session.accessToken, { 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ p_customer_id: session.userId, p_amount: delta })
       })
-    })
+    } else if (delta < 0) {
+      await request('/rest/v1/rpc/deduct_wallet_balance', {
+        method: 'POST',
+        headers: authHeaders(session.accessToken, { 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ p_customer_id: session.userId, p_amount: Math.abs(delta) })
+      })
+    }
   } catch (err) {
-    console.error('Failed to sync wallet balance to database:', err)
+    console.error('Failed to sync wallet balance to database via RPC:', err)
   }
 }
