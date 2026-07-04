@@ -1,0 +1,128 @@
+:root {
+  color: #111;
+  background: #f5f7fb;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+.controller {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 18px;
+  padding: 24px;
+}
+
+.hero {
+  grid-row: span 2;
+  background: #0f172a;
+  color: white;
+  border-radius: 8px;
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.hero p {
+  margin: 0 0 12px;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.hero h1 {
+  margin: 0;
+  font-size: 54px;
+  line-height: 1;
+}
+
+.hero span {
+  margin-top: 26px;
+  font-size: 22px;
+  color: #cbd5e1;
+}
+
+.actions,
+.panel,
+.test {
+  background: white;
+  border: 1px solid #d9e0ea;
+  border-radius: 8px;
+  padding: 18px;
+}
+
+.actions {
+  display: grid;
+  gap: 12px;
+}
+
+button {
+  border: 0;
+  border-radius: 8px;
+  background: #16a34a;
+  color: white;
+  min-height: 68px;
+  font-size: 24px;
+  font-weight: 800;
+}
+
+button + button {
+  background: #2563eb;
+}
+
+.test button {
+  min-height: 52px;
+  padding: 0 24px;
+  background: #111827;
+  font-size: 18px;
+}
+
+h2 {
+  margin: 0 0 14px;
+  font-size: 22px;
+}
+
+dl {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+}
+
+dl div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid #edf1f7;
+  padding-bottom: 8px;
+}
+
+dt {
+  color: #667085;
+}
+
+dd {
+  margin: 0;
+  font-weight: 800;
+  text-align: right;
+}
+
+.test div {
+  display: flex;
+  gap: 10px;
+}
+
+input {
+  width: 90px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 0 12px;
+  font-size: 22px;
+  font-weight: 800;
+}

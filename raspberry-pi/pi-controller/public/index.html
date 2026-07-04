@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CoinCubby Pi Controller</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <main class="controller">
+      <section class="hero">
+        <p>CoinCubby</p>
+        <h1>Pi Controller</h1>
+        <span id="statusText">Starting...</span>
+      </section>
+
+      <section class="actions">
+        <button id="refreshButton" type="button">Refresh Status</button>
+      </section>
+
+      <section class="panel">
+        <h2>Device Status</h2>
+        <dl>
+          <div>
+            <dt>Device</dt>
+            <dd id="deviceCode">-</dd>
+          </div>
+          <div>
+            <dt>Last command</dt>
+            <dd id="lastCommand">-</dd>
+          </div>
+          <div>
+            <dt>Error</dt>
+            <dd id="lastError">None</dd>
+          </div>
+        </dl>
+      </section>
+
+      <section class="test">
+        <h2>Relay Test</h2>
+        <div>
+          <input id="lockerInput" type="number" min="1" max="16" value="1" />
+          <button id="testButton" type="button">Open</button>
+        </div>
+      </section>
+    </main>
+
+    <script src="/controller.js"></script>
+  </body>
+</html>

@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { registerAccount, isPasskeyTaken } from '../lib/supabase'
+import { useEffect, useState } from 'react'
+import { registerAccount, isUserIdTaken, generateUniqueUserId } from '../lib/supabase'
 
 export default function Register({ onNavigate }) {
   const [form, setForm] = useState({
@@ -8,11 +8,30 @@ export default function Register({ onNavigate }) {
     email: '',
     password: '',
     confirmPassword: '',
-    passkey: '',
   })
+  const [userId, setUserId] = useState('')
+  const [generatingId, setGeneratingId] = useState(true)
   const [notice, setNotice] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+
+  // Auto-generate a unique User ID on page load
+  useEffect(() => {
+    async function init() {
+      setGeneratingId(true)
+      const id = await generateUniqueUserId()
+      setUserId(id)
+      setGeneratingId(false)
+    }
+    init()
+  }, [])
+
+  async function handleRegenerate() {
+    setGeneratingId(true)
+    const id = await generateUniqueUserId()
+    setUserId(id)
+    setGeneratingId(false)
+  }
 
   function updateField(event) {
     setForm((current) => ({ ...current, [event.target.name]: event.target.value }))
@@ -27,17 +46,19 @@ export default function Register({ onNavigate }) {
     if (!form.lastName.trim()) return setError('Last name is required.')
     if (!form.email.trim()) return setError('Email is required.')
     if (!/^\S+@\S+\.\S+$/.test(form.email)) return setError('Enter a valid email address.')
-    if (!form.password) return setError('Password is required.')
-    if (form.password.length < 6) return setError('Password must be at least 6 characters.')
-    if (form.password !== form.confirmPassword) return setError('Passwords do not match.')
-    if (!form.passkey) return setError('PIN ID is required.')
-    if (form.passkey.length !== 4) return setError('PIN ID must be exactly 4 digits.')
+    if (!form.password) return setError('6-digit PIN is required.')
+    if (!/^\d{6}$/.test(form.password)) return setError('PIN must be exactly 6 digits.')
+    if (form.password !== form.confirmPassword) return setError('PINs do not match.')
+    if (!userId) return setError('User ID is not ready yet. Please wait.')
 
     setLoading(true)
     try {
-      const taken = await isPasskeyTaken(form.passkey)
+      // Double-check uniqueness right before submission
+      const taken = await isUserIdTaken(userId)
       if (taken) {
-        setError('This PIN ID is already taken. Please choose a different 4-digit PIN.')
+        const newId = await generateUniqueUserId()
+        setUserId(newId)
+        setError('Your User ID had a conflict. A new one has been generated. Please submit again.')
         setLoading(false)
         return
       }
@@ -47,7 +68,7 @@ export default function Register({ onNavigate }) {
         lastName: form.lastName.trim(),
         email: form.email.trim(),
         password: form.password,
-        passkey: form.passkey,
+        userId,
       })
       setNotice('Account created successfully. Please check your email if confirmation is required.')
       setTimeout(() => onNavigate('login'), 900)
@@ -77,6 +98,7 @@ export default function Register({ onNavigate }) {
               <input name="lastName" value={form.lastName} onChange={updateField} placeholder="Doe" />
             </label>
           </div>
+
           <label className="xml-field">
             <span>Email Address</span>
             <input
@@ -88,50 +110,67 @@ export default function Register({ onNavigate }) {
               autoComplete="email"
             />
           </label>
+
+          {/* User ID — read-only, auto-generated */}
+          <div className="xml-field">
+            <span>Your User ID <em style={{ fontSize: '11px', fontWeight: 400, color: '#888' }}>(auto-assigned, share this with the kiosk)</em></span>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <input
+                type="text"
+                value={generatingId ? 'Generating...' : userId}
+                readOnly
+                style={{ fontFamily: 'monospace', letterSpacing: '0.2em', fontWeight: '700', flex: 1 }}
+              />
+              <button
+                type="button"
+                className="secondary-button"
+                style={{ padding: '10px 14px', whiteSpace: 'nowrap', fontSize: '12px' }}
+                onClick={handleRegenerate}
+                disabled={generatingId || loading}
+              >
+                {generatingId ? '...' : '↻ New ID'}
+              </button>
+            </div>
+          </div>
+
           <label className="xml-field">
-            <span>Password</span>
+            <span>6-Digit PIN</span>
             <input
               name="password"
               type="password"
+              inputMode="numeric"
+              maxLength="6"
               value={form.password}
-              onChange={updateField}
-              placeholder="••••••••"
+              onChange={(e) => {
+                const val = e.target.value.replace(/\D/g, '')
+                setForm((current) => ({ ...current, password: val }))
+              }}
+              placeholder="••••••"
               autoComplete="new-password"
             />
           </label>
+
           <label className="xml-field">
-            <span>Confirm Password</span>
+            <span>Confirm 6-Digit PIN</span>
             <input
               name="confirmPassword"
               type="password"
-              value={form.confirmPassword}
-              onChange={updateField}
-              placeholder="••••••••"
-              autoComplete="new-password"
-            />
-          </label>
-          <label className="xml-field">
-            <span>PIN ID (4 Digits)</span>
-            <input
-              name="passkey"
-              type="text"
               inputMode="numeric"
-              pattern="[0-9]*"
-              maxLength="4"
-              value={form.passkey}
+              maxLength="6"
+              value={form.confirmPassword}
               onChange={(e) => {
                 const val = e.target.value.replace(/\D/g, '')
-                setForm((current) => ({ ...current, passkey: val }))
+                setForm((current) => ({ ...current, confirmPassword: val }))
               }}
-              placeholder="1234"
-              required
+              placeholder="••••••"
+              autoComplete="new-password"
             />
           </label>
 
           {error && <p className="alert">{error}</p>}
           {notice && <p className="success">{notice}</p>}
 
-          <button className="primary-button xml-black-button" type="submit" disabled={loading}>
+          <button className="primary-button xml-black-button" type="submit" disabled={loading || generatingId}>
             {loading ? 'Creating account...' : 'Create Account'}
           </button>
         </form>
