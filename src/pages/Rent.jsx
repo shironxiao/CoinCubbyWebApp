@@ -19,8 +19,7 @@ function mapRental(row) {
   const startMs = parseTimestamp(row.start_time)
   const endMs = parseTimestamp(row.end_time)
   const isOpenTime = !row.end_time
-  // Open time and overtime are billed at HALF the database rate
-  const ratePerHr = (Number(row.rates?.price_per_hour) || size.rate) / 2
+  const ratePerHr = size.rate
 
   return {
     transactionId: row.transaction_id,

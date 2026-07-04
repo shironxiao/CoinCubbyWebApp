@@ -8,6 +8,7 @@ import {
   fetchLockers,
   fetchModules,
   fetchPaymentSession,
+  fetchRatesMap,
   fetchTransactionPayments,
   formatMoney,
   getOrCreateWallet,
@@ -51,6 +52,7 @@ export default function Home({ session, onNavigate, addNotification }) {
   })
   const [activeRentals, setActiveRentals] = useState([])
   const [tick, setTick] = useState(() => Date.now())
+  const [ratesMap, setRatesMap] = useState(null)
 
   const availableCount = useMemo(
     () => lockers.filter((locker) => locker.status === 'Available').length,
@@ -64,6 +66,8 @@ export default function Home({ session, onNavigate, addNotification }) {
 
   useEffect(() => {
     loadModules()
+    // Load DB rates for rate chip display
+    fetchRatesMap().then((map) => setRatesMap(map)).catch(() => {})
   }, [])
 
   useEffect(() => {
@@ -325,11 +329,21 @@ export default function Home({ session, onNavigate, addNotification }) {
         <h2>Pick your locker</h2>
         <span>Green means you're good to go.<br />Check status indicator below.</span>
 
-        {/* Rate chips */}
+        {/* Rate chips — from database */}
         <div className="welcome-rates">
-          <span className="rate-chip"><b>S</b> ₱10/hr</span>
-          <span className="rate-chip"><b>M</b> ₱20/hr</span>
-          <span className="rate-chip"><b>L</b> ₱30/hr</span>
+          {ratesMap ? (
+            <>
+              <span className="rate-chip"><b>S</b> {formatMoney(ratesMap[1] ?? 10, false)}/hr</span>
+              <span className="rate-chip"><b>M</b> {formatMoney(ratesMap[2] ?? 20, false)}/hr</span>
+              <span className="rate-chip"><b>L</b> {formatMoney(ratesMap[3] ?? 30, false)}/hr</span>
+            </>
+          ) : (
+            <>
+              <span className="rate-chip" style={{ opacity: 0.5 }}><b>S</b> ...</span>
+              <span className="rate-chip" style={{ opacity: 0.5 }}><b>M</b> ...</span>
+              <span className="rate-chip" style={{ opacity: 0.5 }}><b>L</b> ...</span>
+            </>
+          )}
         </div>
 
         {/* Rent Now button */}
@@ -356,8 +370,7 @@ export default function Home({ session, onNavigate, addNotification }) {
             const progress  = isOpen ? 100 : Math.min(100, (elapsedMs / totalMs) * 100)
 
             const sizeInfo     = sizeFromType(rental.lockers?.size_type_id)
-            // Open time and overtime are billed at HALF the database rate
-            const ratePerHr    = (Number(rental.rates?.price_per_hour) || sizeInfo.rate) / 2
+            const ratePerHr    = sizeInfo.rate
 
             // Timer: elapsed for open, overtime elapsed for overdue, remaining for fixed-in-time
             const timerMs = isOpen ? elapsedMs : isOverdue ? overtimeMs : remainMs

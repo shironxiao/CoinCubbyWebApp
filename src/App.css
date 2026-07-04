@@ -1691,6 +1691,101 @@ dd {
   transform: scale(0.9);
 }
 
+/* Bell Icon Permission States */
+.notif-bell-button.notif-permission-granted {
+  color: #2e7d32;
+}
+
+.notif-bell-button.notif-permission-granted .bell-status-check {
+  color: #4caf50;
+  filter: drop-shadow(0 0 2px rgba(76, 175, 80, 0.4));
+}
+
+.notif-bell-button.notif-permission-denied {
+  color: #b71c1c;
+  opacity: 0.72;
+}
+
+.notif-bell-button.notif-permission-denied .bell-status-slash {
+  color: #e53935;
+}
+
+.notif-bell-button.notif-permission-unsupported {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* Permission Card inside Drawer */
+.notif-permission-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  margin-bottom: 14px;
+  background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 100%);
+  animation: fade-in 0.3s ease-out;
+}
+
+.notif-permission-card strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--dark);
+  margin-bottom: 4px;
+}
+
+.notif-permission-card p {
+  margin: 0;
+  font-size: 13px;
+  color: #555;
+  line-height: 1.45;
+}
+
+.notif-permission-card button {
+  flex-shrink: 0;
+  align-self: center;
+  padding: 8px 18px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--dark);
+  color: var(--white);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.15s;
+  white-space: nowrap;
+}
+
+.notif-permission-card button:hover {
+  background: #333;
+}
+
+.notif-permission-card button:active {
+  transform: scale(0.96);
+}
+
+/* Denied / Unsupported state variants */
+.notif-permission-card.denied {
+  background: linear-gradient(135deg, #ffebee 0%, #fff3e0 100%);
+  border-color: #ffcdd2;
+}
+
+.notif-permission-card.denied strong {
+  color: #b71c1c;
+}
+
+.notif-permission-card.unsupported {
+  background: #f5f5f5;
+  border-color: #e0e0e0;
+}
+
+.notif-permission-card.unsupported strong {
+  color: #757575;
+}
+
+
 /* Bell Unread Pulse Animation */
 @keyframes bell-wiggle {
   0%, 100% { transform: rotate(0); }

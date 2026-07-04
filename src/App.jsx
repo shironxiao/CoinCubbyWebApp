@@ -9,6 +9,11 @@ import Register from './pages/Register'
 import Rent from './pages/Rent'
 import ResetPassword from './pages/ResetPassword'
 import NotificationsDrawer from './components/NotificationsDrawer'
+import {
+  getBrowserNotificationStatus,
+  requestBrowserNotificationPermission,
+  showBrowserNotification,
+} from './lib/browserNotifications'
 import { clearSession, getSession } from './lib/supabase'
 
 const protectedPages = ['home', 'rent', 'history', 'profile']
@@ -31,6 +36,9 @@ export default function App() {
   const [recoveryToken, setRecoveryToken] = useState(() => getRecoveryToken())
   const [notifOpen, setNotifOpen] = useState(false)
   const [notifications, setNotifications] = useState([])
+  const [browserNotificationStatus, setBrowserNotificationStatus] = useState(() =>
+    getBrowserNotificationStatus(),
+  )
 
   const navItems = [
     ['home', 'Home'],
@@ -73,7 +81,21 @@ export default function App() {
     }
   }, [notifications, session?.userId])
 
-  function addNotification({ title, content, type }) {
+  async function handleEnableBrowserNotifications() {
+    const permission = await requestBrowserNotificationPermission()
+    setBrowserNotificationStatus(permission)
+
+    if (permission === 'granted') {
+      addNotification({
+        title: 'Locker Reminders Enabled',
+        content: 'CoinCubby can now show locker reminders on this device.',
+        type: 'info',
+        showOnDevice: true,
+      })
+    }
+  }
+
+  function addNotification({ title, content, type, showOnDevice = true, tag, url }) {
     const newNotif = {
       id: Date.now().toString(),
       title,
@@ -83,6 +105,15 @@ export default function App() {
       isRead: false,
     }
     setNotifications((prev) => [newNotif, ...prev])
+
+    if (showOnDevice) {
+      showBrowserNotification({
+        title,
+        body: content,
+        tag: tag || `coincubby-${type || 'notice'}`,
+        url: url || (type === 'rental_end' ? '#/history' : '#/rent'),
+      }).catch((err) => console.warn('Device notification failed:', err))
+    }
   }
 
   function handleMarkAsRead(id) {
@@ -164,15 +195,32 @@ export default function App() {
           </div>
           <div className="sidebar-controls">
             <button
-              className={`notif-bell-button ${unreadCount > 0 ? 'has-unread' : ''}`}
+              className={`notif-bell-button notif-permission-${browserNotificationStatus} ${unreadCount > 0 ? 'has-unread' : ''}`}
               type="button"
               aria-label="View notifications"
               onClick={() => setNotifOpen(true)}
             >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-              </svg>
+              {browserNotificationStatus === 'granted' ? (
+                /* Bell with check — notifications enabled */
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                  <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                  <path className="bell-status-check" d="M8 12.5l2.5 2.5L16 9" strokeWidth="2.5" stroke="currentColor"></path>
+                </svg>
+              ) : browserNotificationStatus === 'denied' ? (
+                /* Bell with slash — permission blocked */
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" opacity="0.45"></path>
+                  <path d="M13.73 21a2 2 0 0 1-3.46 0" opacity="0.45"></path>
+                  <line className="bell-status-slash" x1="4" y1="4" x2="20" y2="20" strokeWidth="2.5" stroke="currentColor"></line>
+                </svg>
+              ) : (
+                /* Bell outline — default / not yet asked */
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                  <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                </svg>
+              )}
               {unreadCount > 0 && <span className="notif-badge">{unreadCount}</span>}
             </button>
 
@@ -212,6 +260,8 @@ export default function App() {
         onMarkAsRead={handleMarkAsRead}
         onMarkAllAsRead={handleMarkAllAsRead}
         onClearAll={handleClearAll}
+        browserNotificationStatus={browserNotificationStatus}
+        onEnableBrowserNotifications={handleEnableBrowserNotifications}
         onNavigate={(path) => {
           navigate(path)
           setNotifOpen(false)

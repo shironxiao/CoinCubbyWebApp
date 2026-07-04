@@ -171,10 +171,55 @@ export async function sendPasswordResetEmail(email) {
 
 
 
-export function sizeFromType(sizeTypeId) {
-  if (Number(sizeTypeId) === 2) return { label: 'Medium', rate: 20, price_per_minute: 20 / 60 }
-  if (Number(sizeTypeId) === 3) return { label: 'Large', rate: 30, price_per_minute: 30 / 60 }
-  return { label: 'Small', rate: 10, price_per_minute: 10 / 60 }
+// In-memory rates cache so we don't re-fetch on every call
+let _ratesCache = null
+let _ratesCacheTime = 0
+const RATES_CACHE_TTL = 60_000 // 1 minute
+
+/**
+ * Fetches rates from the database and returns a Map keyed by size_type_id.
+ * Caches in memory for 1 minute to avoid excessive API calls.
+ */
+export async function fetchRatesMap(forceRefresh = false) {
+  const now = Date.now()
+  if (!forceRefresh && _ratesCache && now - _ratesCacheTime < RATES_CACHE_TTL) {
+    return _ratesCache
+  }
+
+  try {
+    const rates = await fetchRates()
+    const map = {}
+    for (const r of rates || []) {
+      map[Number(r.size_type_id)] = Number(r.price_per_hour)
+    }
+    _ratesCache = map
+    _ratesCacheTime = now
+    return map
+  } catch (err) {
+    console.warn('Failed to fetch rates from DB, using cache/fallback:', err)
+    return _ratesCache || {}
+  }
+}
+
+/** Clears the in-memory rates cache (useful after admin updates). */
+export function invalidateRatesCache() {
+  _ratesCache = null
+  _ratesCacheTime = 0
+}
+
+const SIZE_LABELS = { 1: 'Small', 2: 'Medium', 3: 'Large' }
+const FALLBACK_RATES = { 1: 10, 2: 20, 3: 30 }
+
+/**
+ * Returns size info for a given size_type_id.
+ * If a ratesMap (from fetchRatesMap) is provided, uses DB rates.
+ * Otherwise falls back to hardcoded defaults.
+ */
+export function sizeFromType(sizeTypeId, ratesMap) {
+  const id = Number(sizeTypeId) || 1
+  const label = SIZE_LABELS[id] || 'Small'
+  const rate = (ratesMap && ratesMap[id] != null) ? Number(ratesMap[id]) : (FALLBACK_RATES[id] || 10)
+  return { label, rate, price_per_minute: rate / 60 }
 }
 
 export async function fetchModules() {
@@ -186,13 +231,16 @@ export async function fetchModules() {
 
 export async function fetchLockers(moduleId) {
   const moduleFilter = moduleId ? `module_id=eq.${moduleId}&` : ''
-  const rows = await request(
-    `/rest/v1/lockers?${moduleFilter}select=locker_id,locker_number,status,size_type_id,module_id,device_id&order=locker_id.asc`,
-    { headers: authHeaders() },
-  )
+  const [rows, ratesMap] = await Promise.all([
+    request(
+      `/rest/v1/lockers?${moduleFilter}select=locker_id,locker_number,status,size_type_id,module_id,device_id&order=locker_id.asc`,
+      { headers: authHeaders() },
+    ),
+    fetchRatesMap(),
+  ])
 
   return (rows || []).map((row) => {
-    const size = sizeFromType(row.size_type_id)
+    const size = sizeFromType(row.size_type_id, ratesMap)
     return {
       dbId: row.locker_id,
       id: row.locker_number || String(row.locker_id),
@@ -212,31 +260,8 @@ export async function fetchRates() {
   })
 }
 
-export async function ensureCorrectRates() {
-  try {
-    const rates = await fetchRates()
-    const correctRates = {
-      1: 10.00, // Small: ₱10/hr
-      2: 20.00, // Medium: ₱20/hr
-      3: 30.00, // Large: ₱30/hr
-    }
-
-    for (const rate of (rates || [])) {
-      const correctPrice = correctRates[rate.size_type_id]
-      if (correctPrice !== undefined) {
-        if (Math.abs(Number(rate.price_per_hour) - correctPrice) > 0.001) {
-          await request(`/rest/v1/rates?rate_id=eq.${rate.rate_id}`, {
-            method: 'PATCH',
-            headers: authHeaders(null, { 'Content-Type': 'application/json' }),
-            body: JSON.stringify({ price_per_hour: correctPrice }),
-          })
-        }
-      }
-    }
-  } catch (err) {
-    console.error('Failed to ensure correct rates in DB:', err)
-  }
-}
+// ensureCorrectRates() was removed — rates are now fully driven by the database.
+// Admin rate changes in the rates table are reflected in real-time.
 
 export async function upsertCustomer(session) {
   if (!session?.userId) return
@@ -301,7 +326,7 @@ export async function createRental({ locker, duration, isOpenTime, paymentMethod
   })
 
   const transactionId = transactionRows?.[0]?.transaction_id
-  const amount = isOpenTime ? 0 : Number(duration) * locker.rate
+  const amount = isOpenTime ? 0 : Number(duration) * Number(rate.price_per_hour)
 
   if (transactionId && !isDevicePending) {
     const payment = {
