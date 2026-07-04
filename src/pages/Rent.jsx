@@ -139,17 +139,19 @@ export default function Rent({ session, addNotification }) {
         const payments = await fetchTransactionPayments(activeReturnItem.transactionId, session.accessToken)
         if (!isMounted) return
 
+        const prepaidAmount = activeReturnItem.isOpenTime ? 0 : (activeReturnItem.durationMinutes / 60) * activeReturnItem.ratePerHr
         const sum = (payments || []).reduce((acc, p) => acc + Number(p.amount || 0), 0)
+        const newlyInserted = Math.max(0, sum - prepaidAmount)
         
         setInsertedAmount((prev) => {
-          if (sum > prev) {
+          if (newlyInserted > prev) {
             setSecondsLeft(60) // reset timer
           }
-          return sum
+          return newlyInserted
         })
 
         const fee = calculateOvertimeFee(activeReturnItem, Date.now())
-        if (sum >= fee) {
+        if (newlyInserted >= fee) {
           clearInterval(interval)
           
           await completeRental({ ...activeReturnItem, userId: session.userId }, session.accessToken, fee, 'Device')
