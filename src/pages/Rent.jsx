@@ -19,7 +19,8 @@ function mapRental(row) {
   const startMs = parseTimestamp(row.start_time)
   const endMs = parseTimestamp(row.end_time)
   const isOpenTime = !row.end_time
-  const ratePerHr = size.rate
+  // Open time and overtime are billed at HALF the database rate
+  const ratePerHr = (Number(row.rates?.price_per_hour) || size.rate) / 2
 
   return {
     transactionId: row.transaction_id,
@@ -352,20 +353,19 @@ export default function Rent({ session, addNotification }) {
       const prepaidHours = Math.max(0, item.endMs - item.startMs) / 3600000
       const prepaid = prepaidHours * item.ratePerHr
 
-      // Past end time → show accumulating overtime on top of prepaid
+      // Past end time → show accumulating overtime using half-hour step billing
       if (tick > item.endMs) {
-        const overtimeMs = Math.max(0, tick - item.endMs)
-        const overtimeCost = Math.floor((overtimeMs / 3600000) * item.ratePerHr)
+        const overtimeCost = calculateOvertimeFee(item, tick)
         return `Overtime Due: ${formatMoney(overtimeCost, false)}`
       }
 
       return `Prepaid: ${formatMoney(prepaid, false)}`
     }
 
-    // Open time: accumulate live every second based on elapsed time
-    const elapsedMs = Math.max(0, tick - item.startMs)
-    const cost = Math.floor((elapsedMs / 3600000) * item.ratePerHr)
-    return `Current Bill: ${formatMoney(cost, false)}`
+    // Open time: bill using the same half-hour step formula as calculateOvertimeFee
+    // (matches exactly what will be charged on return)
+    const openCost = calculateOvertimeFee(item, tick)
+    return `Bill: ${formatMoney(openCost, false)}`
   }
 
   return (

@@ -356,17 +356,28 @@ export default function Home({ session, onNavigate, addNotification }) {
             const progress  = isOpen ? 100 : Math.min(100, (elapsedMs / totalMs) * 100)
 
             const sizeInfo     = sizeFromType(rental.lockers?.size_type_id)
-            const ratePerHr    = sizeInfo.rate
+            // Open time and overtime are billed at HALF the database rate
+            const ratePerHr    = (Number(rental.rates?.price_per_hour) || sizeInfo.rate) / 2
 
             // Timer: elapsed for open, overtime elapsed for overdue, remaining for fixed-in-time
             const timerMs = isOpen ? elapsedMs : isOverdue ? overtimeMs : remainMs
             const timer   = formatDuration(timerMs)
             const timerLabel = isOpen ? 'ELAPSED' : isOverdue ? 'OVERTIME' : 'REMAINING'
 
-            // Bill: for overdue, show prepaid + accumulating overtime total
+            // Bill: use half-hour step formula (matches what is actually charged)
             const prepaidCost = isOpen ? 0 : (totalMs / 3600000) * ratePerHr
-            const overtimeCost = Math.floor((overtimeMs / 3600000) * ratePerHr)
-            const openCost     = Math.floor((elapsedMs / 3600000) * ratePerHr)
+
+            function calcStepBill(elMs) {
+              const mins = Math.floor(elMs / 60000)
+              const hrs = Math.floor(mins / 60)
+              const rem = mins % 60
+              let mult = hrs
+              if (rem > 0) mult += rem <= 30 ? 0.5 : 1.0
+              return Math.floor(mult * ratePerHr)
+            }
+
+            const overtimeCost = calcStepBill(overtimeMs)
+            const openCost     = calcStepBill(elapsedMs)
             const billLabel = isOpen
               ? `Bill: ${formatMoney(openCost, false)}`
               : isOverdue
