@@ -207,7 +207,7 @@ export async function fetchLockers(moduleId) {
 }
 
 export async function fetchRates() {
-  return request('/rest/v1/rates?select=rate_id,size_type_id,price_per_minute,min_charge_minutes', {
+  return request('/rest/v1/rates?select=rate_id,size_type_id,price_per_hour', {
     headers: authHeaders(),
   })
 }
@@ -216,19 +216,19 @@ export async function ensureCorrectRates() {
   try {
     const rates = await fetchRates()
     const correctRates = {
-      1: 10 / 60, // Small: ₱10/hr
-      2: 20 / 60, // Medium: ₱20/hr
-      3: 30 / 60, // Large: ₱30/hr
+      1: 10.00, // Small: ₱10/hr
+      2: 20.00, // Medium: ₱20/hr
+      3: 30.00, // Large: ₱30/hr
     }
 
     for (const rate of (rates || [])) {
       const correctPrice = correctRates[rate.size_type_id]
       if (correctPrice !== undefined) {
-        if (Math.abs(Number(rate.price_per_minute) - correctPrice) > 0.001) {
+        if (Math.abs(Number(rate.price_per_hour) - correctPrice) > 0.001) {
           await request(`/rest/v1/rates?rate_id=eq.${rate.rate_id}`, {
             method: 'PATCH',
             headers: authHeaders(null, { 'Content-Type': 'application/json' }),
-            body: JSON.stringify({ price_per_minute: correctPrice }),
+            body: JSON.stringify({ price_per_hour: correctPrice }),
           })
         }
       }
@@ -588,7 +588,7 @@ export async function fetchProfile(session) {
 
 export async function fetchActiveRentals(customerId, token) {
   return request(
-    `/rest/v1/transactions?customer_id=eq.${customerId}&status=eq.Active&select=transaction_id,locker_id,start_time,end_time,duration_minutes,qr_token,status,lockers(locker_number,size_type_id,device_id),rates(price_per_minute,min_charge_minutes)&order=start_time.desc`,
+    `/rest/v1/transactions?customer_id=eq.${customerId}&status=eq.Active&select=transaction_id,locker_id,start_time,end_time,duration_minutes,qr_token,status,lockers(locker_number,size_type_id,device_id),rates(price_per_hour)&order=start_time.desc`,
     { headers: authHeaders(token) },
   )
 }
@@ -669,7 +669,17 @@ export async function completeRental(item, token, overtimeFee = 0, paymentMethod
 
   let finalPaymentAmount = overtimeFee
   if (finalPaymentAmount <= 0 && item.isOpenTime) {
-    finalPaymentAmount = Math.floor((totalDurationMinutes / 60) * item.ratePerHr)
+    const hours = Math.floor(totalDurationMinutes / 60)
+    const rem = totalDurationMinutes % 60
+    let multiplier = hours
+    if (rem > 0) {
+      if (rem <= 30) {
+        multiplier += 0.5
+      } else {
+        multiplier += 1.0
+      }
+    }
+    finalPaymentAmount = Math.floor(multiplier * item.ratePerHr)
   }
 
   if (finalPaymentAmount > 0) {
