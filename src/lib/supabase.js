@@ -851,6 +851,10 @@ export async function getOrCreateWallet(session) {
   }
 
   try {
+    // Read from localStorage to check if there is an existing balance from an old account
+    const cached = localStorage.getItem(`coincubby.balance.${session.userId}`)
+    const initialBalance = cached !== null && !Number.isNaN(Number(cached)) ? Number(cached) : 50.00
+
     await request('/rest/v1/wallets?on_conflict=customer_id', {
       method: 'POST',
       headers: authHeaders(session.accessToken, {
@@ -859,11 +863,11 @@ export async function getOrCreateWallet(session) {
       }),
       body: JSON.stringify({
         customer_id: session.userId,
-        balance: 50.00
+        balance: initialBalance
       })
     })
-    localStorage.setItem(`coincubby.balance.${session.userId}`, '50.00')
-    return 50.00
+    localStorage.setItem(`coincubby.balance.${session.userId}`, initialBalance.toFixed(2))
+    return initialBalance
   } catch (err) {
     console.error('Failed to create default wallet in database:', err)
     const cached = localStorage.getItem(`coincubby.balance.${session.userId}`)
