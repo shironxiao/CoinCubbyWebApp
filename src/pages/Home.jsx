@@ -563,30 +563,36 @@ export default function Home({ session, onNavigate, addNotification }) {
               </label>
             )}
 
-            <p className="xml-section-label">Payment Method</p>
-            <div className="payment-options xml-payment-options">
-              {rentalType === 'fixed' && (
-                <button
-                  type="button"
-                  className={paymentMethod === 'Wallet' ? 'selected' : ''}
-                  onClick={() => setPaymentMethod('Wallet')}
-                >
-                  Wallet ({formatMoney(total || selectedLocker.rate)})
-                </button>
-              )}
-              <button
-                type="button"
-                className={paymentMethod === 'Device' ? 'selected' : ''}
-                onClick={() => setPaymentMethod('Device')}
-              >
-                Pay at Device
-              </button>
-            </div>
+            {rentalType === 'fixed' ? (
+              <>
+                <p className="xml-section-label">Payment Method</p>
+                <div className="payment-options xml-payment-options">
+                  <button
+                    type="button"
+                    className={paymentMethod === 'Wallet' ? 'selected' : ''}
+                    onClick={() => setPaymentMethod('Wallet')}
+                  >
+                    Wallet ({formatMoney(total || selectedLocker.rate)})
+                  </button>
+                  <button
+                    type="button"
+                    className={paymentMethod === 'Device' ? 'selected' : ''}
+                    onClick={() => setPaymentMethod('Device')}
+                  >
+                    Pay at Device
+                  </button>
+                </div>
 
-            <div className="total-row">
-              <span>Total Amount</span>
-              <strong>{rentalType === 'open' ? 'Running...' : formatMoney(total)}</strong>
-            </div>
+                <div className="total-row">
+                  <span>Total Amount</span>
+                  <strong>{formatMoney(total)}</strong>
+                </div>
+              </>
+            ) : (
+              <div style={{ background: 'var(--label-green, #e8f5e9)', border: '1px solid #a5d6a7', borderRadius: '10px', padding: '12px 14px', fontSize: '13px', color: '#2e7d32', lineHeight: '1.5' }}>
+                💡 <strong>Pay on return.</strong> You will be billed at half the hourly rate when you return the locker.
+              </div>
+            )}
 
             <div className="action-row">
               <button className="secondary-button" type="button" onClick={() => setSelectedLocker(null)}>
