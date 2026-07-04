@@ -906,3 +906,45 @@ export async function syncWalletBalance(session, newBalance) {
     console.error('Failed to sync wallet balance to database via RPC:', err)
   }
 }
+
+export function mapRental(row) {
+  const size = sizeFromType(row.lockers?.size_type_id)
+  const startMs = parseTimestamp(row.start_time)
+  const endMs = parseTimestamp(row.end_time)
+  const isOpenTime = !row.end_time
+  const ratePerHr = size.rate
+
+  return {
+    transactionId: row.transaction_id,
+    lockerId: row.locker_id,
+    lockerNumber: row.lockers?.locker_number || '?',
+    deviceId: row.lockers?.device_id,
+    sizeName: size.label,
+    startMs,
+    endMs,
+    isOpenTime,
+    ratePerHr,
+    qrToken: row.qr_token || '-',
+    durationMinutes: row.duration_minutes || 0,
+  }
+}
+
+export function mapHistory(row) {
+  const payments = row.payments || []
+  const amount = payments.reduce((sum, payment) => sum + Number(payment.amount || 0), 0)
+  const size = sizeFromType(row.lockers?.size_type_id)
+
+  return {
+    id: row.transaction_id,
+    lockerNumber: row.lockers?.locker_number || '?',
+    sizeName: size.label,
+    amount,
+    paymentMethod: payments[0]?.payment_method || 'Device',
+    status: row.status || 'Active',
+    startTime: row.start_time,
+    endTime: row.end_time,
+    durationMinutes: row.duration_minutes || 0,
+    paymentsList: payments,
+  }
+}
+

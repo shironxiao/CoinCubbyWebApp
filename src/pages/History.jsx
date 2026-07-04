@@ -1,30 +1,16 @@
 /* eslint-disable react-hooks/set-state-in-effect, react-hooks/preserve-manual-memoization */
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { fetchRentalHistory, formatMoney, sizeFromType } from '../lib/supabase'
+import { formatMoney, sizeFromType, mapHistory } from '../lib/supabase'
 import { formatDateTime, formatMinutes } from '../lib/time'
 
-function mapHistory(row) {
-  const payments = row.payments || []
-  const amount = payments.reduce((sum, payment) => sum + Number(payment.amount || 0), 0)
-  const size = sizeFromType(row.lockers?.size_type_id)
-
-  return {
-    id: row.transaction_id,
-    lockerNumber: row.lockers?.locker_number || '?',
-    sizeName: size.label,
-    amount,
-    paymentMethod: payments[0]?.payment_method || 'Device',
-    status: row.status || 'Active',
-    startTime: row.start_time,
-    endTime: row.end_time,
-    durationMinutes: row.duration_minutes || 0,
-    paymentsList: payments,
-  }
-}
-
-export default function History({ session }) {
-  const [items, setItems] = useState([])
-  const [loading, setLoading] = useState(true)
+export default function History({
+  session,
+  rentalHistory,
+  loadingData,
+  refreshAllData,
+}) {
+  const items = rentalHistory
+  const loading = loadingData
   const [message, setMessage] = useState('')
   const [timeFilter, setTimeFilter] = useState('all') // 'all', 'today', 'week', 'month'
   const [statusFilter, setStatusFilter] = useState('all') // 'all', 'active', 'completed'
@@ -67,28 +53,7 @@ export default function History({ session }) {
     setCurrentPage(1)
   }, [timeFilter, statusFilter])
 
-  const loadHistory = useCallback(async () => {
-    if (!session?.userId) {
-      setItems([])
-      setLoading(false)
-      return
-    }
-
-    setLoading(true)
-    setMessage('')
-    try {
-      const rows = await fetchRentalHistory(session.userId, session.accessToken)
-      setItems((rows || []).map(mapHistory))
-    } catch (err) {
-      setMessage(err.message || 'Failed to load history.')
-    } finally {
-      setLoading(false)
-    }
-  }, [session?.accessToken, session?.userId])
-
-  useEffect(() => {
-    loadHistory()
-  }, [loadHistory])
+  // Data is loaded and synced globally
 
   const filteredItems = useMemo(() => {
     const now = new Date()

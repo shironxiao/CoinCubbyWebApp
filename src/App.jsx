@@ -1,5 +1,4 @@
-/* eslint-disable react-hooks/set-state-in-effect */
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import './App.css'
 import History from './pages/History'
 import Home from './pages/Home'
@@ -14,7 +13,18 @@ import {
   requestBrowserNotificationPermission,
   showBrowserNotification,
 } from './lib/browserNotifications'
-import { clearSession, getSession } from './lib/supabase'
+import {
+  clearSession,
+  getSession,
+  fetchLockers,
+  fetchModules,
+  fetchRentalHistory,
+  fetchActiveRentals,
+  fetchRatesMap,
+  getOrCreateWallet,
+  mapRental,
+  mapHistory,
+} from './lib/supabase'
 
 const protectedPages = ['home', 'rent', 'history', 'profile']
 
@@ -39,6 +49,96 @@ export default function App() {
   const [browserNotificationStatus, setBrowserNotificationStatus] = useState(() =>
     getBrowserNotificationStatus(),
   )
+
+  const [walletBalance, setWalletBalance] = useState(50)
+  const [activeRentals, setActiveRentals] = useState([])
+  const [rentalHistory, setRentalHistory] = useState([])
+  const [lockers, setLockers] = useState([])
+  const [modules, setModules] = useState([])
+  const [selectedModuleId, setSelectedModuleId] = useState('')
+  const [ratesMap, setRatesMap] = useState(null)
+  const [loadingData, setLoadingData] = useState(true)
+
+  // Fetch static data (modules and rates) on mount or session change
+  useEffect(() => {
+    async function initStatic() {
+      try {
+        const mods = await fetchModules()
+        setModules(mods || [])
+        if (mods?.length) {
+          setSelectedModuleId(String(mods[0].module_id))
+        }
+        const rates = await fetchRatesMap()
+        setRatesMap(rates)
+      } catch (err) {
+        console.error('Failed to load static modules/rates:', err)
+      }
+    }
+    initStatic()
+  }, [])
+
+  // Sync wallet balance to states when session is loaded initially
+  useEffect(() => {
+    if (session?.userId) {
+      getOrCreateWallet(session).then((val) => {
+        if (val !== null) setWalletBalance(val)
+      })
+    }
+  }, [session])
+
+  const refreshAllData = useCallback(async (showLoading = false) => {
+    if (!session?.userId) return
+
+    if (showLoading) {
+      setLoadingData(true)
+    }
+
+    try {
+      const [bal, activeRows, allLockers, historyRows] = await Promise.all([
+        getOrCreateWallet(session),
+        fetchActiveRentals(session.userId, session.accessToken),
+        fetchLockers(),
+        fetchRentalHistory(session.userId, session.accessToken),
+      ])
+
+      if (bal !== null) {
+        setWalletBalance(bal)
+      }
+      setActiveRentals((activeRows || []).map(mapRental))
+      setLockers(allLockers || [])
+      setRentalHistory((historyRows || []).map(mapHistory))
+    } catch (err) {
+      console.error('Error syncing app data:', err)
+    } finally {
+      if (showLoading) {
+        setLoadingData(false)
+      }
+    }
+  }, [session])
+
+  // Setup periodic polling interval
+  useEffect(() => {
+    if (!session?.userId) return
+
+    // Run initial full fetch with loading indicator
+    refreshAllData(true)
+
+    const interval = setInterval(() => {
+      refreshAllData(false)
+    }, 4000)
+
+    return () => clearInterval(interval)
+  }, [session?.userId, refreshAllData])
+
+  // Clear states when user logs out
+  useEffect(() => {
+    if (!session) {
+      setWalletBalance(50)
+      setActiveRentals([])
+      setRentalHistory([])
+      setLockers([])
+    }
+  }, [session])
 
   const navItems = [
     ['home', 'Home'],
@@ -167,8 +267,28 @@ export default function App() {
     if (!session && page === 'register') return <Register onNavigate={navigate} />
     if (!session) return <Login onLogin={setSession} onNavigate={navigate} />
 
-    if (page === 'rent') return <Rent session={session} addNotification={addNotification} />
-    if (page === 'history') return <History session={session} />
+    if (page === 'rent') {
+      return (
+        <Rent
+          session={session}
+          addNotification={addNotification}
+          activeRentals={activeRentals}
+          walletBalance={walletBalance}
+          loadingData={loadingData}
+          refreshAllData={refreshAllData}
+        />
+      )
+    }
+    if (page === 'history') {
+      return (
+        <History
+          session={session}
+          rentalHistory={rentalHistory}
+          loadingData={loadingData}
+          refreshAllData={refreshAllData}
+        />
+      )
+    }
     if (page === 'profile') {
       return (
         <Profile
@@ -180,7 +300,22 @@ export default function App() {
       )
     }
 
-    return <Home session={session} onNavigate={navigate} addNotification={addNotification} />
+    return (
+      <Home
+        session={session}
+        onNavigate={navigate}
+        addNotification={addNotification}
+        modules={modules}
+        selectedModuleId={selectedModuleId}
+        setSelectedModuleId={setSelectedModuleId}
+        lockers={lockers}
+        walletBalance={walletBalance}
+        activeRentals={activeRentals}
+        ratesMap={ratesMap}
+        loadingData={loadingData}
+        refreshAllData={refreshAllData}
+      />
+    )
   }
 
   const unreadCount = notifications.filter((n) => !n.isRead).length

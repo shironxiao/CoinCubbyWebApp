@@ -3,38 +3,15 @@ import { useCallback, useEffect, useState } from 'react'
 import {
   completeRental,
   createReturnPaymentSession,
-  fetchActiveRentals,
   fetchPaymentSession,
+  fetchTransactionPayments,
   formatMoney,
-  getOrCreateWallet,
-  parseTimestamp,
   sizeFromType,
   syncWalletBalance,
   verifyPinAsPassword,
+  mapRental,
 } from '../lib/supabase'
 import { formatDateTime, formatDuration } from '../lib/time'
-
-function mapRental(row) {
-  const size = sizeFromType(row.lockers?.size_type_id)
-  const startMs = parseTimestamp(row.start_time)
-  const endMs = parseTimestamp(row.end_time)
-  const isOpenTime = !row.end_time
-  const ratePerHr = size.rate
-
-  return {
-    transactionId: row.transaction_id,
-    lockerId: row.locker_id,
-    lockerNumber: row.lockers?.locker_number || '?',
-    deviceId: row.lockers?.device_id,
-    sizeName: size.label,
-    startMs,
-    endMs,
-    isOpenTime,
-    ratePerHr,
-    qrToken: row.qr_token || '-',
-    durationMinutes: row.duration_minutes || 0,
-  }
-}
 
 function calculateOvertimeFee(item, currentTick) {
   let mins = 0
@@ -61,14 +38,22 @@ function calculateOvertimeFee(item, currentTick) {
   return Math.floor(multiplier * item.ratePerHr)
 }
 
-export default function Rent({ session, addNotification }) {
-  const [rentals, setRentals] = useState([])
-  const [loading, setLoading] = useState(true)
+export default function Rent({
+  session,
+  addNotification,
+  activeRentals,
+  walletBalance: balanceProp,
+  loadingData,
+  refreshAllData,
+}) {
+  const rentals = activeRentals
+  const walletBalance = balanceProp
+  const loading = loadingData
+
   const [message, setMessage] = useState('')
   const [tick, setTick] = useState(() => Date.now())
   const [activeReturnItem, setActiveReturnItem] = useState(null)
   const [payMethod, setPayMethod] = useState('Wallet')
-  const [walletBalance, setWalletBalance] = useState(50)
   const [insertedAmount, setInsertedAmount] = useState(0)
   const [secondsLeft, setSecondsLeft] = useState(60)
   const [hasTimedOut, setHasTimedOut] = useState(false)
@@ -109,36 +94,7 @@ export default function Rent({ session, addNotification }) {
     return () => clearInterval(id)
   }, [])
 
-  useEffect(() => {
-    if (session?.userId) {
-      getOrCreateWallet(session).then((val) => {
-        if (val !== null) setWalletBalance(val)
-      })
-    }
-  }, [session])
-
-  const loadRentals = useCallback(async () => {
-    if (!session?.userId) {
-      setRentals([])
-      setLoading(false)
-      return
-    }
-
-    setLoading(true)
-    setMessage('')
-    try {
-      const rows = await fetchActiveRentals(session.userId, session.accessToken)
-      setRentals((rows || []).map(mapRental))
-    } catch (err) {
-      setMessage(err.message || 'Failed to load rentals.')
-    } finally {
-      setLoading(false)
-    }
-  }, [session?.accessToken, session?.userId])
-
-  useEffect(() => {
-    loadRentals()
-  }, [loadRentals])
+  // Local data loader is no longer needed since it is polled globally
 
   // Countdown timer for return overtime pay at device
   useEffect(() => {
@@ -225,30 +181,25 @@ export default function Rent({ session, addNotification }) {
     const interval = setInterval(async () => {
       try {
         const paymentSession = await fetchPaymentSession(activeReturnItem.paymentSessionId, session.accessToken)
+        const payments = paymentSession
+          ? [{ amount: paymentSession.amount_paid }]
+          : await fetchTransactionPayments(activeReturnItem.transactionId, session.accessToken)
         if (!isMounted) return
 
         const sum = (payments || []).reduce((acc, p) => acc + Number(p.amount || 0), 0)
         
         setInsertedAmount((prev) => {
-          if (newlyInserted > prev) {
+          if (sum > prev) {
             setSecondsLeft(60) // reset timer
           }
-          return newlyInserted
+          return sum
         })
 
         const fee = calculateOvertimeFee(activeReturnItem, Date.now())
         if (sum >= fee) {
           clearInterval(interval)
-
-          // Reload wallet balance state from database
-          if (session?.userId) {
-            getOrCreateWallet(session).then((val) => {
-              if (val !== null) setWalletBalance(val)
-            })
-          }
-
           closeReturnModal()
-          await loadRentals()
+          await refreshAllData()
         }
       } catch (err) {
         console.error('Error polling return payments:', err)
@@ -259,7 +210,7 @@ export default function Rent({ session, addNotification }) {
       isMounted = false
       clearInterval(interval)
     }
-  }, [activeReturnItem, payMethod, hasTimedOut, session?.accessToken, session?.userId, loadRentals])
+  }, [activeReturnItem, payMethod, hasTimedOut, session?.accessToken, session?.userId, refreshAllData])
 
   function handleContinuePayment() {
     setSecondsLeft(60)
@@ -304,19 +255,12 @@ export default function Rent({ session, addNotification }) {
 
       try {
         const finalBalance = Math.max(0, walletBalance - fee)
-        setWalletBalance(finalBalance)
         await syncWalletBalance(session, finalBalance)
 
         await completeRental({ ...activeReturnItem, userId: session.userId }, session.accessToken, fee, 'Wallet')
 
-        // Reload wallet balance state from database
-        if (session?.userId) {
-          const dbBalance = await getOrCreateWallet(session)
-          if (dbBalance !== null) setWalletBalance(dbBalance)
-        }
-
         closeReturnModal()
-        await loadRentals()
+        await refreshAllData()
       } catch (err) {
         setMessage(err.message || 'Failed to complete wallet payment return.')
       }
@@ -332,15 +276,8 @@ export default function Rent({ session, addNotification }) {
           })
         }
 
-        // Reload wallet balance state from database
-        if (session?.userId) {
-          getOrCreateWallet(session).then((val) => {
-            if (val !== null) setWalletBalance(val)
-          })
-        }
-
         closeReturnModal()
-        await loadRentals()
+        await refreshAllData()
       } catch (err) {
         setMessage(err.message || 'Failed to complete return.')
       }
