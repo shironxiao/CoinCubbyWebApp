@@ -19,7 +19,10 @@ function mapRental(row) {
   const startMs = parseTimestamp(row.start_time)
   const endMs = parseTimestamp(row.end_time)
   const isOpenTime = !row.end_time
-  const ratePerHr = size.rate
+  // Use the DB rate from the rates join; fall back to sizeFromType if missing
+  const ratePerHr = row.rates?.price_per_hour != null
+    ? Number(row.rates.price_per_hour)
+    : size.rate
 
   return {
     transactionId: row.transaction_id,
