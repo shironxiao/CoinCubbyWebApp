@@ -6,8 +6,10 @@ import {
   fetchActiveRentals,
   fetchPaymentSession,
   formatMoney,
+  getOrCreateWallet,
   parseTimestamp,
   sizeFromType,
+  syncWalletBalance,
   verifyPinAsPassword,
 } from '../lib/supabase'
 import { formatDateTime, formatDuration } from '../lib/time'
@@ -94,6 +96,14 @@ export default function Rent({ session, addNotification }) {
     const id = setInterval(() => setTick(Date.now()), 1000)
     return () => clearInterval(id)
   }, [])
+
+  useEffect(() => {
+    if (session?.userId) {
+      getOrCreateWallet(session).then((val) => {
+        if (val !== null) setWalletBalance(val)
+      })
+    }
+  }, [session])
 
   const loadRentals = useCallback(async () => {
     if (!session?.userId) {
@@ -218,11 +228,11 @@ export default function Rent({ session, addNotification }) {
         if (sum >= fee) {
           clearInterval(interval)
 
-          // Reload wallet balance state from localStorage
+          // Reload wallet balance state from database
           if (session?.userId) {
-            const balanceKey = `coincubby.balance.${session.userId}`
-            const stored = localStorage.getItem(balanceKey)
-            if (stored !== null) setWalletBalance(Number(stored))
+            getOrCreateWallet(session).then((val) => {
+              if (val !== null) setWalletBalance(val)
+            })
           }
 
           closeReturnModal()
@@ -263,6 +273,11 @@ export default function Rent({ session, addNotification }) {
     } catch {
       setWalletBalance(50.00)
     }
+    if (session?.userId) {
+      getOrCreateWallet(session).then((val) => {
+        if (val !== null) setWalletBalance(val)
+      })
+    }
   }
 
   async function handleConfirmReturn() {
@@ -277,16 +292,15 @@ export default function Rent({ session, addNotification }) {
 
       try {
         const finalBalance = Math.max(0, walletBalance - fee)
-        localStorage.setItem(`coincubby.balance.${session.userId}`, finalBalance.toFixed(2))
         setWalletBalance(finalBalance)
+        await syncWalletBalance(session, finalBalance)
 
         await completeRental({ ...activeReturnItem, userId: session.userId }, session.accessToken, fee, 'Wallet')
 
-        // Reload wallet balance state from localStorage
+        // Reload wallet balance state from database
         if (session?.userId) {
-          const balanceKey = `coincubby.balance.${session.userId}`
-          const stored = localStorage.getItem(balanceKey)
-          if (stored !== null) setWalletBalance(Number(stored))
+          const dbBalance = await getOrCreateWallet(session)
+          if (dbBalance !== null) setWalletBalance(dbBalance)
         }
 
         closeReturnModal()
@@ -306,11 +320,11 @@ export default function Rent({ session, addNotification }) {
           })
         }
 
-        // Reload wallet balance state from localStorage
+        // Reload wallet balance state from database
         if (session?.userId) {
-          const balanceKey = `coincubby.balance.${session.userId}`
-          const stored = localStorage.getItem(balanceKey)
-          if (stored !== null) setWalletBalance(Number(stored))
+          getOrCreateWallet(session).then((val) => {
+            if (val !== null) setWalletBalance(val)
+          })
         }
 
         closeReturnModal()

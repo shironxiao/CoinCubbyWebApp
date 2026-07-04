@@ -10,8 +10,10 @@ import {
   fetchPaymentSession,
   fetchTransactionPayments,
   formatMoney,
+  getOrCreateWallet,
   parseTimestamp,
   sizeFromType,
+  syncWalletBalance,
   updateLockerStatus,
 } from '../lib/supabase'
 import { formatDuration } from '../lib/time'
@@ -63,6 +65,14 @@ export default function Home({ session, onNavigate, addNotification }) {
   useEffect(() => {
     loadModules()
   }, [])
+
+  useEffect(() => {
+    if (session?.userId) {
+      getOrCreateWallet(session).then((val) => {
+        if (val !== null) setBalance(val)
+      })
+    }
+  }, [session])
 
   useEffect(() => {
     if (selectedModuleId) {
@@ -285,8 +295,8 @@ export default function Home({ session, onNavigate, addNotification }) {
         // Deduct from wallet if paid via Wallet
         if (paymentMethod === 'Wallet' && !isOpenTime) {
           const finalBalance = Math.max(0, balance - total)
-          localStorage.setItem(`coincubby.balance.${session.userId}`, finalBalance.toFixed(2))
           setBalance(finalBalance)
+          await syncWalletBalance(session, finalBalance)
         }
 
         setSelectedLocker(null)

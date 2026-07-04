@@ -630,10 +630,36 @@ export async function completeRental(item, token, overtimeFee = 0, paymentMethod
       const refundAmount = Number((unusedMinutes * (item.ratePerHr / 60)).toFixed(2))
 
       if (refundAmount > 0) {
-        // 1. Credit the user's digital wallet in localStorage
-        const balanceKey = `coincubby.balance.${item.userId}`
-        const currentBalance = Number(localStorage.getItem(balanceKey) || 50.0)
+        // 1. Credit the user's digital wallet in database and localStorage
+        let currentBalance = 50.00
+        try {
+          const dbWallet = await request(`/rest/v1/wallets?customer_id=eq.${item.userId}&select=balance`, {
+            headers: authHeaders(token)
+          })
+          if (dbWallet && dbWallet.length > 0) {
+            currentBalance = Number(dbWallet[0].balance)
+          }
+        } catch (err) {
+          console.warn('Failed to fetch wallet for refund, using localStorage fallback:', err)
+          const balanceKey = `coincubby.balance.${item.userId}`
+          currentBalance = Number(localStorage.getItem(balanceKey) || 50.0)
+        }
+
         const newBalance = currentBalance + refundAmount
+        
+        // Sync to DB
+        try {
+          await request(`/rest/v1/wallets?customer_id=eq.${item.userId}`, {
+            method: 'PATCH',
+            headers: authHeaders(token, { 'Content-Type': 'application/json' }),
+            body: JSON.stringify({ balance: newBalance, updated_at: new Date().toISOString() })
+          })
+        } catch (err) {
+          console.error('Failed to update wallet balance in DB for refund:', err)
+        }
+
+        // Sync to localStorage
+        const balanceKey = `coincubby.balance.${item.userId}`
         localStorage.setItem(balanceKey, newBalance.toFixed(2))
 
         // 2. Insert a negative payment record in the database
@@ -675,6 +701,40 @@ export async function completeRental(item, token, overtimeFee = 0, paymentMethod
         payment_method: paymentMethod,
       }),
     })
+
+    // Deduct from DB wallet if overtime fee is paid via Wallet
+    if (paymentMethod === 'Wallet' && item.userId) {
+      let currentBalance = 50.00
+      try {
+        const dbWallet = await request(`/rest/v1/wallets?customer_id=eq.${item.userId}&select=balance`, {
+          headers: authHeaders(token)
+        })
+        if (dbWallet && dbWallet.length > 0) {
+          currentBalance = Number(dbWallet[0].balance)
+        }
+      } catch (err) {
+        console.warn('Failed to fetch wallet for deduction, using localStorage fallback:', err)
+        const balanceKey = `coincubby.balance.${item.userId}`
+        currentBalance = Number(localStorage.getItem(balanceKey) || 50.0)
+      }
+
+      const newBalance = Math.max(0, currentBalance - finalPaymentAmount)
+
+      // Sync to DB
+      try {
+        await request(`/rest/v1/wallets?customer_id=eq.${item.userId}`, {
+          method: 'PATCH',
+          headers: authHeaders(token, { 'Content-Type': 'application/json' }),
+          body: JSON.stringify({ balance: newBalance, updated_at: new Date().toISOString() })
+        })
+      } catch (err) {
+        console.error('Failed to update wallet balance in DB for overtime deduction:', err)
+      }
+
+      // Sync to localStorage
+      const balanceKey = `coincubby.balance.${item.userId}`
+      localStorage.setItem(balanceKey, newBalance.toFixed(2))
+    }
   }
 
   await updateLockerStatus(item.lockerId, 'Available', token)
@@ -773,4 +833,60 @@ export async function generateUniqueUserId(retries = 10) {
   }
   // Fallback: timestamp-based suffix (extremely unlikely collision)
   return String(Date.now()).slice(-6)
+}
+
+export async function getOrCreateWallet(session) {
+  if (!session?.userId) return null
+  try {
+    const data = await request(`/rest/v1/wallets?customer_id=eq.${session.userId}&select=balance`, {
+      headers: authHeaders(session.accessToken)
+    })
+    if (data && data.length > 0) {
+      const balance = Number(data[0].balance)
+      localStorage.setItem(`coincubby.balance.${session.userId}`, balance.toFixed(2))
+      return balance
+    }
+  } catch (err) {
+    console.warn('Failed to fetch wallet from database, trying to create one:', err)
+  }
+
+  try {
+    await request('/rest/v1/wallets?on_conflict=customer_id', {
+      method: 'POST',
+      headers: authHeaders(session.accessToken, {
+        'Content-Type': 'application/json',
+        Prefer: 'resolution=merge-duplicates,return=representation',
+      }),
+      body: JSON.stringify({
+        customer_id: session.userId,
+        balance: 50.00
+      })
+    })
+    localStorage.setItem(`coincubby.balance.${session.userId}`, '50.00')
+    return 50.00
+  } catch (err) {
+    console.error('Failed to create default wallet in database:', err)
+    const cached = localStorage.getItem(`coincubby.balance.${session.userId}`)
+    return cached !== null ? Number(cached) : 50.00
+  }
+}
+
+export async function syncWalletBalance(session, newBalance) {
+  if (!session?.userId) return
+  localStorage.setItem(`coincubby.balance.${session.userId}`, Number(newBalance).toFixed(2))
+  try {
+    await request(`/rest/v1/wallets?customer_id=eq.${session.userId}`, {
+      method: 'PATCH',
+      headers: authHeaders(session.accessToken, {
+        'Content-Type': 'application/json',
+        Prefer: 'return=minimal',
+      }),
+      body: JSON.stringify({
+        balance: newBalance,
+        updated_at: new Date().toISOString()
+      })
+    })
+  } catch (err) {
+    console.error('Failed to sync wallet balance to database:', err)
+  }
 }
