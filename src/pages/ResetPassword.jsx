@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { changePassword } from '../lib/supabase'
 import logo from '../assets/coin_logo.png'
+import AlertDialog from '../components/AlertDialog'
 
 export default function ResetPassword({ accessToken, onNavigate }) {
   const [form, setForm] = useState({ password: '', confirmPassword: '' })
@@ -72,8 +73,8 @@ export default function ResetPassword({ accessToken, onNavigate }) {
             />
           </label>
 
-          {error && <p className="alert">{error}</p>}
-          {notice && <p className="success">{notice}</p>}
+          {error && <AlertDialog type="error" message={error} onClose={() => setError('')} />}
+          {notice && <AlertDialog type="success" message={notice} onClose={() => setNotice('')} />}
 
           <button className="primary-button xml-black-button" type="submit" disabled={loading}>
             {loading ? 'Updating...' : 'Reset PIN'}

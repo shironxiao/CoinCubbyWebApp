@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { loginWithPassword, sendPasswordResetEmail } from '../lib/supabase'
 import logo from '../assets/coin_logo.png'
+import AlertDialog from '../components/AlertDialog'
 
 export default function Login({ onNavigate, onLogin }) {
   const [form, setForm] = useState({ email: '', password: '' })
@@ -101,7 +102,7 @@ export default function Login({ onNavigate, onLogin }) {
                 />
               </label>
 
-              {error && <p className="alert">{error}</p>}
+              {error && <AlertDialog type="error" message={error} onClose={() => setError('')} />}
 
               <button className="primary-button xml-black-button" type="submit" disabled={loading}>
                 {loading ? 'Logging in...' : 'Continue'}
@@ -149,8 +150,8 @@ export default function Login({ onNavigate, onLogin }) {
                 />
               </label>
 
-              {resetError && <p className="alert">{resetError}</p>}
-              {resetNotice && <p className="success">{resetNotice}</p>}
+              {resetError && <AlertDialog type="error" message={resetError} onClose={() => setResetError('')} />}
+              {resetNotice && <AlertDialog type="success" message={resetNotice} onClose={() => setResetNotice('')} />}
 
               <button className="primary-button xml-black-button" type="submit" disabled={resetLoading}>
                 {resetLoading ? 'Sending...' : 'Send Reset Link'}

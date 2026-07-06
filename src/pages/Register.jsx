@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { registerAccount, isUserIdTaken, generateUniqueUserId } from '../lib/supabase'
+import AlertDialog from '../components/AlertDialog'
 
 export default function Register({ onNavigate }) {
   const [form, setForm] = useState({
@@ -167,8 +168,8 @@ export default function Register({ onNavigate }) {
             />
           </label>
 
-          {error && <p className="alert">{error}</p>}
-          {notice && <p className="success">{notice}</p>}
+          {error && <AlertDialog type="error" message={error} onClose={() => setError('')} />}
+          {notice && <AlertDialog type="success" message={notice} onClose={() => setNotice('')} />}
 
           <button className="primary-button xml-black-button" type="submit" disabled={loading || generatingId}>
             {loading ? 'Creating account...' : 'Create Account'}

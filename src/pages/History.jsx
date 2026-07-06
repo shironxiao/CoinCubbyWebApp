@@ -1,7 +1,7 @@
-/* eslint-disable react-hooks/set-state-in-effect, react-hooks/preserve-manual-memoization */
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { fetchRentalHistory, formatMoney, sizeFromType } from '../lib/supabase'
 import { formatDateTime, formatMinutes } from '../lib/time'
+import AlertDialog from '../components/AlertDialog'
 
 function mapHistory(row) {
   const payments = row.payments || []
@@ -237,7 +237,7 @@ export default function History({ session }) {
         <span>Status</span>
       </section>
 
-      {message && <p className="alert">{message}</p>}
+      {message && <AlertDialog type="error" message={message} onClose={() => setMessage('')} />}
       {loading && <div className="xml-loading"><span></span><p>Loading history...</p></div>}
       {!loading && items.length === 0 && <p className="empty-state">No rental history yet.</p>}
       {!loading && items.length > 0 && filteredItems.length === 0 && <p className="empty-state">No matching rentals found.</p>}

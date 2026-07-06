@@ -11,6 +11,7 @@ import {
   verifyPinAsPassword,
 } from '../lib/supabase'
 import { formatDateTime, formatDuration } from '../lib/time'
+import AlertDialog from '../components/AlertDialog'
 
 function mapRental(row) {
   const size = sizeFromType(row.lockers?.size_type_id)
@@ -356,7 +357,13 @@ export default function Rent({ session, addNotification }) {
         <span className="locker-glyph banner-locker" aria-hidden="true"></span>
       </section>
 
-      {message && <p className={message.includes('returned') ? 'success' : 'alert'}>{message}</p>}
+      {message && (
+        <AlertDialog
+          type={message.includes('returned') ? 'success' : 'error'}
+          message={message}
+          onClose={() => setMessage('')}
+        />
+      )}
       {loading && <div className="xml-loading"><span></span><p>Loading rentals...</p></div>}
       {!loading && rentals.length === 0 && <p className="empty-state">No active rentals yet.</p>}
 

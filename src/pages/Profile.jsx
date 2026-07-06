@@ -1,6 +1,7 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { fetchProfile, logout, changePassword, verifyUserPassword } from '../lib/supabase'
+import AlertDialog from '../components/AlertDialog'
 
 export default function Profile({ session, onLogout, onNavigate, addNotification }) {
   const [profile, setProfile] = useState({
@@ -64,15 +65,7 @@ export default function Profile({ session, onLogout, onNavigate, addNotification
     }
   }
 
-  const initials = useMemo(() => {
-    const name = profile.fullName || profile.contact || 'User'
-    return name
-      .split(' ')
-      .filter(Boolean)
-      .slice(0, 2)
-      .map((part) => part[0]?.toUpperCase())
-      .join('')
-  }, [profile])
+
 
   const loadProfile = useCallback(async () => {
     if (!session?.accessToken) return
@@ -115,7 +108,7 @@ export default function Profile({ session, onLogout, onNavigate, addNotification
       </header>
 
       <section className="profile-hero">
-        <div className="avatar">{initials || 'U'}</div>
+        <div className="profile-brand-logo">CoinCubby</div>
         <h1>{profile.fullName || 'Loading...'}</h1>
         <p>{profile.contact}</p>
 
@@ -145,7 +138,7 @@ export default function Profile({ session, onLogout, onNavigate, addNotification
         )}
       </section>
 
-      {message && <p className="alert">{message}</p>}
+      {message && <AlertDialog type="error" message={message} onClose={() => setMessage('')} />}
 
       {/* Change PIN Section */}
       {!isChangingPassword ? (
@@ -216,8 +209,8 @@ export default function Profile({ session, onLogout, onNavigate, addNotification
             />
           </label>
 
-          {error && <p className="alert">{error}</p>}
-          {notice && <p className="success">{notice}</p>}
+          {error && <AlertDialog type="error" message={error} onClose={() => setError('')} />}
+          {notice && <AlertDialog type="success" message={notice} onClose={() => setNotice('')} />}
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '8px' }}>
             <button

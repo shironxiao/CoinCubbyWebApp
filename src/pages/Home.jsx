@@ -15,6 +15,7 @@ import {
   updateLockerStatus,
 } from '../lib/supabase'
 import { formatDuration } from '../lib/time'
+import AlertDialog from '../components/AlertDialog'
 
 function statusClass(status) {
   return String(status || 'Available').toLowerCase().replaceAll(' ', '-')
@@ -455,7 +456,7 @@ export default function Home({ session, onNavigate, addNotification }) {
           ))}
         </div>
 
-      {message && <p className="alert">{message}</p>}
+      {message && <AlertDialog type="error" message={message} onClose={() => setMessage('')} />}
       {loading ? (
         <p className="muted">Loading lockers...</p>
       ) : (
