@@ -1394,15 +1394,16 @@ dd {
   text-align: center;
 }
 
-.avatar {
-  display: grid;
-  place-items: center;
-  width: 76px;
-  height: 76px;
-  border-radius: 10px;
-  background: var(--label-green);
-  color: var(--dark);
+.profile-brand-logo {
+  font-size: 26px;
   font-weight: 800;
+  letter-spacing: 0.12em;
+  background: linear-gradient(135deg, var(--dark) 45%, var(--gray) 90%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-transform: uppercase;
+  font-family: 'Outfit', 'Inter', sans-serif;
+  margin-bottom: 2px;
 }
 
 .profile-hero h1 {
@@ -2242,4 +2243,108 @@ dd {
 .continue-payment-btn {
   width: 100%;
 }
+
+/* Alert Dialog Styles */
+.alert-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  animation: fade-in 0.2s ease-out;
+}
+
+.alert-dialog {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  padding: 32px 24px;
+  width: min(90%, 360px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  animation: scale-up 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.alert-dialog-icon {
+  font-size: 32px;
+  width: 64px;
+  height: 64px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--bg-app);
+}
+
+.alert-dialog--error .alert-dialog-icon {
+  background: #fee4e2;
+}
+
+.alert-dialog--success .alert-dialog-icon {
+  background: #dcfae6;
+}
+
+.alert-dialog--warning .alert-dialog-icon {
+  background: #fef0c7;
+}
+
+.alert-dialog-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--dark);
+  margin: 0;
+}
+
+.alert-dialog-message {
+  font-size: 14px;
+  color: var(--gray);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.alert-dialog-btn {
+  width: 100%;
+  padding: 12px;
+  border: 0;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.alert-dialog-btn:hover {
+  opacity: 0.9;
+}
+
+.alert-dialog-btn--error {
+  background: #d92d20;
+  color: var(--white);
+}
+
+.alert-dialog-btn--success {
+  background: #079455;
+  color: var(--white);
+}
+
+.alert-dialog-btn--warning {
+  background: #dc6803;
+  color: var(--white);
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scale-up {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
 
