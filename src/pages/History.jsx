@@ -1,36 +1,23 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { fetchRentalHistory, formatMoney, sizeFromType } from '../lib/supabase'
+import { formatMoney, sizeFromType, mapHistory } from '../lib/supabase'
 import { formatDateTime, formatMinutes } from '../lib/time'
 import AlertDialog from '../components/AlertDialog'
 
-function mapHistory(row) {
-  const payments = row.payments || []
-  const amount = payments.reduce((sum, payment) => sum + Number(payment.amount || 0), 0)
-  const size = sizeFromType(row.lockers?.size_type_id)
-
-  return {
-    id: row.transaction_id,
-    lockerNumber: row.lockers?.locker_number || '?',
-    sizeName: size.label,
-    amount,
-    paymentMethod: payments[0]?.payment_method || 'Device',
-    status: row.status || 'Active',
-    startTime: row.start_time,
-    endTime: row.end_time,
-    durationMinutes: row.duration_minutes || 0,
-    paymentsList: payments,
-  }
-}
-
-export default function History({ session }) {
-  const [items, setItems] = useState([])
-  const [loading, setLoading] = useState(true)
+export default function History({
+  session,
+  rentalHistory,
+  loadingData,
+  refreshAllData,
+}) {
+  const items = rentalHistory
+  const loading = loadingData
   const [message, setMessage] = useState('')
   const [timeFilter, setTimeFilter] = useState('all') // 'all', 'today', 'week', 'month'
   const [statusFilter, setStatusFilter] = useState('all') // 'all', 'active', 'completed'
   const [selectedItem, setSelectedItem] = useState(null)
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false)
-  const [isConfirmingClearAll, setIsConfirmingClearAll] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 8
   const [deletedIds, setDeletedIds] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem(`coincubby.deleted_transactions.${session?.userId}`)) || []
@@ -62,38 +49,11 @@ export default function History({ session }) {
     setIsConfirmingDelete(false)
   }
 
-  function handleClearAll() {
-    const allIds = filteredItems.map((item) => item.id)
-    const updated = [...new Set([...deletedIds, ...allIds])]
-    setDeletedIds(updated)
-    if (session?.userId) {
-      localStorage.setItem(`coincubby.deleted_transactions.${session.userId}`, JSON.stringify(updated))
-    }
-    setIsConfirmingClearAll(false)
-  }
-
-  const loadHistory = useCallback(async () => {
-    if (!session?.userId) {
-      setItems([])
-      setLoading(false)
-      return
-    }
-
-    setLoading(true)
-    setMessage('')
-    try {
-      const rows = await fetchRentalHistory(session.userId, session.accessToken)
-      setItems((rows || []).map(mapHistory))
-    } catch (err) {
-      setMessage(err.message || 'Failed to load history.')
-    } finally {
-      setLoading(false)
-    }
-  }, [session?.accessToken, session?.userId])
-
   useEffect(() => {
-    loadHistory()
-  }, [loadHistory])
+    setCurrentPage(1)
+  }, [timeFilter, statusFilter])
+
+  // Data is loaded and synced globally
 
   const filteredItems = useMemo(() => {
     const now = new Date()
@@ -144,20 +104,16 @@ export default function History({ session }) {
     [filteredItems],
   )
 
+  const totalPages = Math.ceil(filteredItems.length / itemsPerPage)
+  const paginatedItems = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage
+    return filteredItems.slice(start, start + itemsPerPage)
+  }, [filteredItems, currentPage])
+
   return (
     <main className="page xml-page xml-history">
       <section className="xml-screen-header" style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: '16px', width: '100%', flexWrap: 'wrap' }}>
         <h1>Rental History</h1>
-        {filteredItems.length > 0 && (
-          <button
-            type="button"
-            className="secondary-button"
-            style={{ fontSize: '11px', padding: '6px 12px', borderColor: '#ff3b30', color: '#ff3b30', borderRadius: '20px', background: 'transparent' }}
-            onClick={() => setIsConfirmingClearAll(true)}
-          >
-            Clear All
-          </button>
-        )}
       </section>
 
       <section className="history-summary">
@@ -243,7 +199,7 @@ export default function History({ session }) {
       {!loading && items.length > 0 && filteredItems.length === 0 && <p className="empty-state">No matching rentals found.</p>}
 
       <section className="history-list">
-        {filteredItems.map((item) => (
+        {paginatedItems.map((item) => (
           <article
             className="history-row"
             key={item.id}
@@ -265,6 +221,30 @@ export default function History({ session }) {
           </article>
         ))}
       </section>
+
+      {totalPages > 1 && (
+        <div className="pagination-controls">
+          <button
+            className="pagination-btn"
+            disabled={currentPage === 1}
+            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            aria-label="Previous page"
+          >
+            &larr; Prev
+          </button>
+          <span className="pagination-info">
+            Page <strong>{currentPage}</strong> of {totalPages}
+          </span>
+          <button
+            className="pagination-btn"
+            disabled={currentPage === totalPages}
+            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+            aria-label="Next page"
+          >
+            Next &rarr;
+          </button>
+        </div>
+      )}
 
       {selectedItem && (
         <div className="modal-backdrop" role="presentation" onClick={() => {
@@ -386,45 +366,7 @@ export default function History({ session }) {
         </div>
       )}
 
-      {isConfirmingClearAll && (
-        <div className="modal-backdrop" role="presentation" onClick={() => setIsConfirmingClearAll(false)}>
-          <div className="rent-sheet xml-rent-sheet" onClick={(e) => e.stopPropagation()} style={{ padding: '24px', gap: '16px', textAlign: 'center' }}>
-            <div className="sheet-title" style={{ borderBottom: '1px solid rgba(0, 0, 0, 0.08)', paddingBottom: '12px', marginBottom: '8px' }}>
-              <h2>Clear Rental History?</h2>
-              <button className="icon-button" type="button" onClick={() => setIsConfirmingClearAll(false)}>
-                X
-              </button>
-            </div>
-
-            <div style={{ display: 'grid', gap: '16px', color: 'var(--dark)' }}>
-              <span style={{ fontSize: '2.5rem' }}>⚠️</span>
-              <p className="muted" style={{ fontSize: '13px', lineHeight: '1.4' }}>
-                Are you sure you want to clear all currently filtered rentals from your history view?
-                <br />
-                <strong style={{ color: '#ff3b30' }}>This will only hide them from your view and does not delete database records.</strong>
-              </p>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '8px' }}>
-                <button
-                  className="secondary-button"
-                  type="button"
-                  onClick={() => setIsConfirmingClearAll(false)}
-                >
-                  Cancel
-                </button>
-                <button
-                  className="danger-button xml-black-button"
-                  type="button"
-                  onClick={handleClearAll}
-                  style={{ background: '#ff3b30', color: '#fff', border: 'none' }}
-                >
-                  Yes, Clear All
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Clear All Modal has been removed as pagination was added instead */}
     </main>
   )
 }

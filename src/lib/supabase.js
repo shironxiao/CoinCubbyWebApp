@@ -171,10 +171,55 @@ export async function sendPasswordResetEmail(email) {
 
 
 
-export function sizeFromType(sizeTypeId) {
-  if (Number(sizeTypeId) === 2) return { label: 'Medium', rate: 20, price_per_minute: 20 / 60 }
-  if (Number(sizeTypeId) === 3) return { label: 'Large', rate: 30, price_per_minute: 30 / 60 }
-  return { label: 'Small', rate: 10, price_per_minute: 10 / 60 }
+// In-memory rates cache so we don't re-fetch on every call
+let _ratesCache = null
+let _ratesCacheTime = 0
+const RATES_CACHE_TTL = 60_000 // 1 minute
+
+/**
+ * Fetches rates from the database and returns a Map keyed by size_type_id.
+ * Caches in memory for 1 minute to avoid excessive API calls.
+ */
+export async function fetchRatesMap(forceRefresh = false) {
+  const now = Date.now()
+  if (!forceRefresh && _ratesCache && now - _ratesCacheTime < RATES_CACHE_TTL) {
+    return _ratesCache
+  }
+
+  try {
+    const rates = await fetchRates()
+    const map = {}
+    for (const r of rates || []) {
+      map[Number(r.size_type_id)] = Number(r.price_per_hour)
+    }
+    _ratesCache = map
+    _ratesCacheTime = now
+    return map
+  } catch (err) {
+    console.warn('Failed to fetch rates from DB, using cache/fallback:', err)
+    return _ratesCache || {}
+  }
+}
+
+/** Clears the in-memory rates cache (useful after admin updates). */
+export function invalidateRatesCache() {
+  _ratesCache = null
+  _ratesCacheTime = 0
+}
+
+const SIZE_LABELS = { 1: 'Small', 2: 'Medium', 3: 'Large' }
+const FALLBACK_RATES = { 1: 10, 2: 20, 3: 30 }
+
+/**
+ * Returns size info for a given size_type_id.
+ * If a ratesMap (from fetchRatesMap) is provided, uses DB rates.
+ * Otherwise falls back to hardcoded defaults.
+ */
+export function sizeFromType(sizeTypeId, ratesMap) {
+  const id = Number(sizeTypeId) || 1
+  const label = SIZE_LABELS[id] || 'Small'
+  const rate = (ratesMap && ratesMap[id] != null) ? Number(ratesMap[id]) : (FALLBACK_RATES[id] || 10)
+  return { label, rate, price_per_minute: rate / 60 }
 }
 
 export async function fetchModules() {
@@ -186,13 +231,16 @@ export async function fetchModules() {
 
 export async function fetchLockers(moduleId) {
   const moduleFilter = moduleId ? `module_id=eq.${moduleId}&` : ''
-  const rows = await request(
-    `/rest/v1/lockers?${moduleFilter}select=locker_id,locker_number,status,size_type_id,module_id,device_id&order=locker_id.asc`,
-    { headers: authHeaders() },
-  )
+  const [rows, ratesMap] = await Promise.all([
+    request(
+      `/rest/v1/lockers?${moduleFilter}select=locker_id,locker_number,status,size_type_id,module_id,device_id&order=locker_id.asc`,
+      { headers: authHeaders() },
+    ),
+    fetchRatesMap(),
+  ])
 
   return (rows || []).map((row) => {
-    const size = sizeFromType(row.size_type_id)
+    const size = sizeFromType(row.size_type_id, ratesMap)
     return {
       dbId: row.locker_id,
       id: row.locker_number || String(row.locker_id),
@@ -207,36 +255,13 @@ export async function fetchLockers(moduleId) {
 }
 
 export async function fetchRates() {
-  return request('/rest/v1/rates?select=rate_id,size_type_id,price_per_minute,min_charge_minutes', {
+  return request('/rest/v1/rates?select=rate_id,size_type_id,price_per_hour', {
     headers: authHeaders(),
   })
 }
 
-export async function ensureCorrectRates() {
-  try {
-    const rates = await fetchRates()
-    const correctRates = {
-      1: 10 / 60, // Small: ₱10/hr
-      2: 20 / 60, // Medium: ₱20/hr
-      3: 30 / 60, // Large: ₱30/hr
-    }
-
-    for (const rate of (rates || [])) {
-      const correctPrice = correctRates[rate.size_type_id]
-      if (correctPrice !== undefined) {
-        if (Math.abs(Number(rate.price_per_minute) - correctPrice) > 0.001) {
-          await request(`/rest/v1/rates?rate_id=eq.${rate.rate_id}`, {
-            method: 'PATCH',
-            headers: authHeaders(null, { 'Content-Type': 'application/json' }),
-            body: JSON.stringify({ price_per_minute: correctPrice }),
-          })
-        }
-      }
-    }
-  } catch (err) {
-    console.error('Failed to ensure correct rates in DB:', err)
-  }
-}
+// ensureCorrectRates() was removed — rates are now fully driven by the database.
+// Admin rate changes in the rates table are reflected in real-time.
 
 export async function upsertCustomer(session) {
   if (!session?.userId) return
@@ -301,7 +326,7 @@ export async function createRental({ locker, duration, isOpenTime, paymentMethod
   })
 
   const transactionId = transactionRows?.[0]?.transaction_id
-  const amount = isOpenTime ? 0 : Number(duration) * locker.rate
+  const amount = isOpenTime ? 0 : Number(duration) * Number(rate.price_per_hour)
 
   if (transactionId && !isDevicePending) {
     const payment = {
@@ -588,7 +613,7 @@ export async function fetchProfile(session) {
 
 export async function fetchActiveRentals(customerId, token) {
   return request(
-    `/rest/v1/transactions?customer_id=eq.${customerId}&status=eq.Active&select=transaction_id,locker_id,start_time,end_time,duration_minutes,qr_token,status,lockers(locker_number,size_type_id,device_id),rates(price_per_minute,min_charge_minutes)&order=start_time.desc`,
+    `/rest/v1/transactions?customer_id=eq.${customerId}&status=eq.Active&select=transaction_id,locker_id,start_time,end_time,duration_minutes,qr_token,status,lockers(locker_number,size_type_id,device_id),rates(price_per_hour)&order=start_time.desc`,
     { headers: authHeaders(token) },
   )
 }
@@ -630,11 +655,21 @@ export async function completeRental(item, token, overtimeFee = 0, paymentMethod
       const refundAmount = Number((unusedMinutes * (item.ratePerHr / 60)).toFixed(2))
 
       if (refundAmount > 0) {
-        // 1. Credit the user's digital wallet in localStorage
-        const balanceKey = `coincubby.balance.${item.userId}`
-        const currentBalance = Number(localStorage.getItem(balanceKey) || 50.0)
-        const newBalance = currentBalance + refundAmount
-        localStorage.setItem(balanceKey, newBalance.toFixed(2))
+        // 1. Credit the user's wallet using the stored RPC function (bypasses RLS)
+        try {
+          const result = await request('/rest/v1/rpc/add_wallet_balance', {
+            method: 'POST',
+            headers: authHeaders(token, { 'Content-Type': 'application/json' }),
+            body: JSON.stringify({
+              p_customer_id: item.userId,
+              p_amount: refundAmount
+            })
+          })
+          const newBalance = Number(result)
+          localStorage.setItem(`coincubby.balance.${item.userId}`, newBalance.toFixed(2))
+        } catch (err) {
+          console.error('Failed to add refund to wallet via RPC:', err)
+        }
 
         // 2. Insert a negative payment record in the database
         try {
@@ -659,7 +694,17 @@ export async function completeRental(item, token, overtimeFee = 0, paymentMethod
 
   let finalPaymentAmount = overtimeFee
   if (finalPaymentAmount <= 0 && item.isOpenTime) {
-    finalPaymentAmount = Math.floor((totalDurationMinutes / 60) * item.ratePerHr)
+    const hours = Math.floor(totalDurationMinutes / 60)
+    const rem = totalDurationMinutes % 60
+    let multiplier = hours
+    if (rem > 0) {
+      if (rem <= 30) {
+        multiplier += 0.5
+      } else {
+        multiplier += 1.0
+      }
+    }
+    finalPaymentAmount = Math.floor(multiplier * item.ratePerHr)
   }
 
   if (finalPaymentAmount > 0) {
@@ -675,6 +720,24 @@ export async function completeRental(item, token, overtimeFee = 0, paymentMethod
         payment_method: paymentMethod,
       }),
     })
+
+    // Deduct from DB wallet via RPC if overtime fee is paid via Wallet
+    if (paymentMethod === 'Wallet' && item.userId) {
+      try {
+        const result = await request('/rest/v1/rpc/deduct_wallet_balance', {
+          method: 'POST',
+          headers: authHeaders(token, { 'Content-Type': 'application/json' }),
+          body: JSON.stringify({
+            p_customer_id: item.userId,
+            p_amount: finalPaymentAmount
+          })
+        })
+        const newBalance = Number(result)
+        localStorage.setItem(`coincubby.balance.${item.userId}`, newBalance.toFixed(2))
+      } catch (err) {
+        console.error('Failed to deduct wallet via RPC for overtime:', err)
+      }
+    }
   }
 
   await updateLockerStatus(item.lockerId, 'Available', token)
@@ -774,3 +837,114 @@ export async function generateUniqueUserId(retries = 10) {
   // Fallback: timestamp-based suffix (extremely unlikely collision)
   return String(Date.now()).slice(-6)
 }
+
+export async function getOrCreateWallet(session) {
+  if (!session?.userId) return null
+  try {
+    const data = await request(`/rest/v1/wallets?customer_id=eq.${session.userId}&select=balance`, {
+      headers: authHeaders(session.accessToken)
+    })
+    if (data && data.length > 0) {
+      const balance = Number(data[0].balance)
+      localStorage.setItem(`coincubby.balance.${session.userId}`, balance.toFixed(2))
+      return balance
+    }
+  } catch (err) {
+    console.warn('Failed to fetch wallet from database, trying to create one:', err)
+  }
+
+  try {
+    // Read from localStorage to check if there is an existing balance from an old account
+    const cached = localStorage.getItem(`coincubby.balance.${session.userId}`)
+    const initialBalance = cached !== null && !Number.isNaN(Number(cached)) ? Number(cached) : 50.00
+
+    await request('/rest/v1/wallets?on_conflict=customer_id', {
+      method: 'POST',
+      headers: authHeaders(session.accessToken, {
+        'Content-Type': 'application/json',
+        Prefer: 'resolution=merge-duplicates,return=representation',
+      }),
+      body: JSON.stringify({
+        customer_id: session.userId,
+        balance: initialBalance
+      })
+    })
+    localStorage.setItem(`coincubby.balance.${session.userId}`, initialBalance.toFixed(2))
+    return initialBalance
+  } catch (err) {
+    console.error('Failed to create default wallet in database:', err)
+    const cached = localStorage.getItem(`coincubby.balance.${session.userId}`)
+    return cached !== null ? Number(cached) : 50.00
+  }
+}
+
+/**
+ * Syncs wallet balance to database using the stored RPC function (bypasses RLS).
+ * Also updates localStorage cache.
+ */
+export async function syncWalletBalance(session, newBalance) {
+  if (!session?.userId) return
+  localStorage.setItem(`coincubby.balance.${session.userId}`, Number(newBalance).toFixed(2))
+  try {
+    // Compute the delta between current cached balance and the new balance
+    const cached = Number(localStorage.getItem(`coincubby.balance.${session.userId}`) || newBalance)
+    const delta = newBalance - cached
+    if (delta > 0) {
+      await request('/rest/v1/rpc/add_wallet_balance', {
+        method: 'POST',
+        headers: authHeaders(session.accessToken, { 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ p_customer_id: session.userId, p_amount: delta })
+      })
+    } else if (delta < 0) {
+      await request('/rest/v1/rpc/deduct_wallet_balance', {
+        method: 'POST',
+        headers: authHeaders(session.accessToken, { 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ p_customer_id: session.userId, p_amount: Math.abs(delta) })
+      })
+    }
+  } catch (err) {
+    console.error('Failed to sync wallet balance to database via RPC:', err)
+  }
+}
+
+export function mapRental(row) {
+  const size = sizeFromType(row.lockers?.size_type_id)
+  const startMs = parseTimestamp(row.start_time)
+  const endMs = parseTimestamp(row.end_time)
+  const isOpenTime = !row.end_time
+  const ratePerHr = size.rate
+
+  return {
+    transactionId: row.transaction_id,
+    lockerId: row.locker_id,
+    lockerNumber: row.lockers?.locker_number || '?',
+    deviceId: row.lockers?.device_id,
+    sizeName: size.label,
+    startMs,
+    endMs,
+    isOpenTime,
+    ratePerHr,
+    qrToken: row.qr_token || '-',
+    durationMinutes: row.duration_minutes || 0,
+  }
+}
+
+export function mapHistory(row) {
+  const payments = row.payments || []
+  const amount = payments.reduce((sum, payment) => sum + Number(payment.amount || 0), 0)
+  const size = sizeFromType(row.lockers?.size_type_id)
+
+  return {
+    id: row.transaction_id,
+    lockerNumber: row.lockers?.locker_number || '?',
+    sizeName: size.label,
+    amount,
+    paymentMethod: payments[0]?.payment_method || 'Device',
+    status: row.status || 'Active',
+    startTime: row.start_time,
+    endTime: row.end_time,
+    durationMinutes: row.duration_minutes || 0,
+    paymentsList: payments,
+  }
+}
+

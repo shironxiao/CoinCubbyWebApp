@@ -3,59 +3,58 @@ import { useCallback, useEffect, useState } from 'react'
 import {
   completeRental,
   createReturnPaymentSession,
-  fetchActiveRentals,
   fetchPaymentSession,
+  fetchTransactionPayments,
   formatMoney,
-  parseTimestamp,
   sizeFromType,
+  syncWalletBalance,
   verifyPinAsPassword,
+  mapRental,
 } from '../lib/supabase'
 import { formatDateTime, formatDuration } from '../lib/time'
 import AlertDialog from '../components/AlertDialog'
 
-function mapRental(row) {
-  const size = sizeFromType(row.lockers?.size_type_id)
-  const startMs = parseTimestamp(row.start_time)
-  const endMs = parseTimestamp(row.end_time)
-  const isOpenTime = !row.end_time
-  const ratePerHr = size.rate
-
-  return {
-    transactionId: row.transaction_id,
-    lockerId: row.locker_id,
-    lockerNumber: row.lockers?.locker_number || '?',
-    deviceId: row.lockers?.device_id,
-    sizeName: size.label,
-    startMs,
-    endMs,
-    isOpenTime,
-    ratePerHr,
-    qrToken: row.qr_token || '-',
-    durationMinutes: row.duration_minutes || 0,
-  }
-}
-
 function calculateOvertimeFee(item, currentTick) {
+  let mins = 0
   if (item.isOpenTime) {
     const durationMs = Math.max(0, currentTick - item.startMs)
-    const durationMins = Math.floor(durationMs / 60000)
-    return Math.floor((durationMins / 60) * item.ratePerHr)
+    mins = Math.floor(durationMs / 60000)
   } else {
     if (currentTick <= item.endMs) return 0
     const overtimeMs = currentTick - item.endMs
-    const overtimeMins = Math.floor(overtimeMs / 60000)
-    return Math.floor((overtimeMins / 60) * item.ratePerHr)
+    mins = Math.floor(overtimeMs / 60000)
   }
+
+  const hours = Math.floor(mins / 60)
+  const rem = mins % 60
+  let multiplier = hours
+  if (rem > 0) {
+    if (rem <= 30) {
+      multiplier += 0.5
+    } else {
+      multiplier += 1.0
+    }
+  }
+
+  return Math.floor(multiplier * item.ratePerHr)
 }
 
-export default function Rent({ session, addNotification }) {
-  const [rentals, setRentals] = useState([])
-  const [loading, setLoading] = useState(true)
+export default function Rent({
+  session,
+  addNotification,
+  activeRentals,
+  walletBalance: balanceProp,
+  loadingData,
+  refreshAllData,
+}) {
+  const rentals = activeRentals
+  const walletBalance = balanceProp
+  const loading = loadingData
+
   const [message, setMessage] = useState('')
   const [tick, setTick] = useState(() => Date.now())
   const [activeReturnItem, setActiveReturnItem] = useState(null)
   const [payMethod, setPayMethod] = useState('Wallet')
-  const [walletBalance, setWalletBalance] = useState(50)
   const [insertedAmount, setInsertedAmount] = useState(0)
   const [secondsLeft, setSecondsLeft] = useState(60)
   const [hasTimedOut, setHasTimedOut] = useState(false)
@@ -96,28 +95,7 @@ export default function Rent({ session, addNotification }) {
     return () => clearInterval(id)
   }, [])
 
-  const loadRentals = useCallback(async () => {
-    if (!session?.userId) {
-      setRentals([])
-      setLoading(false)
-      return
-    }
-
-    setLoading(true)
-    setMessage('')
-    try {
-      const rows = await fetchActiveRentals(session.userId, session.accessToken)
-      setRentals((rows || []).map(mapRental))
-    } catch (err) {
-      setMessage(err.message || 'Failed to load rentals.')
-    } finally {
-      setLoading(false)
-    }
-  }, [session?.accessToken, session?.userId])
-
-  useEffect(() => {
-    loadRentals()
-  }, [loadRentals])
+  // Local data loader is no longer needed since it is polled globally
 
   // Countdown timer for return overtime pay at device
   useEffect(() => {
@@ -204,9 +182,12 @@ export default function Rent({ session, addNotification }) {
     const interval = setInterval(async () => {
       try {
         const paymentSession = await fetchPaymentSession(activeReturnItem.paymentSessionId, session.accessToken)
+        const payments = paymentSession
+          ? [{ amount: paymentSession.amount_paid }]
+          : await fetchTransactionPayments(activeReturnItem.transactionId, session.accessToken)
         if (!isMounted) return
 
-        const sum = Number(paymentSession?.amount_paid || 0)
+        const sum = (payments || []).reduce((acc, p) => acc + Number(p.amount || 0), 0)
         
         setInsertedAmount((prev) => {
           if (sum > prev) {
@@ -216,18 +197,10 @@ export default function Rent({ session, addNotification }) {
         })
 
         const fee = calculateOvertimeFee(activeReturnItem, Date.now())
-        if (sum >= fee || paymentSession?.status === 'Paid') {
+        if (sum >= fee) {
           clearInterval(interval)
-
-          // Reload wallet balance state from localStorage
-          if (session?.userId) {
-            const balanceKey = `coincubby.balance.${session.userId}`
-            const stored = localStorage.getItem(balanceKey)
-            if (stored !== null) setWalletBalance(Number(stored))
-          }
-
           closeReturnModal()
-          await loadRentals()
+          await refreshAllData()
         }
       } catch (err) {
         console.error('Error polling return payments:', err)
@@ -238,7 +211,7 @@ export default function Rent({ session, addNotification }) {
       isMounted = false
       clearInterval(interval)
     }
-  }, [activeReturnItem, payMethod, hasTimedOut, session?.accessToken, session?.userId, loadRentals])
+  }, [activeReturnItem, payMethod, hasTimedOut, session?.accessToken, session?.userId, refreshAllData])
 
   function handleContinuePayment() {
     setSecondsLeft(60)
@@ -264,6 +237,11 @@ export default function Rent({ session, addNotification }) {
     } catch {
       setWalletBalance(50.00)
     }
+    if (session?.userId) {
+      getOrCreateWallet(session).then((val) => {
+        if (val !== null) setWalletBalance(val)
+      })
+    }
   }
 
   async function handleConfirmReturn() {
@@ -278,20 +256,12 @@ export default function Rent({ session, addNotification }) {
 
       try {
         const finalBalance = Math.max(0, walletBalance - fee)
-        localStorage.setItem(`coincubby.balance.${session.userId}`, finalBalance.toFixed(2))
-        setWalletBalance(finalBalance)
+        await syncWalletBalance(session, finalBalance)
 
         await completeRental({ ...activeReturnItem, userId: session.userId }, session.accessToken, fee, 'Wallet')
 
-        // Reload wallet balance state from localStorage
-        if (session?.userId) {
-          const balanceKey = `coincubby.balance.${session.userId}`
-          const stored = localStorage.getItem(balanceKey)
-          if (stored !== null) setWalletBalance(Number(stored))
-        }
-
         closeReturnModal()
-        await loadRentals()
+        await refreshAllData()
       } catch (err) {
         setMessage(err.message || 'Failed to complete wallet payment return.')
       }
@@ -307,15 +277,8 @@ export default function Rent({ session, addNotification }) {
           })
         }
 
-        // Reload wallet balance state from localStorage
-        if (session?.userId) {
-          const balanceKey = `coincubby.balance.${session.userId}`
-          const stored = localStorage.getItem(balanceKey)
-          if (stored !== null) setWalletBalance(Number(stored))
-        }
-
         closeReturnModal()
-        await loadRentals()
+        await refreshAllData()
       } catch (err) {
         setMessage(err.message || 'Failed to complete return.')
       }
@@ -327,20 +290,19 @@ export default function Rent({ session, addNotification }) {
       const prepaidHours = Math.max(0, item.endMs - item.startMs) / 3600000
       const prepaid = prepaidHours * item.ratePerHr
 
-      // Past end time → show accumulating overtime on top of prepaid
+      // Past end time → show accumulating overtime using half-hour step billing
       if (tick > item.endMs) {
-        const overtimeMs = Math.max(0, tick - item.endMs)
-        const overtimeCost = Math.floor((overtimeMs / 3600000) * item.ratePerHr)
+        const overtimeCost = calculateOvertimeFee(item, tick)
         return `Overtime Due: ${formatMoney(overtimeCost, false)}`
       }
 
       return `Prepaid: ${formatMoney(prepaid, false)}`
     }
 
-    // Open time: accumulate live every second based on elapsed time
-    const elapsedMs = Math.max(0, tick - item.startMs)
-    const cost = Math.floor((elapsedMs / 3600000) * item.ratePerHr)
-    return `Current Bill: ${formatMoney(cost, false)}`
+    // Open time: bill using the same half-hour step formula as calculateOvertimeFee
+    // (matches exactly what will be charged on return)
+    const openCost = calculateOvertimeFee(item, tick)
+    return `Bill: ${formatMoney(openCost, false)}`
   }
 
   return (

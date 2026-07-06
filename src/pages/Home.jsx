@@ -4,14 +4,12 @@ import {
   activateRental,
   cancelPaymentSession,
   createRental,
-  fetchActiveRentals,
-  fetchLockers,
-  fetchModules,
   fetchPaymentSession,
   fetchTransactionPayments,
   formatMoney,
   parseTimestamp,
   sizeFromType,
+  syncWalletBalance,
   updateLockerStatus,
 } from '../lib/supabase'
 import { formatDuration } from '../lib/time'
@@ -21,81 +19,49 @@ function statusClass(status) {
   return String(status || 'Available').toLowerCase().replaceAll(' ', '-')
 }
 
-export default function Home({ session, onNavigate, addNotification }) {
+export default function Home({
+  session,
+  onNavigate,
+  addNotification,
+  modules,
+  selectedModuleId,
+  setSelectedModuleId,
+  lockers,
+  walletBalance,
+  activeRentals,
+  ratesMap,
+  loadingData,
+  refreshAllData,
+}) {
   const lockerPanelRef = useRef(null)
-  const [modules, setModules] = useState([])
-  const [selectedModuleId, setSelectedModuleId] = useState('')
-  const [lockers, setLockers] = useState([])
   const [selectedLocker, setSelectedLocker] = useState(null)
   const [duration, setDuration] = useState('1')
   const [rentalType, setRentalType] = useState('fixed')
   const [paymentMethod, setPaymentMethod] = useState('Wallet')
-  const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
   const [paymentTx, setPaymentTx] = useState(null)
   const [insertedAmount, setInsertedAmount] = useState(0)
   const [secondsLeft, setSecondsLeft] = useState(60)
   const [hasTimedOut, setHasTimedOut] = useState(false)
-  const [balance, setBalance] = useState(() => {
-    try {
-      const key = `coincubby.balance.${session?.userId}`
-      const stored = localStorage.getItem(key)
-      if (stored !== null) return Number(stored)
-      localStorage.setItem(key, '50.00')
-      return 50.00
-    } catch {
-      return 50.00
-    }
-  })
-  const [activeRentals, setActiveRentals] = useState([])
   const [tick, setTick] = useState(() => Date.now())
 
+  const balance = walletBalance
+  const loading = loadingData
+
+  const filteredLockers = useMemo(() => {
+    return lockers.filter((locker) => String(locker.moduleId) === String(selectedModuleId))
+  }, [lockers, selectedModuleId])
+
   const availableCount = useMemo(
-    () => lockers.filter((locker) => locker.status === 'Available').length,
-    [lockers],
+    () => filteredLockers.filter((locker) => locker.status === 'Available').length,
+    [filteredLockers],
   )
 
   const selectedModule = useMemo(
     () => modules.find((moduleItem) => String(moduleItem.module_id) === String(selectedModuleId)),
     [modules, selectedModuleId],
   )
-
-  useEffect(() => {
-    loadModules()
-  }, [])
-
-  useEffect(() => {
-    if (selectedModuleId) {
-      loadLockers(selectedModuleId)
-    }
-  }, [selectedModuleId])
-
-  useEffect(() => {
-    if (!session?.userId || !session?.accessToken) {
-      setActiveRentals([])
-      return
-    }
-
-    let isMounted = true
-    async function loadActiveRentals() {
-      try {
-        const rows = await fetchActiveRentals(session.userId, session.accessToken)
-        if (!isMounted) return
-        setActiveRentals(rows || [])
-      } catch (err) {
-        if (isMounted) {
-          setActiveRentals([])
-        }
-        console.error('Failed to load active rentals:', err)
-      }
-    }
-
-    loadActiveRentals()
-    return () => {
-      isMounted = false
-    }
-  }, [session?.accessToken, session?.userId])
 
   useEffect(() => {
     const timer = setInterval(() => setTick(Date.now()), 1000)
@@ -156,7 +122,7 @@ export default function Home({ session, onNavigate, addNotification }) {
           }
 
           setPaymentTx(null)
-          await loadLockers(selectedModuleId)
+          await refreshAllData()
           onNavigate('rent')
         }
       } catch (err) {
@@ -173,37 +139,6 @@ export default function Home({ session, onNavigate, addNotification }) {
   function handleContinuePayment() {
     setSecondsLeft(60)
     setHasTimedOut(false)
-  }
-
-  async function loadModules() {
-    setLoading(true)
-    setMessage('')
-    try {
-      const rows = await fetchModules()
-      setModules(rows || [])
-      if (rows?.length) {
-        setSelectedModuleId(String(rows[0].module_id))
-      } else {
-        setLockers([])
-        setMessage('No active modules found.')
-      }
-    } catch (err) {
-      setMessage(err.message || 'Failed to load modules.')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  async function loadLockers(moduleId) {
-    setLoading(true)
-    setMessage('')
-    try {
-      setLockers(await fetchLockers(moduleId))
-    } catch (err) {
-      setMessage(err.message || 'Failed to load lockers.')
-    } finally {
-      setLoading(false)
-    }
   }
 
   function returnActiveRental() {
@@ -223,7 +158,7 @@ export default function Home({ session, onNavigate, addNotification }) {
   }
 
   function handleQuickRent() {
-    const firstAvailable = lockers.find((locker) => locker.status === 'Available')
+    const firstAvailable = filteredLockers.find((locker) => locker.status === 'Available')
     if (firstAvailable) {
       openRental(firstAvailable)
     } else {
@@ -286,12 +221,11 @@ export default function Home({ session, onNavigate, addNotification }) {
         // Deduct from wallet if paid via Wallet
         if (paymentMethod === 'Wallet' && !isOpenTime) {
           const finalBalance = Math.max(0, balance - total)
-          localStorage.setItem(`coincubby.balance.${session.userId}`, finalBalance.toFixed(2))
-          setBalance(finalBalance)
+          await syncWalletBalance(session, finalBalance)
         }
 
         setSelectedLocker(null)
-        await loadLockers(selectedModuleId)
+        await refreshAllData()
         onNavigate('rent')
       }
     } catch (err) {
@@ -316,11 +250,21 @@ export default function Home({ session, onNavigate, addNotification }) {
         <h2>Pick your locker</h2>
         <span>Green means you're good to go.<br />Check status indicator below.</span>
 
-        {/* Rate chips */}
+        {/* Rate chips — from database */}
         <div className="welcome-rates">
-          <span className="rate-chip"><b>S</b> ₱10/hr</span>
-          <span className="rate-chip"><b>M</b> ₱20/hr</span>
-          <span className="rate-chip"><b>L</b> ₱30/hr</span>
+          {ratesMap ? (
+            <>
+              <span className="rate-chip"><b>S</b> {formatMoney(ratesMap[1] ?? 10, false)}/hr</span>
+              <span className="rate-chip"><b>M</b> {formatMoney(ratesMap[2] ?? 20, false)}/hr</span>
+              <span className="rate-chip"><b>L</b> {formatMoney(ratesMap[3] ?? 30, false)}/hr</span>
+            </>
+          ) : (
+            <>
+              <span className="rate-chip" style={{ opacity: 0.5 }}><b>S</b> ...</span>
+              <span className="rate-chip" style={{ opacity: 0.5 }}><b>M</b> ...</span>
+              <span className="rate-chip" style={{ opacity: 0.5 }}><b>L</b> ...</span>
+            </>
+          )}
         </div>
 
         {/* Rent Now button */}
@@ -354,10 +298,20 @@ export default function Home({ session, onNavigate, addNotification }) {
             const timer   = formatDuration(timerMs)
             const timerLabel = isOpen ? 'ELAPSED' : isOverdue ? 'OVERTIME' : 'REMAINING'
 
-            // Bill: for overdue, show prepaid + accumulating overtime total
+            // Bill: use half-hour step formula (matches what is actually charged)
             const prepaidCost = isOpen ? 0 : (totalMs / 3600000) * ratePerHr
-            const overtimeCost = Math.floor((overtimeMs / 3600000) * ratePerHr)
-            const openCost     = Math.floor((elapsedMs / 3600000) * ratePerHr)
+
+            function calcStepBill(elMs) {
+              const mins = Math.floor(elMs / 60000)
+              const hrs = Math.floor(mins / 60)
+              const rem = mins % 60
+              let mult = hrs
+              if (rem > 0) mult += rem <= 30 ? 0.5 : 1.0
+              return Math.floor(mult * ratePerHr)
+            }
+
+            const overtimeCost = calcStepBill(overtimeMs)
+            const openCost     = calcStepBill(elapsedMs)
             const billLabel = isOpen
               ? `Bill: ${formatMoney(openCost, false)}`
               : isOverdue
@@ -418,7 +372,7 @@ export default function Home({ session, onNavigate, addNotification }) {
         <div className="xml-stat-card">
           <span className="xml-icon-circle locker-glyph" aria-hidden="true"></span>
           <div>
-            <strong>{lockers.length}</strong>
+            <strong>{filteredLockers.length}</strong>
             <small>Total Locker</small>
           </div>
         </div>
@@ -461,7 +415,7 @@ export default function Home({ session, onNavigate, addNotification }) {
         <p className="muted">Loading lockers...</p>
       ) : (
         <div className="locker-grid">
-          {lockers.map((locker) => (
+          {filteredLockers.map((locker) => (
             <button
               key={locker.dbId}
               className={`locker-tile ${statusClass(locker.status)}`}
@@ -530,30 +484,36 @@ export default function Home({ session, onNavigate, addNotification }) {
               </label>
             )}
 
-            <p className="xml-section-label">Payment Method</p>
-            <div className="payment-options xml-payment-options">
-              {rentalType === 'fixed' && (
-                <button
-                  type="button"
-                  className={paymentMethod === 'Wallet' ? 'selected' : ''}
-                  onClick={() => setPaymentMethod('Wallet')}
-                >
-                  Wallet ({formatMoney(total || selectedLocker.rate)})
-                </button>
-              )}
-              <button
-                type="button"
-                className={paymentMethod === 'Device' ? 'selected' : ''}
-                onClick={() => setPaymentMethod('Device')}
-              >
-                Pay at Device
-              </button>
-            </div>
+            {rentalType === 'fixed' ? (
+              <>
+                <p className="xml-section-label">Payment Method</p>
+                <div className="payment-options xml-payment-options">
+                  <button
+                    type="button"
+                    className={paymentMethod === 'Wallet' ? 'selected' : ''}
+                    onClick={() => setPaymentMethod('Wallet')}
+                  >
+                    Wallet ({formatMoney(total || selectedLocker.rate)})
+                  </button>
+                  <button
+                    type="button"
+                    className={paymentMethod === 'Device' ? 'selected' : ''}
+                    onClick={() => setPaymentMethod('Device')}
+                  >
+                    Pay at Device
+                  </button>
+                </div>
 
-            <div className="total-row">
-              <span>Total Amount</span>
-              <strong>{rentalType === 'open' ? 'Running...' : formatMoney(total)}</strong>
-            </div>
+                <div className="total-row">
+                  <span>Total Amount</span>
+                  <strong>{formatMoney(total)}</strong>
+                </div>
+              </>
+            ) : (
+              <div style={{ background: 'var(--label-green, #e8f5e9)', border: '1px solid #a5d6a7', borderRadius: '10px', padding: '12px 14px', fontSize: '13px', color: '#2e7d32', lineHeight: '1.5' }}>
+                💡 <strong>Pay on return.</strong> You will be billed at half the hourly rate when you return the locker.
+              </div>
+            )}
 
             <div className="action-row">
               <button className="secondary-button" type="button" onClick={() => setSelectedLocker(null)}>
@@ -582,7 +542,7 @@ export default function Home({ session, onNavigate, addNotification }) {
                   try {
                     await cancelPaymentSession(paymentTx.paymentSessionId, session.accessToken)
                     await updateLockerStatus(paymentTx.lockerId, 'Available', session.accessToken)
-                    await loadLockers(selectedModuleId)
+                    await refreshAllData()
                   } catch (err) {
                     console.error('Error cancelling rental payment:', err)
                   }
@@ -643,7 +603,7 @@ export default function Home({ session, onNavigate, addNotification }) {
                   try {
                     await cancelPaymentSession(paymentTx.paymentSessionId, session.accessToken)
                     await updateLockerStatus(paymentTx.lockerId, 'Available', session.accessToken)
-                    await loadLockers(selectedModuleId)
+                    await refreshAllData()
                   } catch (err) {
                     console.error('Error cancelling rental payment:', err)
                   }

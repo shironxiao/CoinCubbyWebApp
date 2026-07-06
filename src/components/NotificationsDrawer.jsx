@@ -7,6 +7,8 @@ export default function NotificationsDrawer({
   onMarkAsRead,
   onMarkAllAsRead,
   onClearAll,
+  browserNotificationStatus,
+  onEnableBrowserNotifications,
   onNavigate,
 }) {
   // Prevent body scroll when drawer is open
@@ -165,6 +167,32 @@ export default function NotificationsDrawer({
         </div>
 
         <div className="notif-body">
+          {browserNotificationStatus !== 'granted' && (
+            <div className={`notif-permission-card ${browserNotificationStatus}`}>
+              <div>
+                <strong>
+                  {browserNotificationStatus === 'denied'
+                    ? 'Device reminders are blocked'
+                    : browserNotificationStatus === 'unsupported'
+                      ? 'Device reminders are unavailable'
+                      : 'Enable locker reminders'}
+                </strong>
+                <p>
+                  {browserNotificationStatus === 'denied'
+                    ? 'Turn notifications back on in your browser settings to receive locker reminders.'
+                    : browserNotificationStatus === 'unsupported'
+                      ? 'This browser does not support web notifications.'
+                      : 'Allow CoinCubby to notify you when your locker status changes.'}
+                </p>
+              </div>
+              {browserNotificationStatus === 'default' && (
+                <button type="button" onClick={onEnableBrowserNotifications}>
+                  Enable
+                </button>
+              )}
+            </div>
+          )}
+
           {!hasNotifications ? (
             <div className="notif-empty-state">
               <div className="notif-empty-bell">
