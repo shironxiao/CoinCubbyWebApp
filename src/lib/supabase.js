@@ -12,6 +12,19 @@ export function getSession() {
   }
 }
 
+export async function validateSession(session) {
+  if (!session?.accessToken) return false
+  try {
+    await request('/auth/v1/user', {
+      headers: authHeaders(session.accessToken),
+    })
+    return true
+  } catch {
+    clearSession()
+    return false
+  }
+}
+
 export function saveSession(session) {
   localStorage.setItem(storageKey, JSON.stringify(session))
 }

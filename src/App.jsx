@@ -16,6 +16,7 @@ import {
 import {
   clearSession,
   getSession,
+  validateSession,
   fetchLockers,
   fetchModules,
   fetchRentalHistory,
@@ -58,6 +59,28 @@ export default function App() {
   const [selectedModuleId, setSelectedModuleId] = useState('')
   const [ratesMap, setRatesMap] = useState(null)
   const [loadingData, setLoadingData] = useState(true)
+  // True while we're verifying the stored session token on first load
+  const [validating, setValidating] = useState(() => Boolean(getSession()))
+
+  // On mount: verify the stored session token is still valid with Supabase.
+  // If expired or invalid, clear it and force the login page.
+  // We block the entire page render (show a spinner) until this resolves
+  // so there is zero flash of the home page for users with stale sessions.
+  useEffect(() => {
+    const storedSession = getSession()
+    if (!storedSession) {
+      setValidating(false)
+      return
+    }
+    validateSession(storedSession).then((valid) => {
+      if (!valid) {
+        setSession(null)
+        navigate('login')
+      }
+      setValidating(false)
+    })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Fetch static data (modules and rates) on mount or session change
   useEffect(() => {
@@ -386,7 +409,13 @@ export default function App() {
         </aside>
       )}
 
-      <div className="content-shell">{renderPage()}</div>
+      <div className="content-shell">
+        {validating ? (
+          <div className="session-loading">
+            <div className="session-loading-spinner" />
+          </div>
+        ) : renderPage()}
+      </div>
 
       <NotificationsDrawer
         isOpen={notifOpen}
