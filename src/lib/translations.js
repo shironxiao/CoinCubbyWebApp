@@ -157,7 +157,7 @@ export const translations = {
     home: "Tahanan",
     rental: "Renta",
     history: "Kasaysayan",
-    profile: "Profile",
+    profile: "Aking Profile",
     close: "Isara",
     cancel: "Kanselahin",
     confirm: "Kumpirmahin",
