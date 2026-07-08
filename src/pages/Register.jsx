@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { registerAccount, isUserIdTaken, generateUniqueUserId } from '../lib/supabase'
 import AlertDialog from '../components/AlertDialog'
 
-export default function Register({ onNavigate }) {
+export default function Register({ onNavigate, t, lang }) {
   const [form, setForm] = useState({
     firstName: '',
     lastName: '',
@@ -43,14 +43,14 @@ export default function Register({ onNavigate }) {
     setError('')
     setNotice('')
 
-    if (!form.firstName.trim()) return setError('First name is required.')
-    if (!form.lastName.trim()) return setError('Last name is required.')
-    if (!form.email.trim()) return setError('Email is required.')
-    if (!/^\S+@\S+\.\S+$/.test(form.email)) return setError('Enter a valid email address.')
-    if (!form.password) return setError('6-digit PIN is required.')
-    if (!/^\d{6}$/.test(form.password)) return setError('PIN must be exactly 6 digits.')
-    if (form.password !== form.confirmPassword) return setError('PINs do not match.')
-    if (!userId) return setError('User ID is not ready yet. Please wait.')
+    if (!form.firstName.trim()) return setError(lang === 'tl' ? 'Kailangan ang pangalan.' : 'First name is required.')
+    if (!form.lastName.trim()) return setError(lang === 'tl' ? 'Kailangan ang apelyido.' : 'Last name is required.')
+    if (!form.email.trim()) return setError(lang === 'tl' ? 'Kailangan ang email.' : 'Email is required.')
+    if (!/^\S+@\S+\.\S+$/.test(form.email)) return setError(lang === 'tl' ? 'Ilagay ang wastong email address.' : 'Enter a valid email address.')
+    if (!form.password) return setError(lang === 'tl' ? 'Kailangan ang 6-digit na PIN.' : '6-digit PIN is required.')
+    if (!/^\d{6}$/.test(form.password)) return setError(lang === 'tl' ? 'Ang PIN ay dapat na eksaktong 6 na digit.' : 'PIN must be exactly 6 digits.')
+    if (form.password !== form.confirmPassword) return setError(lang === 'tl' ? 'Hindi magkatugma ang PIN.' : 'PINs do not match.')
+    if (!userId) return setError(lang === 'tl' ? 'Hindi pa handa ang User ID. Pakihintay.' : 'User ID is not ready yet. Please wait.')
 
     setLoading(true)
     try {
@@ -59,7 +59,7 @@ export default function Register({ onNavigate }) {
       if (taken) {
         const newId = await generateUniqueUserId()
         setUserId(newId)
-        setError('Your User ID had a conflict. A new one has been generated. Please submit again.')
+        setError(lang === 'tl' ? 'May salungatan ang iyong User ID. Nabuo ang bago. Pakisubmit muli.' : 'Your User ID had a conflict. A new one has been generated. Please submit again.')
         setLoading(false)
         return
       }
@@ -71,10 +71,10 @@ export default function Register({ onNavigate }) {
         password: form.password,
         userId,
       })
-      setNotice('Account created successfully. Please check your email if confirmation is required.')
+      setNotice(lang === 'tl' ? 'Matagumpay na nalikha ang account. Pakisuri ang iyong email kung kailangan ng kumpirmasyon.' : 'Account created successfully. Please check your email if confirmation is required.')
       setTimeout(() => onNavigate('login'), 900)
     } catch (err) {
-      setError(err.message || 'Registration failed. Please try again.')
+      setError(lang === 'tl' ? 'Nabigo ang pagpaparehistro. Pakisubukan muli.' : (err.message || 'Registration failed. Please try again.'))
     } finally {
       setLoading(false)
     }
@@ -84,24 +84,24 @@ export default function Register({ onNavigate }) {
     <main className="auth-page android-auth">
       <section className="auth-panel xml-register-panel">
         <div>
-          <h1>Create Account</h1>
-          <p className="muted">Join our smart public locker system</p>
+          <h1>{t('register_title')}</h1>
+          <p className="muted">{t('register_sub')}</p>
         </div>
 
         <form className="form-stack" onSubmit={handleSubmit}>
           <div className="two-column">
             <label className="xml-field">
-              <span>First Name</span>
-              <input name="firstName" value={form.firstName} onChange={updateField} placeholder="John" />
+              <span>{t('first_name')}</span>
+              <input name="firstName" value={form.firstName} onChange={updateField} placeholder={lang === 'tl' ? 'Juan' : 'John'} />
             </label>
             <label className="xml-field">
-              <span>Last Name</span>
-              <input name="lastName" value={form.lastName} onChange={updateField} placeholder="Doe" />
+              <span>{t('last_name')}</span>
+              <input name="lastName" value={form.lastName} onChange={updateField} placeholder={lang === 'tl' ? 'Dela Cruz' : 'Doe'} />
             </label>
           </div>
 
           <label className="xml-field">
-            <span>Email Address</span>
+            <span>{t('email_label')}</span>
             <input
               name="email"
               type="email"
@@ -114,11 +114,11 @@ export default function Register({ onNavigate }) {
 
           {/* User ID — read-only, auto-generated */}
           <div className="xml-field">
-            <span>Your User ID <em style={{ fontSize: '11px', fontWeight: 400, color: '#888' }}>(auto-assigned, share this with the kiosk)</em></span>
+            <span>{t('user_id_label')} <em style={{ fontSize: '11px', fontWeight: 400, color: '#888' }}>{t('user_id_note')}</em></span>
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
               <input
                 type="text"
-                value={generatingId ? 'Generating...' : userId}
+                value={generatingId ? (lang === 'tl' ? 'Gumagawa...' : 'Generating...') : userId}
                 readOnly
                 style={{ fontFamily: 'monospace', letterSpacing: '0.2em', fontWeight: '700', flex: 1 }}
               />
@@ -129,13 +129,13 @@ export default function Register({ onNavigate }) {
                 onClick={handleRegenerate}
                 disabled={generatingId || loading}
               >
-                {generatingId ? '...' : '↻ New ID'}
+                {generatingId ? '...' : `↻ ${t('regenerate_id')}`}
               </button>
             </div>
           </div>
 
           <label className="xml-field">
-            <span>6-Digit PIN</span>
+            <span>{t('pin_label')}</span>
             <input
               name="password"
               type="password"
@@ -152,7 +152,7 @@ export default function Register({ onNavigate }) {
           </label>
 
           <label className="xml-field">
-            <span>Confirm 6-Digit PIN</span>
+            <span>{t('confirm_pin')}</span>
             <input
               name="confirmPassword"
               type="password"
@@ -172,14 +172,14 @@ export default function Register({ onNavigate }) {
           {notice && <AlertDialog type="success" message={notice} onClose={() => setNotice('')} />}
 
           <button className="primary-button xml-black-button" type="submit" disabled={loading || generatingId}>
-            {loading ? 'Creating account...' : 'Create Account'}
+            {loading ? t('creating_account') : t('register_title')}
           </button>
         </form>
 
         <p className="auth-switch">
-          Already have an account?{' '}
+          {t('have_account')}{' '}
           <button type="button" onClick={() => onNavigate('login')}>
-            Log In
+            {t('login_title')}
           </button>
         </p>
       </section>

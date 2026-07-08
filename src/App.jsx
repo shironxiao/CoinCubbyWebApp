@@ -7,7 +7,9 @@ import Profile from './pages/Profile'
 import Register from './pages/Register'
 import Rent from './pages/Rent'
 import ResetPassword from './pages/ResetPassword'
+import WelcomeIntro from './pages/WelcomeIntro'
 import NotificationsDrawer from './components/NotificationsDrawer'
+import { translations } from './lib/translations'
 import {
   getBrowserNotificationStatus,
   requestBrowserNotificationPermission,
@@ -51,6 +53,26 @@ export default function App() {
     getBrowserNotificationStatus(),
   )
 
+  // Language localization states
+  const [lang, setLang] = useState(() => localStorage.getItem('coincubby.lang') || 'en')
+  const [introSeen, setIntroSeen] = useState(() => localStorage.getItem('coincubby.introSeen') === 'true')
+
+  function t(key) {
+    return translations[lang]?.[key] || translations['en']?.[key] || key
+  }
+
+  function handleLanguageSelect(selectedLang) {
+    setLang(selectedLang)
+    localStorage.setItem('coincubby.lang', selectedLang)
+    setIntroSeen(true)
+    localStorage.setItem('coincubby.introSeen', 'true')
+  }
+
+  function changeLanguage(newLang) {
+    setLang(newLang)
+    localStorage.setItem('coincubby.lang', newLang)
+  }
+
   const [walletBalance, setWalletBalance] = useState(50)
   const [activeRentals, setActiveRentals] = useState([])
   const [rentalHistory, setRentalHistory] = useState([])
@@ -67,6 +89,11 @@ export default function App() {
   // We block the entire page render (show a spinner) until this resolves
   // so there is zero flash of the home page for users with stale sessions.
   useEffect(() => {
+    // If onboarding hasn't been completed, don't validate yet
+    if (!localStorage.getItem('coincubby.introSeen')) {
+      setValidating(false)
+      return
+    }
     const storedSession = getSession()
     if (!storedSession) {
       setValidating(false)
@@ -164,10 +191,10 @@ export default function App() {
   }, [session])
 
   const navItems = [
-    ['home', 'Home'],
-    ['rent', 'Rental'],
-    ['history', 'History'],
-    ['profile', 'Profile'],
+    ['home', t('home')],
+    ['rent', t('rental')],
+    ['history', t('history')],
+    ['profile', t('profile')],
   ]
 
   // Load user-specific notifications
@@ -283,12 +310,16 @@ export default function App() {
   }
 
   function renderPage() {
-    if (recoveryToken) {
-      return <ResetPassword accessToken={recoveryToken} onNavigate={navigate} />
+    if (!introSeen) {
+      return <WelcomeIntro onLanguageSelect={handleLanguageSelect} />
     }
 
-    if (!session && page === 'register') return <Register onNavigate={navigate} />
-    if (!session) return <Login onLogin={setSession} onNavigate={navigate} />
+    if (recoveryToken) {
+      return <ResetPassword accessToken={recoveryToken} onNavigate={navigate} t={t} lang={lang} />
+    }
+
+    if (!session && page === 'register') return <Register onNavigate={navigate} t={t} lang={lang} />
+    if (!session) return <Login onLogin={setSession} onNavigate={navigate} t={t} lang={lang} />
 
     if (page === 'rent') {
       return (
@@ -299,6 +330,8 @@ export default function App() {
           walletBalance={walletBalance}
           loadingData={loadingData}
           refreshAllData={refreshAllData}
+          t={t}
+          lang={lang}
         />
       )
     }
@@ -309,6 +342,8 @@ export default function App() {
           rentalHistory={rentalHistory}
           loadingData={loadingData}
           refreshAllData={refreshAllData}
+          t={t}
+          lang={lang}
         />
       )
     }
@@ -319,6 +354,9 @@ export default function App() {
           onLogout={handleLogout}
           onNavigate={navigate}
           addNotification={addNotification}
+          t={t}
+          lang={lang}
+          onLanguageChange={changeLanguage}
         />
       )
     }
@@ -337,6 +375,8 @@ export default function App() {
         ratesMap={ratesMap}
         loadingData={loadingData}
         refreshAllData={refreshAllData}
+        t={t}
+        lang={lang}
       />
     )
   }

@@ -3,7 +3,7 @@ import { changePassword } from '../lib/supabase'
 import logo from '../assets/coin_logo.png'
 import AlertDialog from '../components/AlertDialog'
 
-export default function ResetPassword({ accessToken, onNavigate }) {
+export default function ResetPassword({ accessToken, onNavigate, t, lang }) {
   const [form, setForm] = useState({ password: '', confirmPassword: '' })
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
@@ -14,17 +14,17 @@ export default function ResetPassword({ accessToken, onNavigate }) {
     setError('')
     setNotice('')
 
-    if (!form.password) return setError('PIN is required.')
-    if (!/^\d{6}$/.test(form.password)) return setError('PIN must be exactly 6 digits.')
-    if (form.password !== form.confirmPassword) return setError('PINs do not match.')
+    if (!form.password) return setError(lang === 'tl' ? 'Kailangan ang PIN.' : 'PIN is required.')
+    if (!/^\d{6}$/.test(form.password)) return setError(lang === 'tl' ? 'Ang PIN ay dapat na eksaktong 6 na digit.' : 'PIN must be exactly 6 digits.')
+    if (form.password !== form.confirmPassword) return setError(lang === 'tl' ? 'Hindi magkatugma ang PIN.' : 'PINs do not match.')
 
     setLoading(true)
     try {
       await changePassword(form.password, accessToken)
-      setNotice('PIN updated successfully! Redirecting to login...')
+      setNotice(lang === 'tl' ? 'Matagumpay na na-update ang PIN! Nagreredirekt sa login...' : 'PIN updated successfully! Redirecting to login...')
       setTimeout(() => onNavigate('login'), 2000)
     } catch (err) {
-      setError(err.message || 'Failed to reset PIN. The link may have expired.')
+      setError(lang === 'tl' ? 'Nabigo ang pag-reset ng PIN. Maaaring expired na ang link.' : (err.message || 'Failed to reset PIN. The link may have expired.'))
     } finally {
       setLoading(false)
     }
@@ -35,13 +35,13 @@ export default function ResetPassword({ accessToken, onNavigate }) {
       <section className="auth-panel xml-login-panel">
         <img className="auth-logo" src={logo} alt="CoinCubby logo" />
         <div>
-          <h1>Set New PIN</h1>
-          <p className="muted">Enter your new 6-digit PIN below</p>
+          <h1>{t('set_new_pin')}</h1>
+          <p className="muted">{t('enter_new_pin')}</p>
         </div>
 
         <form className="form-stack" onSubmit={handleSubmit}>
           <label className="xml-field">
-            <span>New 6-Digit PIN</span>
+            <span>{t('new_pin_label')}</span>
             <input
               name="password"
               type="password"
@@ -57,7 +57,7 @@ export default function ResetPassword({ accessToken, onNavigate }) {
             />
           </label>
           <label className="xml-field">
-            <span>Confirm New 6-Digit PIN</span>
+            <span>{t('confirm_new_pin')}</span>
             <input
               name="confirmPassword"
               type="password"
@@ -77,13 +77,13 @@ export default function ResetPassword({ accessToken, onNavigate }) {
           {notice && <AlertDialog type="success" message={notice} onClose={() => setNotice('')} />}
 
           <button className="primary-button xml-black-button" type="submit" disabled={loading}>
-            {loading ? 'Updating...' : 'Reset PIN'}
+            {loading ? t('updating') : t('set_new_pin')}
           </button>
         </form>
 
         <p className="auth-switch">
           <button type="button" onClick={() => onNavigate('login')}>
-            Back to Login
+            {t('back_to_login')}
           </button>
         </p>
       </section>

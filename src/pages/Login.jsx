@@ -3,7 +3,7 @@ import { loginWithPassword, sendPasswordResetEmail } from '../lib/supabase'
 import logo from '../assets/coin_logo.png'
 import AlertDialog from '../components/AlertDialog'
 
-export default function Login({ onNavigate, onLogin }) {
+export default function Login({ onNavigate, onLogin, t, lang }) {
   const [form, setForm] = useState({ email: '', password: '' })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -22,9 +22,9 @@ export default function Login({ onNavigate, onLogin }) {
     event.preventDefault()
     setError('')
 
-    if (!form.email.trim()) return setError('Please enter your email.')
-    if (!/^\S+@\S+\.\S+$/.test(form.email)) return setError('Enter a valid email address.')
-    if (!form.password) return setError('Please enter your password.')
+    if (!form.email.trim()) return setError(lang === 'tl' ? 'Mangyaring ilagay ang iyong email.' : 'Please enter your email.')
+    if (!/^\S+@\S+\.\S+$/.test(form.email)) return setError(lang === 'tl' ? 'Ilagay ang wastong email address.' : 'Enter a valid email address.')
+    if (!form.password) return setError(lang === 'tl' ? 'Mangyaring ilagay ang iyong PIN.' : 'Please enter your PIN.')
 
     setLoading(true)
     try {
@@ -33,8 +33,8 @@ export default function Login({ onNavigate, onLogin }) {
       onNavigate('home')
     } catch (err) {
       const message = err.message?.includes('Email not confirmed')
-        ? 'Please confirm your email before logging in.'
-        : err.message || 'Invalid email or password.'
+        ? (lang === 'tl' ? 'Pakikumpirma muna ang iyong email bago mag-log in.' : 'Please confirm your email before logging in.')
+        : (lang === 'tl' ? 'Maling email o PIN.' : 'Invalid email or password.')
       setError(message)
     } finally {
       setLoading(false)
@@ -46,16 +46,16 @@ export default function Login({ onNavigate, onLogin }) {
     setResetError('')
     setResetNotice('')
 
-    if (!resetEmail.trim()) return setResetError('Please enter your email.')
-    if (!/^\S+@\S+\.\S+$/.test(resetEmail)) return setResetError('Enter a valid email address.')
+    if (!resetEmail.trim()) return setResetError(lang === 'tl' ? 'Mangyaring ilagay ang iyong email.' : 'Please enter your email.')
+    if (!/^\S+@\S+\.\S+$/.test(resetEmail)) return setResetError(lang === 'tl' ? 'Ilagay ang wastong email address.' : 'Enter a valid email address.')
 
     setResetLoading(true)
     try {
       await sendPasswordResetEmail(resetEmail.trim())
-      setResetNotice('Password reset link sent! Please check your inbox.')
+      setResetNotice(lang === 'tl' ? 'Naipadala na ang link para sa pag-reset ng password! Pakisuri ang iyong inbox.' : 'Password reset link sent! Please check your inbox.')
       setResetEmail('')
     } catch (err) {
-      setResetError(err.message || 'Failed to send recovery email. Please try again.')
+      setResetError(lang === 'tl' ? 'Bigo sa pagpapadala ng recovery email. Pakisubukan muli.' : 'Failed to send recovery email. Please try again.')
     } finally {
       setResetLoading(false)
     }
@@ -70,12 +70,12 @@ export default function Login({ onNavigate, onLogin }) {
           <>
             <div>
               <h1>CoinCubby</h1>
-              <p className="muted">Log in to our smart public locker system</p>
+              <p className="muted">{t('login_sub')}</p>
             </div>
 
             <form className="form-stack" onSubmit={handleSubmit}>
               <label className="xml-field">
-                <span>Email Address</span>
+                <span>{t('email_label')}</span>
                 <input
                   name="email"
                   type="email"
@@ -86,7 +86,7 @@ export default function Login({ onNavigate, onLogin }) {
                 />
               </label>
               <label className="xml-field">
-                <span>6-Digit PIN</span>
+                <span>{t('pin_label')}</span>
                 <input
                   name="password"
                   type="password"
@@ -105,7 +105,7 @@ export default function Login({ onNavigate, onLogin }) {
               {error && <AlertDialog type="error" message={error} onClose={() => setError('')} />}
 
               <button className="primary-button xml-black-button" type="submit" disabled={loading}>
-                {loading ? 'Logging in...' : 'Continue'}
+                {loading ? t('logging_in') : t('continue_payment')}
               </button>
             </form>
 
@@ -119,27 +119,27 @@ export default function Login({ onNavigate, onLogin }) {
                   setResetNotice('')
                 }}
               >
-                Forgot your PIN?
+                {t('forgot_pin')}
               </button>
             </p>
 
             <p className="auth-switch">
-              Don&apos;t have an account?{' '}
+              {t('no_account')}{' '}
               <button type="button" onClick={() => onNavigate('register')}>
-                Create an account
+                {t('create_one')}
               </button>
             </p>
           </>
         ) : (
           <>
             <div>
-              <h1>Reset PIN</h1>
-              <p className="muted">Enter your email and we&apos;ll send you a reset link</p>
+              <h1>{t('reset_pin_title')}</h1>
+              <p className="muted">{t('reset_pin_sub')}</p>
             </div>
 
             <form className="form-stack" onSubmit={handleResetSubmit}>
               <label className="xml-field">
-                <span>Email Address</span>
+                <span>{t('email_label')}</span>
                 <input
                   name="resetEmail"
                   type="email"
@@ -154,7 +154,7 @@ export default function Login({ onNavigate, onLogin }) {
               {resetNotice && <AlertDialog type="success" message={resetNotice} onClose={() => setResetNotice('')} />}
 
               <button className="primary-button xml-black-button" type="submit" disabled={resetLoading}>
-                {resetLoading ? 'Sending...' : 'Send Reset Link'}
+                {resetLoading ? t('sending') : t('send_reset_link')}
               </button>
             </form>
 
@@ -167,7 +167,7 @@ export default function Login({ onNavigate, onLogin }) {
                   setResetNotice('')
                 }}
               >
-                Back to Login
+                {t('back_to_login')}
               </button>
             </p>
           </>

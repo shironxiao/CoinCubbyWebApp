@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { fetchProfile, logout, changePassword, verifyUserPassword } from '../lib/supabase'
 import AlertDialog from '../components/AlertDialog'
 
-export default function Profile({ session, onLogout, onNavigate, addNotification }) {
+export default function Profile({ session, onLogout, onNavigate, addNotification, t, lang, onLanguageChange }) {
   const [profile, setProfile] = useState({
     fullName: session?.fullName || '',
     contact: session?.email || '',
@@ -104,7 +104,7 @@ export default function Profile({ session, onLogout, onNavigate, addNotification
   return (
     <main className="page xml-page profile-page">
       <header className="xml-topbar">
-        <strong>Profile</strong>
+        <strong>{t('profile_title')}</strong>
       </header>
 
       <section className="profile-hero">
@@ -114,7 +114,7 @@ export default function Profile({ session, onLogout, onNavigate, addNotification
 
         {/* User ID Badge */}
         {loadingProfile ? (
-          <div style={{ marginTop: '10px', fontSize: '12px', color: '#888' }}>Loading User ID...</div>
+          <div style={{ marginTop: '10px', fontSize: '12px', color: '#888' }}>{lang === 'tl' ? 'Naglo-load ng User ID...' : 'Loading User ID...'}</div>
         ) : profile.coinUserId ? (
           <div style={{
             display: 'inline-flex',
@@ -130,11 +130,11 @@ export default function Profile({ session, onLogout, onNavigate, addNotification
             letterSpacing: '0.15em',
             fontFamily: 'monospace',
           }}>
-            <span style={{ opacity: 0.6, fontSize: '11px', fontWeight: 400, letterSpacing: 0 }}>User ID</span>
+            <span style={{ opacity: 0.6, fontSize: '11px', fontWeight: 400, letterSpacing: 0 }}>{t('user_id_badge')}</span>
             {profile.coinUserId}
           </div>
         ) : (
-          <div style={{ marginTop: '10px', fontSize: '12px', color: '#aaa' }}>No User ID assigned</div>
+          <div style={{ marginTop: '10px', fontSize: '12px', color: '#aaa' }}>{t('no_user_id')}</div>
         )}
       </section>
 
@@ -148,18 +148,18 @@ export default function Profile({ session, onLogout, onNavigate, addNotification
           onClick={() => setIsChangingPassword(true)}
         >
           <span>🔑</span>
-          <p>Change PIN</p>
+          <p>{t('change_pin')}</p>
           <b>›</b>
         </section>
       ) : (
         <form className="form-stack" onSubmit={handleChangePassword} style={{ marginTop: '16px' }}>
-          <h2 style={{ fontSize: '16px', fontWeight: '700', margin: '0 0 4px 0' }}>Change PIN</h2>
+          <h2 style={{ fontSize: '16px', fontWeight: '700', margin: '0 0 4px 0' }}>{t('change_pin')}</h2>
           <p style={{ fontSize: '12px', color: '#888', margin: '0 0 16px 0' }}>
-            Your 6-digit PIN is used to log in and verify locker returns.
+            {lang === 'tl' ? 'Ang iyong 6-digit na PIN ay ginagamit para mag-log in at i-verify ang pagbabalik ng locker.' : 'Your 6-digit PIN is used to log in and verify locker returns.'}
           </p>
 
           <label className="xml-field">
-            <span>Current 6-Digit PIN</span>
+            <span>{t('current_pin')}</span>
             <input
               name="currentPassword"
               type="password"
@@ -176,7 +176,7 @@ export default function Profile({ session, onLogout, onNavigate, addNotification
           </label>
 
           <label className="xml-field">
-            <span>New 6-Digit PIN</span>
+            <span>{t('new_pin')}</span>
             <input
               name="password"
               type="password"
@@ -193,7 +193,7 @@ export default function Profile({ session, onLogout, onNavigate, addNotification
           </label>
 
           <label className="xml-field">
-            <span>Confirm New PIN</span>
+            <span>{t('confirm_new_pin_form')}</span>
             <input
               name="confirmPassword"
               type="password"
@@ -223,17 +223,33 @@ export default function Profile({ session, onLogout, onNavigate, addNotification
                 setNotice('')
               }}
             >
-              Cancel
+              {t('cancel')}
             </button>
             <button className="primary-button xml-black-button" type="submit" disabled={loadingPassword}>
-              {loadingPassword ? 'Saving...' : 'Save PIN'}
+              {loadingPassword ? t('saving_pin') : t('save_pin')}
             </button>
           </div>
         </form>
       )}
 
+      {/* Language Switcher Row */}
+      <div className="profile-lang-row">
+        <div>
+          <h4>{t('language_label')}</h4>
+          <p>{t('language_description')}</p>
+        </div>
+        <select
+          className="profile-lang-select"
+          value={lang}
+          onChange={(e) => onLanguageChange(e.target.value)}
+        >
+          <option value="en">🇺🇸 English</option>
+          <option value="tl">🇵🇭 Tagalog</option>
+        </select>
+      </div>
+
       <button className="danger-button xml-black-button" type="button" onClick={handleSignOut}>
-        Sign Out
+        {t('sign_out')}
       </button>
     </main>
   )
