@@ -46,6 +46,8 @@ export default function Rent({
   walletBalance: balanceProp,
   loadingData,
   refreshAllData,
+  t,
+  lang,
 }) {
   const rentals = activeRentals
   const walletBalance = balanceProp
@@ -263,7 +265,7 @@ export default function Rent({
         closeReturnModal()
         await refreshAllData()
       } catch (err) {
-        setMessage(err.message || 'Failed to complete wallet payment return.')
+        setMessage(lang === 'tl' ? 'Bigo sa pagkumpleto ng pagbabalik gamit ang wallet.' : (err.message || 'Failed to complete wallet payment return.'))
       }
     } else if (fee === 0) {
       try {
@@ -271,8 +273,10 @@ export default function Rent({
 
         if (addNotification) {
           addNotification({
-            title: 'Locker Returned',
-            content: `Locker ${activeReturnItem.lockerNumber} has been successfully returned.`,
+            title: lang === 'tl' ? 'Naibalik ang Locker' : 'Locker Returned',
+            content: lang === 'tl'
+              ? `Ang locker ${activeReturnItem.lockerNumber} ay matagumpay na naibalik.`
+              : `Locker ${activeReturnItem.lockerNumber} has been successfully returned.`,
             type: 'rental_end',
           })
         }
@@ -280,7 +284,7 @@ export default function Rent({
         closeReturnModal()
         await refreshAllData()
       } catch (err) {
-        setMessage(err.message || 'Failed to complete return.')
+        setMessage(lang === 'tl' ? 'Bigo sa pagkumpleto ng pagbabalik.' : (err.message || 'Failed to complete return.'))
       }
     }
   }
@@ -293,28 +297,28 @@ export default function Rent({
       // Past end time → show accumulating overtime using half-hour step billing
       if (tick > item.endMs) {
         const overtimeCost = calculateOvertimeFee(item, tick)
-        return `Overtime Due: ${formatMoney(overtimeCost, false)}`
+        return `${lang === 'tl' ? 'May Labis na Oras' : 'Overtime Due'}: ${formatMoney(overtimeCost, false)}`
       }
 
-      return `Prepaid: ${formatMoney(prepaid, false)}`
+      return `${lang === 'tl' ? 'Bayad Na' : 'Prepaid'}: ${formatMoney(prepaid, false)}`
     }
 
     // Open time: bill using the same half-hour step formula as calculateOvertimeFee
     // (matches exactly what will be charged on return)
     const openCost = calculateOvertimeFee(item, tick)
-    return `Bill: ${formatMoney(openCost, false)}`
+    return `${lang === 'tl' ? 'Kabayaran' : 'Bill'}: ${formatMoney(openCost, false)}`
   }
 
   return (
     <main className="page xml-page xml-rentals">
       <section className="xml-screen-header">
-        <h1>My Rentals</h1>
+        <h1>{t('my_rentals')}</h1>
       </section>
 
       <section className="xml-active-banner">
         <div>
-          <small>ACTIVE RENTALS</small>
-          <strong>{rentals.length} locker(s) rented</strong>
+          <small>{t('active_rentals_label')}</small>
+          <strong>{rentals.length} {lang === 'tl' ? 'locker ang narentahan' : 'locker(s) rented'}</strong>
         </div>
         <span className="locker-glyph banner-locker" aria-hidden="true"></span>
       </section>
@@ -326,8 +330,8 @@ export default function Rent({
           onClose={() => setMessage('')}
         />
       )}
-      {loading && <div className="xml-loading"><span></span><p>Loading rentals...</p></div>}
-      {!loading && rentals.length === 0 && <p className="empty-state">No active rentals yet.</p>}
+      {loading && <div className="xml-loading"><span></span><p>{lang === 'tl' ? 'Naglo-load ng mga renta...' : 'Loading rentals...'}</p></div>}
+      {!loading && rentals.length === 0 && <p className="empty-state">{lang === 'tl' ? 'Wala pang aktibong mga renta.' : 'No active rentals yet.'}</p>}
 
       <section className="rental-list">
       {rentals.map((item) => {
@@ -341,20 +345,24 @@ export default function Rent({
               : item.endMs - tick   // time remaining
           const timer = formatDuration(timerMs)
           const timerLabel = item.isOpenTime
-            ? 'ELAPSED TIME'
+            ? (lang === 'tl' ? 'NAKALIPAS NA ORAS' : 'ELAPSED TIME')
             : isOverdue
-              ? 'OVERTIME'
-              : 'TIME REMAINING'
+              ? (lang === 'tl' ? 'LUMAMPAS NA ORAS' : 'OVERTIME')
+              : (lang === 'tl' ? 'NATITIRANG ORAS' : 'TIME REMAINING')
 
           return (
             <article className={`rental-card${isOverdue ? ' rental-card--overdue' : ''}`} key={item.transactionId}>
               <div className="card-heading">
                 <div>
-                  <small>Locker</small>
+                  <small>{lang === 'tl' ? 'Locker' : 'Locker'}</small>
                   <h2>{item.lockerNumber}</h2>
                   <p>{item.sizeName}</p>
                 </div>
-                <span className={isOverdue ? 'badge-overdue' : ''}>{isOverdue ? 'Overdue' : 'Active'}</span>
+                <span className={isOverdue ? 'badge-overdue' : ''}>
+                  {isOverdue 
+                    ? (lang === 'tl' ? 'Lampas sa Oras' : 'Overdue') 
+                    : (lang === 'tl' ? 'Aktibo' : 'Active')}
+                </span>
               </div>
 
               <div className="timer-box">
@@ -365,17 +373,17 @@ export default function Rent({
 
               <dl className="detail-grid">
                 <div>
-                  <dt>Started</dt>
+                  <dt>{lang === 'tl' ? 'Nagsimula' : 'Started'}</dt>
                   <dd>{formatDateTime(item.startMs)}</dd>
                 </div>
                 <div>
-                  <dt>Expires</dt>
-                  <dd>{item.isOpenTime ? 'N/A (Open Time)' : formatDateTime(item.endMs)}</dd>
+                  <dt>{lang === 'tl' ? 'Magtatapos' : 'Expires'}</dt>
+                  <dd>{item.isOpenTime ? (lang === 'tl' ? 'N/A (Bukas na Oras)' : 'N/A (Open Time)') : formatDateTime(item.endMs)}</dd>
                 </div>
               </dl>
 
               <button className="primary-button xml-black-button" type="button" onClick={() => initiateReturn(item)}>
-                Return Locker
+                {t('return_locker')}
               </button>
             </article>
           )
@@ -394,8 +402,8 @@ export default function Rent({
             <div className="rent-sheet xml-rent-sheet">
               <div className="sheet-title">
                 <div>
-                  <h2>Return Locker {activeReturnItem.lockerNumber}</h2>
-                  <p className="muted">Size: {activeReturnItem.sizeName}</p>
+                  <h2>{lang === 'tl' ? 'Ibalik ang Locker' : 'Return Locker'} {activeReturnItem.lockerNumber}</h2>
+                  <p className="muted">{lang === 'tl' ? 'Laki' : 'Size'}: {activeReturnItem.sizeName}</p>
                 </div>
                 <button className="icon-button" type="button" onClick={closeReturnModal}>
                   X
@@ -405,11 +413,11 @@ export default function Rent({
               {!isPasskeyVerified ? (
                 <form onSubmit={handleVerifyPinSubmit} className="form-stack" style={{ display: 'grid', gap: '14px', marginTop: '8px' }}>
                   <p style={{ fontSize: '13px', color: '#666', textAlign: 'center', margin: '0 0 10px 0', lineHeight: '1.4' }}>
-                    For security, please enter your 6-digit Account PIN to confirm returning Locker #{activeReturnItem.lockerNumber}.
+                    {t('security_pin_confirm')}
                   </p>
                   
                   <label className="xml-field">
-                    <span>6-Digit Account PIN</span>
+                    <span>{lang === 'tl' ? '6-Digit na PIN ng Account' : '6-Digit Account PIN'}</span>
                     <input
                       type="password"
                       inputMode="numeric"
@@ -434,10 +442,10 @@ export default function Rent({
 
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '8px' }}>
                     <button className="secondary-button" type="button" onClick={closeReturnModal} disabled={verifyingPin}>
-                      Cancel
+                      {t('cancel')}
                     </button>
                     <button className="primary-button xml-black-button" type="submit" disabled={verifyingPin || enteredPin.length !== 6}>
-                      {verifyingPin ? 'Verifying...' : 'Verify PIN'}
+                      {verifyingPin ? t('verifying_pin') : t('confirm_pin_btn')}
                     </button>
                   </div>
                 </form>
@@ -445,23 +453,23 @@ export default function Rent({
                 <>
                   <div className="return-details-card" style={{ display: 'grid', gap: '8px', padding: '14px', background: 'var(--white)', borderRadius: '12px', border: '1px solid var(--line)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
-                      <span style={{ color: 'var(--gray)' }}>Prepaid Period:</span>
-                      <strong>{activeReturnItem.isOpenTime ? 'None (Open Time)' : `${formatDuration(activeReturnItem.endMs - activeReturnItem.startMs)} prepaid`}</strong>
+                      <span style={{ color: 'var(--gray)' }}>{lang === 'tl' ? 'Bayad na Oras:' : 'Prepaid Period:'}</span>
+                      <strong>{activeReturnItem.isOpenTime ? (lang === 'tl' ? 'Wala (Bukas na Oras)' : 'None (Open Time)') : `${formatDuration(activeReturnItem.endMs - activeReturnItem.startMs)} ${lang === 'tl' ? 'bayad na' : 'prepaid'}`}</strong>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
-                      <span style={{ color: 'var(--gray)' }}>Status:</span>
+                      <span style={{ color: 'var(--gray)' }}>{lang === 'tl' ? 'Katayuan:' : 'Status:'}</span>
                       <strong style={{ color: hasOvertime ? '#c62828' : '#2e7d32' }}>
-                        {hasOvertime ? 'Payment Due' : activeReturnItem.isOpenTime ? 'No Charge' : 'Within Prepaid Time'}
+                        {hasOvertime ? (lang === 'tl' ? 'Kailangang Bayaran' : 'Payment Due') : activeReturnItem.isOpenTime ? (lang === 'tl' ? 'Walang Bayad' : 'No Charge') : (lang === 'tl' ? 'Nasa Bayad na Oras' : 'Within Prepaid Time')}
                       </strong>
                     </div>
                     {hasOvertime && (
                       <>
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
-                          <span style={{ color: 'var(--gray)' }}>{activeReturnItem.isOpenTime ? 'Elapsed Duration' : 'Overtime Duration'}:</span>
+                          <span style={{ color: 'var(--gray)' }}>{activeReturnItem.isOpenTime ? (lang === 'tl' ? 'Nakalipas na Oras:' : 'Elapsed Duration:') : (lang === 'tl' ? 'Lumampas na Oras:' : 'Overtime Duration:')}</span>
                           <strong>{formatDuration(overtimeMs)}</strong>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
-                          <span style={{ color: 'var(--gray)' }}>Amount Due:</span>
+                          <span style={{ color: 'var(--gray)' }}>{lang === 'tl' ? 'Halagang Dapat Bayaran:' : 'Amount Due:'}</span>
                           <strong style={{ color: '#c62828' }}>{formatMoney(overtimeFee, false)}</strong>
                         </div>
                       </>
@@ -470,7 +478,7 @@ export default function Rent({
 
                   {hasOvertime ? (
                     <>
-                      <p className="xml-section-label">Payment Method</p>
+                      <p className="xml-section-label">{t('payment_method')}</p>
                       <div className="payment-options xml-payment-options">
                         <button
                           type="button"
@@ -486,7 +494,7 @@ export default function Rent({
                             textAlign: 'left'
                           }}
                         >
-                          Pay via Wallet (Balance: {formatMoney(walletBalance)})
+                          {lang === 'tl' ? `Magbayad gamit ang Wallet (Balanse: ${formatMoney(walletBalance)})` : `Pay via Wallet (Balance: ${formatMoney(walletBalance)})`}
                         </button>
                         <button
                           type="button"
@@ -507,7 +515,7 @@ export default function Rent({
                             textAlign: 'left'
                           }}
                         >
-                          Pay at Device
+                          {t('pay_at_device')}
                         </button>
                       </div>
 
@@ -515,15 +523,15 @@ export default function Rent({
                         <>
                           {walletBalance < overtimeFee ? (
                             <div className="alert alert-danger" style={{ background: '#ffebee', color: '#c62828', padding: '12px', borderRadius: '12px', fontSize: '13px', fontWeight: '700', textAlign: 'center', marginTop: '12px' }}>
-                              Insufficient wallet balance. Please insert coins at the device to pay.
+                              {t('insufficient_wallet_overtime')}
                             </div>
                           ) : (
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '12px' }}>
                               <button className="secondary-button" type="button" onClick={closeReturnModal}>
-                                Cancel
+                                {t('cancel')}
                               </button>
                               <button className="primary-button xml-black-button" type="button" onClick={handleConfirmReturn}>
-                                Pay & Return
+                                {lang === 'tl' ? 'Magbayad at Ibalik' : 'Pay & Return'}
                               </button>
                             </div>
                           )}
@@ -534,15 +542,15 @@ export default function Rent({
                         <div style={{ display: 'grid', gap: '12px', marginTop: '8px' }}>
                           <div className="payment-status-card" style={{ margin: '0' }}>
                             <div className="amount-stat">
-                              <span>Amount Due</span>
+                              <span>{lang === 'tl' ? 'Dapat Bayaran' : 'Amount Due'}</span>
                               <strong>{formatMoney(overtimeFee, false)}</strong>
                             </div>
                             <div className="amount-stat">
-                              <span>Inserted</span>
+                              <span>{t('inserted')}</span>
                               <strong className="inserted-text">{formatMoney(insertedAmount, false)}</strong>
                             </div>
                             <div className="amount-stat">
-                              <span>Remaining</span>
+                              <span>{t('remaining')}</span>
                               <strong className="remaining-text">
                                 {formatMoney(Math.max(0, overtimeFee - insertedAmount), false)}
                               </strong>
@@ -551,19 +559,19 @@ export default function Rent({
 
                           {hasTimedOut ? (
                             <div className="timeout-container">
-                              <p className="alert">Payment session timed out. No cash was detected.</p>
+                              <p className="alert">{t('timeout_title')}</p>
                               <button
                                 className="primary-button xml-black-button continue-payment-btn"
                                 type="button"
                                 onClick={handleContinuePayment}
                               >
-                                Continue
+                                {t('continue_payment')}
                               </button>
                             </div>
                           ) : (
                             <div className="timer-container">
                               {activeReturnItem.paymentSessionStarting && (
-                                <p className="timer-text">Preparing the device payment screen...</p>
+                                <p className="timer-text">{lang === 'tl' ? 'Inihahanda ang screen ng pagbabayad...' : 'Preparing the device payment screen...'}</p>
                               )}
                               <div className="progress-bar-bg">
                                 <div 
@@ -572,14 +580,14 @@ export default function Rent({
                                 ></div>
                               </div>
                               <p className="timer-text">
-                                Please insert cash. Time remaining: <strong>{secondsLeft}s</strong>
+                                {lang === 'tl' ? 'Mangyaring ihulog ang barya. Natitirang oras:' : 'Please insert cash. Time remaining:'} <strong>{secondsLeft}s</strong>
                               </p>
                             </div>
                           )}
 
                           <div className="action-row" style={{ marginTop: '8px' }}>
                             <button className="secondary-button" style={{ width: '100%' }} type="button" onClick={closeReturnModal}>
-                              Cancel
+                              {t('cancel')}
                             </button>
                           </div>
                         </div>
@@ -588,10 +596,10 @@ export default function Rent({
                   ) : (
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '12px' }}>
                       <button className="secondary-button" type="button" onClick={closeReturnModal}>
-                        Cancel
+                        {t('cancel')}
                       </button>
                       <button className="primary-button xml-black-button" type="button" onClick={handleConfirmReturn}>
-                        Confirm Free Return
+                        {lang === 'tl' ? 'Kumpirmahin ang Libreng Pagbabalik' : 'Confirm Free Return'}
                       </button>
                     </div>
                   )}

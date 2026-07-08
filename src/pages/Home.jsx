@@ -32,6 +32,8 @@ export default function Home({
   ratesMap,
   loadingData,
   refreshAllData,
+  t,
+  lang,
 }) {
   const lockerPanelRef = useRef(null)
   const [selectedLocker, setSelectedLocker] = useState(null)
@@ -147,7 +149,7 @@ export default function Home({
 
   function openRental(locker) {
     if (locker.status !== 'Available') {
-      setMessage(`Locker ${locker.id} is not available.`)
+      setMessage(lang === 'tl' ? `Hindi bakante ang Locker ${locker.id}.` : `Locker ${locker.id} is not available.`)
       return
     }
 
@@ -162,7 +164,7 @@ export default function Home({
     if (firstAvailable) {
       openRental(firstAvailable)
     } else {
-      setMessage('No lockers are currently available.')
+      setMessage(lang === 'tl' ? 'Walang bakanteng mga locker sa kasalukuyan.' : 'No lockers are currently available.')
     }
   }
 
@@ -212,8 +214,10 @@ export default function Home({
         // Trigger notification
         if (addNotification) {
           addNotification({
-            title: 'Locker Rented',
-            content: `Locker ${selectedLocker.id} (${selectedLocker.size}) is active. PIN: ${qrToken}`,
+            title: lang === 'tl' ? 'Locker na Narentahan' : 'Locker Rented',
+            content: lang === 'tl'
+              ? `Ang locker ${selectedLocker.id} (${selectedLocker.size}) ay aktibo na. PIN: ${qrToken}`
+              : `Locker ${selectedLocker.id} (${selectedLocker.size}) is active. PIN: ${qrToken}`,
             type: 'rental_start',
           })
         }
@@ -229,7 +233,7 @@ export default function Home({
         onNavigate('rent')
       }
     } catch (err) {
-      setMessage(err.message || 'Could not save rental.')
+      setMessage(lang === 'tl' ? 'Hindi mai-save ang renta. Pakisuri kung may device na nakakonekta.' : (err.message || 'Could not save rental.'))
     } finally {
       setSaving(false)
     }
@@ -246,9 +250,13 @@ export default function Home({
       </section>
 
       <section className="xml-welcome-card">
-        <p>WELCOME!</p>
-        <h2>Pick your locker</h2>
-        <span>Green means you're good to go.<br />Check status indicator below.</span>
+        <p>{lang === 'tl' ? 'MALIGAYANG PAGDATING!' : 'WELCOME!'}</p>
+        <h2>{lang === 'tl' ? 'Piliin ang iyong locker' : 'Pick your locker'}</h2>
+        <span>
+          {lang === 'tl'
+            ? 'Ang berde ay nangangahulugang maaari itong gamitin. Tingnan ang indikasyon sa ibaba.'
+            : "Green means you're good to go. Check status indicator below."}
+        </span>
 
         {/* Rate chips — from database */}
         <div className="welcome-rates">
@@ -273,7 +281,7 @@ export default function Home({
           type="button"
           onClick={() => lockerPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
         >
-          Rent Now
+          {lang === 'tl' ? 'Rentahan Na' : 'Rent Now'}
         </button>
       </section>
 
@@ -296,7 +304,11 @@ export default function Home({
             // Timer: elapsed for open, overtime elapsed for overdue, remaining for fixed-in-time
             const timerMs = isOpen ? elapsedMs : isOverdue ? overtimeMs : remainMs
             const timer   = formatDuration(timerMs)
-            const timerLabel = isOpen ? 'ELAPSED' : isOverdue ? 'OVERTIME' : 'REMAINING'
+            const timerLabel = isOpen 
+              ? (lang === 'tl' ? 'NAKALIPAS' : 'ELAPSED') 
+              : isOverdue 
+                ? (lang === 'tl' ? 'LUMAMPAS NA' : 'OVERTIME') 
+                : (lang === 'tl' ? 'NATITIRA' : 'REMAINING')
 
             // Bill: use half-hour step formula (matches what is actually charged)
             const prepaidCost = isOpen ? 0 : (totalMs / 3600000) * ratePerHr
@@ -313,10 +325,10 @@ export default function Home({
             const overtimeCost = calcStepBill(overtimeMs)
             const openCost     = calcStepBill(elapsedMs)
             const billLabel = isOpen
-              ? `Bill: ${formatMoney(openCost, false)}`
+              ? `${lang === 'tl' ? 'Kabayaran' : 'Bill'}: ${formatMoney(openCost, false)}`
               : isOverdue
-                ? `Overtime Due: ${formatMoney(overtimeCost, false)}`
-                : `Paid: ${formatMoney(prepaidCost, false)}`
+                ? `${lang === 'tl' ? 'May Labis na Oras' : 'Overtime Due'}: ${formatMoney(overtimeCost, false)}`
+                : `${lang === 'tl' ? 'Bayad' : 'Paid'}: ${formatMoney(prepaidCost, false)}`
 
             const lockerLabel = rental.lockers?.locker_number || rental.locker_id
             const sizeLabel   = sizeInfo.label
@@ -333,7 +345,9 @@ export default function Home({
                   </div>
                   <span className={`hbar-badge${isOverdue ? ' hbar-badge--overdue' : ''}`}>
                     <span className="hbar-dot" />
-                    {isOverdue ? 'Overdue' : 'Active'}
+                    {isOverdue 
+                      ? (lang === 'tl' ? 'Lampas sa Oras' : 'Overdue') 
+                      : (lang === 'tl' ? 'Aktibo' : 'Active')}
                   </span>
                 </div>
                 {/* progress bar */}
@@ -355,7 +369,7 @@ export default function Home({
                   type="button"
                   onClick={() => returnActiveRental(rental)}
                 >
-                  Return Locker
+                  {t('return_locker')}
                 </button>
               </div>
             )
@@ -364,7 +378,7 @@ export default function Home({
       )}
 
       <section className="xml-balance-card">
-        <span>Available Balance</span>
+        <span>{t('available_balance')}</span>
         <strong>{formatMoney(balance)}</strong>
       </section>
 
@@ -373,14 +387,14 @@ export default function Home({
           <span className="xml-icon-circle locker-glyph" aria-hidden="true"></span>
           <div>
             <strong>{filteredLockers.length}</strong>
-            <small>Total Locker</small>
+            <small>{lang === 'tl' ? 'Kabuuan ng Locker' : 'Total Locker'}</small>
           </div>
         </div>
         <div className="xml-legend-card">
-          <span><i className="available"></i>Available</span>
-          <span><i className="payment-required"></i>Payment Required</span>
-          <span><i className="occupied"></i>Occupied</span>
-          <span><i className="maintenance"></i>Maintenance</span>
+          <span><i className="available"></i>{t('available')}</span>
+          <span><i className="payment-required"></i>{lang === 'tl' ? 'Kailangang Magbayad' : 'Payment Required'}</span>
+          <span><i className="occupied"></i>{t('occupied')}</span>
+          <span><i className="maintenance"></i>{lang === 'tl' ? 'Kumpunihin' : 'Maintenance'}</span>
         </div>
       </section>
 
@@ -389,11 +403,11 @@ export default function Home({
           <span className="xml-dark-circle locker-glyph light" aria-hidden="true"></span>
           <div>
             <strong>CoinCubby</strong>
-            <small>{selectedModule?.name || 'Select a module'} · {availableCount} available</small>
+            <small>{selectedModule?.name || (lang === 'tl' ? 'Pumili ng module' : 'Select a module')} · {availableCount} {lang === 'tl' ? 'bakante' : 'available'}</small>
           </div>
           <div className="xml-location">
-            <small>Location</small>
-            <strong>Hannah's Shop</strong>
+            <small>{t('location')}</small>
+            <strong>{t('location_name')}</strong>
           </div>
         </div>
 
@@ -412,7 +426,7 @@ export default function Home({
 
       {message && <AlertDialog type="error" message={message} onClose={() => setMessage('')} />}
       {loading ? (
-        <p className="muted">Loading lockers...</p>
+        <p className="muted">{t('loading_lockers')}</p>
       ) : (
         <div className="locker-grid">
           {filteredLockers.map((locker) => (
@@ -425,7 +439,12 @@ export default function Home({
               <span className="locker-icon locker-glyph" aria-hidden="true"></span>
               <strong>{locker.id}</strong>
               <span className="locker-dot"></span>
-              <small>{locker.status}</small>
+              <small>
+                {locker.status === 'Available' ? t('available')
+                  : locker.status === 'Occupied' ? t('occupied')
+                  : locker.status === 'Unavailable' ? t('unavailable')
+                  : locker.status}
+              </small>
               <b>{locker.size} S</b>
             </button>
           ))}
@@ -438,9 +457,9 @@ export default function Home({
           <form className="rent-sheet xml-rent-sheet" onSubmit={confirmRental}>
             <div className="sheet-title">
               <div>
-                <h2>Rent Locker {selectedLocker.id}</h2>
+                <h2>{lang === 'tl' ? 'Rentahan ang Locker' : 'Rent Locker'} {selectedLocker.id}</h2>
                 <p className="muted">
-                  Size: {selectedLocker.size} | Rate: {formatMoney(selectedLocker.rate, false)}/hr
+                  {t('size_label')}: {selectedLocker.size} | {t('rate_label')}: {formatMoney(selectedLocker.rate, false)}/hr
                 </p>
               </div>
               <button className="icon-button" type="button" onClick={() => setSelectedLocker(null)}>
@@ -448,7 +467,7 @@ export default function Home({
               </button>
             </div>
 
-            <p className="xml-section-label">Rental Type</p>
+            <p className="xml-section-label">{lang === 'tl' ? 'Uri ng Renta' : 'Rental Type'}</p>
             <div className="segmented xml-radio-row">
               <button
                 type="button"
@@ -458,7 +477,7 @@ export default function Home({
                   setPaymentMethod('Wallet')
                 }}
               >
-                Fixed Duration
+                {lang === 'tl' ? 'Takdang Oras' : 'Fixed Duration'}
               </button>
               <button
                 type="button"
@@ -468,13 +487,13 @@ export default function Home({
                   setPaymentMethod('Device')
                 }}
               >
-                Open Time
+                {t('open_time')}
               </button>
             </div>
 
             {rentalType === 'fixed' && (
               <label className="xml-field plain">
-                <span>Duration</span>
+                <span>{lang === 'tl' ? 'Tagal' : 'Duration'}</span>
                 <input
                   min="1"
                   type="number"
@@ -486,41 +505,41 @@ export default function Home({
 
             {rentalType === 'fixed' ? (
               <>
-                <p className="xml-section-label">Payment Method</p>
+                <p className="xml-section-label">{t('payment_method')}</p>
                 <div className="payment-options xml-payment-options">
                   <button
                     type="button"
                     className={paymentMethod === 'Wallet' ? 'selected' : ''}
                     onClick={() => setPaymentMethod('Wallet')}
                   >
-                    Wallet ({formatMoney(total || selectedLocker.rate)})
+                    {t('wallet')} ({formatMoney(total || selectedLocker.rate)})
                   </button>
                   <button
                     type="button"
                     className={paymentMethod === 'Device' ? 'selected' : ''}
                     onClick={() => setPaymentMethod('Device')}
                   >
-                    Pay at Device
+                    {t('pay_at_device')}
                   </button>
                 </div>
 
                 <div className="total-row">
-                  <span>Total Amount</span>
+                  <span>{lang === 'tl' ? 'Kabuuan' : 'Total Amount'}</span>
                   <strong>{formatMoney(total)}</strong>
                 </div>
               </>
             ) : (
               <div style={{ background: 'var(--label-green, #e8f5e9)', border: '1px solid #a5d6a7', borderRadius: '10px', padding: '12px 14px', fontSize: '13px', color: '#2e7d32', lineHeight: '1.5' }}>
-                💡 <strong>Pay on return.</strong> You will be billed at half the hourly rate when you return the locker.
+                💡 <strong>{lang === 'tl' ? 'Magbayad pagbalik.' : 'Pay on return.'}</strong> {lang === 'tl' ? 'Sisingilin ka ng kalahati ng halaga bawat oras kapag ibinalik mo ang locker.' : 'You will be billed at half the hourly rate when you return the locker.'}
               </div>
             )}
 
             <div className="action-row">
               <button className="secondary-button" type="button" onClick={() => setSelectedLocker(null)}>
-                Cancel
+                {t('cancel')}
               </button>
               <button className="primary-button xml-black-button" type="submit" disabled={saving}>
-                {saving ? 'Saving...' : rentalType === 'open' ? 'Start Rental' : 'Confirm Rental'}
+                {saving ? t('processing') : rentalType === 'open' ? (lang === 'tl' ? 'Simulan ang Renta' : 'Start Rental') : (lang === 'tl' ? 'Kumpirmahin ang Renta' : 'Confirm Rental')}
               </button>
             </div>
           </form>
@@ -532,8 +551,8 @@ export default function Home({
           <div className="rent-sheet xml-rent-sheet">
             <div className="sheet-title">
               <div>
-                <h2>Insert Money at Device</h2>
-                <p className="muted">Locker {paymentTx.lockerNumber} · Payment Pending</p>
+                <h2>{lang === 'tl' ? 'Ihulog ang Pera sa Kiosk' : 'Insert Money at Device'}</h2>
+                <p className="muted">{lang === 'tl' ? 'Locker' : 'Locker'} {paymentTx.lockerNumber} · {lang === 'tl' ? 'Naghihintay ng Bayad' : 'Payment Pending'}</p>
               </div>
               <button 
                 className="icon-button" 
@@ -555,15 +574,15 @@ export default function Home({
 
             <div className="payment-status-card">
               <div className="amount-stat">
-                <span>Total Due</span>
+                <span>{lang === 'tl' ? 'Dapat Bayaran' : 'Total Due'}</span>
                 <strong>{formatMoney(paymentTx.totalAmount)}</strong>
               </div>
               <div className="amount-stat">
-                <span>Inserted</span>
+                <span>{t('inserted')}</span>
                 <strong className="inserted-text">{formatMoney(insertedAmount)}</strong>
               </div>
               <div className="amount-stat">
-                <span>Remaining</span>
+                <span>{t('remaining')}</span>
                 <strong className="remaining-text">
                   {formatMoney(Math.max(0, paymentTx.totalAmount - insertedAmount))}
                 </strong>
@@ -572,13 +591,13 @@ export default function Home({
 
             {hasTimedOut ? (
               <div className="timeout-container">
-                <p className="alert">Payment session timed out. No cash was detected.</p>
+                <p className="alert">{t('timeout_title')}</p>
                 <button
                   className="primary-button xml-black-button continue-payment-btn"
                   type="button"
                   onClick={handleContinuePayment}
                 >
-                  Continue
+                  {t('continue_payment')}
                 </button>
               </div>
             ) : (
@@ -590,7 +609,7 @@ export default function Home({
                   ></div>
                 </div>
                 <p className="timer-text">
-                  Please insert cash. Time remaining: <strong>{secondsLeft}s</strong>
+                  {lang === 'tl' ? 'Mangyaring ihulog ang barya. Natitirang oras:' : 'Please insert cash. Time remaining:'} <strong>{secondsLeft}s</strong>
                 </p>
               </div>
             )}
@@ -610,7 +629,7 @@ export default function Home({
                   setPaymentTx(null)
                 }}
               >
-                Cancel
+                {t('cancel')}
               </button>
             </div>
           </div>

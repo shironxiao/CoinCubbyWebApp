@@ -8,6 +8,8 @@ export default function History({
   rentalHistory,
   loadingData,
   refreshAllData,
+  t,
+  lang,
 }) {
   const items = rentalHistory
   const loading = loadingData
@@ -113,90 +115,90 @@ export default function History({
   return (
     <main className="page xml-page xml-history">
       <section className="xml-screen-header" style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: '16px', width: '100%', flexWrap: 'wrap' }}>
-        <h1>Rental History</h1>
+        <h1>{t('rental_history')}</h1>
       </section>
 
       <section className="history-summary">
         <div>
           <strong>{filteredItems.length}</strong>
-          <span>Total Rentals</span>
+          <span>{lang === 'tl' ? 'Kabuuan ng Renta' : 'Total Rentals'}</span>
         </div>
         <div>
           <strong>{formatMoney(summary.totalSpent)}</strong>
-          <span>Total Spent</span>
+          <span>{lang === 'tl' ? 'Kabuuan ng Gastos' : 'Total Spent'}</span>
         </div>
         <div>
           <strong>{summary.completed}</strong>
-          <span>Completed</span>
+          <span>{t('completed')}</span>
         </div>
       </section>
 
       <section className="history-filters">
         <div className="filter-group">
-          <label>Time Period</label>
+          <label>{lang === 'tl' ? 'Panahon' : 'Time Period'}</label>
           <div className="filter-options">
             <button
               className={`filter-pill ${timeFilter === 'all' ? 'active' : ''}`}
               onClick={() => setTimeFilter('all')}
             >
-              All Time
+              {lang === 'tl' ? 'Lahat ng Oras' : 'All Time'}
             </button>
             <button
               className={`filter-pill ${timeFilter === 'today' ? 'active' : ''}`}
               onClick={() => setTimeFilter('today')}
             >
-              Today
+              {lang === 'tl' ? 'Ngayong Araw' : 'Today'}
             </button>
             <button
               className={`filter-pill ${timeFilter === 'week' ? 'active' : ''}`}
               onClick={() => setTimeFilter('week')}
             >
-              This Week
+              {lang === 'tl' ? 'Ngayong Linggo' : 'This Week'}
             </button>
             <button
               className={`filter-pill ${timeFilter === 'month' ? 'active' : ''}`}
               onClick={() => setTimeFilter('month')}
             >
-              This Month
+              {lang === 'tl' ? 'Ngayong Buwan' : 'This Month'}
             </button>
           </div>
         </div>
 
         <div className="filter-group">
-          <label>Status</label>
+          <label>{t('status')}</label>
           <div className="filter-options">
             <button
               className={`filter-pill ${statusFilter === 'all' ? 'active' : ''}`}
               onClick={() => setStatusFilter('all')}
             >
-              All
+              {t('filter_all')}
             </button>
             <button
               className={`filter-pill ${statusFilter === 'active' ? 'active' : ''}`}
               onClick={() => setStatusFilter('active')}
             >
-              Active
+              {t('filter_active')}
             </button>
             <button
               className={`filter-pill ${statusFilter === 'completed' ? 'active' : ''}`}
               onClick={() => setStatusFilter('completed')}
             >
-              Completed
+              {t('filter_completed')}
             </button>
           </div>
         </div>
       </section>
 
       <section className="xml-table-head">
-        <span>Locker</span>
-        <span>Amount</span>
-        <span>Status</span>
+        <span>{t('locker_label')}</span>
+        <span>{t('amount')}</span>
+        <span>{t('status')}</span>
       </section>
 
       {message && <AlertDialog type="error" message={message} onClose={() => setMessage('')} />}
-      {loading && <div className="xml-loading"><span></span><p>Loading history...</p></div>}
-      {!loading && items.length === 0 && <p className="empty-state">No rental history yet.</p>}
-      {!loading && items.length > 0 && filteredItems.length === 0 && <p className="empty-state">No matching rentals found.</p>}
+      {loading && <div className="xml-loading"><span></span><p>{lang === 'tl' ? 'Naglo-load ng kasaysayan...' : 'Loading history...'}</p></div>}
+      {!loading && items.length === 0 && <p className="empty-state">{t('no_history')}</p>}
+      {!loading && items.length > 0 && filteredItems.length === 0 && <p className="empty-state">{t('no_matching_rentals')}</p>}
 
       <section className="history-list">
         {paginatedItems.map((item) => (
@@ -213,10 +215,10 @@ export default function History({
               <strong>{item.amount > 0 ? formatMoney(item.amount) : '-'}</strong>
             </div>
             <div>
-              <strong className={`status-badge ${item.status.toLowerCase()}`}>{item.status}</strong>
+              <strong className={`status-badge ${item.status.toLowerCase()}`}>{item.status === 'Active' ? t('filter_active') : item.status === 'Completed' ? t('completed') : item.status}</strong>
             </div>
             <p style={{ gridColumn: 'span 3', textAlign: 'left', paddingLeft: '12px' }}>
-              Start: {formatDateTime(item.startTime)} <b>Size: {item.sizeName}</b> {item.durationMinutes ? formatMinutes(item.durationMinutes) : item.paymentMethod}
+              {lang === 'tl' ? 'Simula: ' : 'Start: '} {formatDateTime(item.startTime)} <b>{lang === 'tl' ? 'Laki: ' : 'Size: '} {item.sizeName}</b> {item.durationMinutes ? formatMinutes(item.durationMinutes) : item.paymentMethod}
             </p>
           </article>
         ))}
@@ -230,10 +232,10 @@ export default function History({
             onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
             aria-label="Previous page"
           >
-            &larr; Prev
+            {lang === 'tl' ? '← Nakaraan' : '← Prev'}
           </button>
           <span className="pagination-info">
-            Page <strong>{currentPage}</strong> of {totalPages}
+            {lang === 'tl' ? <>Pahina <strong>{currentPage}</strong> ng {totalPages}</> : <>Page <strong>{currentPage}</strong> of {totalPages}</>}
           </span>
           <button
             className="pagination-btn"
@@ -241,7 +243,7 @@ export default function History({
             onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
             aria-label="Next page"
           >
-            Next &rarr;
+            {lang === 'tl' ? 'Susunod →' : 'Next →'}
           </button>
         </div>
       )}
@@ -253,7 +255,7 @@ export default function History({
         }}>
           <div className="rent-sheet xml-rent-sheet" onClick={(e) => e.stopPropagation()} style={{ padding: '24px', gap: '16px' }}>
             <div className="sheet-title" style={{ borderBottom: '1px solid rgba(0, 0, 0, 0.08)', paddingBottom: '12px', marginBottom: '8px' }}>
-              <h2>{isConfirmingDelete ? 'Delete Record?' : 'Transaction Details'}</h2>
+              <h2>{isConfirmingDelete ? (lang === 'tl' ? 'Burahin ang Record?' : 'Delete Record?') : t('details')}</h2>
               <p className="muted" style={{ fontFamily: 'monospace', wordBreak: 'break-all', marginTop: '4px' }}>ID: {selectedItem.id}</p>
               <button className="icon-button" type="button" onClick={() => {
                 setSelectedItem(null)
@@ -266,54 +268,54 @@ export default function History({
             {!isConfirmingDelete ? (
               <div style={{ display: 'grid', gap: '14px', color: 'var(--dark)' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ color: '#888', fontSize: '13px' }}>Locker</span>
-                  <strong style={{ fontSize: '15px' }}>Locker #{selectedItem.lockerNumber} ({selectedItem.sizeName})</strong>
+                  <span style={{ color: '#888', fontSize: '13px' }}>{t('locker_label')}</span>
+                  <strong style={{ fontSize: '15px' }}>{lang === 'tl' ? 'Locker' : 'Locker'} #{selectedItem.lockerNumber} ({selectedItem.sizeName})</strong>
                 </div>
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ color: '#888', fontSize: '13px' }}>Status</span>
+                  <span style={{ color: '#888', fontSize: '13px' }}>{t('status')}</span>
                   <span className={`status-badge ${selectedItem.status.toLowerCase()}`} style={{ margin: 0, padding: '4px 10px', borderRadius: '6px', fontWeight: 'bold' }}>
-                    {selectedItem.status}
+                    {selectedItem.status === 'Active' ? t('filter_active') : selectedItem.status === 'Completed' ? t('completed') : selectedItem.status}
                   </span>
                 </div>
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ color: '#888', fontSize: '13px' }}>Start Time</span>
+                  <span style={{ color: '#888', fontSize: '13px' }}>{t('start_time')}</span>
                   <span style={{ fontSize: '13px', fontWeight: '500' }}>{formatDateTime(selectedItem.startTime)}</span>
                 </div>
 
                 {selectedItem.endTime && (
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ color: '#888', fontSize: '13px' }}>End Time</span>
+                    <span style={{ color: '#888', fontSize: '13px' }}>{t('end_time')}</span>
                     <span style={{ fontSize: '13px', fontWeight: '500' }}>{formatDateTime(selectedItem.endTime)}</span>
                   </div>
                 )}
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ color: '#888', fontSize: '13px' }}>Duration</span>
+                  <span style={{ color: '#888', fontSize: '13px' }}>{t('duration')}</span>
                   <span style={{ fontSize: '13px', fontWeight: '500' }}>
-                    {selectedItem.durationMinutes ? formatMinutes(selectedItem.durationMinutes) : 'Open-Ended'}
+                    {selectedItem.durationMinutes ? formatMinutes(selectedItem.durationMinutes) : (lang === 'tl' ? 'Walang Takdang Oras' : 'Open-Ended')}
                   </span>
                 </div>
 
                 <div style={{ borderTop: '1px dashed rgba(0, 0, 0, 0.08)', marginTop: '8px', paddingTop: '12px' }} />
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ color: '#888', fontSize: '13px' }}>Payment Method</span>
-                  <span style={{ fontSize: '13px', fontWeight: '500' }}>{selectedItem.paymentMethod}</span>
+                  <span style={{ color: '#888', fontSize: '13px' }}>{t('payment_method')}</span>
+                  <span style={{ fontSize: '13px', fontWeight: '500' }}>{selectedItem.paymentMethod === 'Wallet' ? t('wallet') : t('pay_at_device')}</span>
                 </div>
 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ color: '#888', fontSize: '13px', fontWeight: '600' }}>Total Amount Paid</span>
+                  <span style={{ color: '#888', fontSize: '13px', fontWeight: '600' }}>{lang === 'tl' ? 'Kabuuan ng Bayad' : 'Total Amount Paid'}</span>
                   <strong style={{ fontSize: '16px', color: '#4cd964' }}>{formatMoney(selectedItem.amount)}</strong>
                 </div>
 
                 {selectedItem.paymentsList && selectedItem.paymentsList.length > 1 && (
                   <div style={{ marginTop: '4px', background: 'rgba(0, 0, 0, 0.02)', padding: '10px', borderRadius: '8px', border: '1px solid rgba(0, 0, 0, 0.05)' }}>
-                    <span style={{ fontSize: '10px', color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 'bold', display: 'block', marginBottom: '6px' }}>Payment Breakdown</span>
+                    <span style={{ fontSize: '10px', color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 'bold', display: 'block', marginBottom: '6px' }}>{lang === 'tl' ? 'Detalye ng Pagbabayad' : 'Payment Breakdown'}</span>
                     {selectedItem.paymentsList.map((p, idx) => (
                       <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', marginBottom: '4px', color: '#555' }}>
-                        <span>Payment #{idx + 1} ({p.payment_method || 'Device'})</span>
+                        <span>{lang === 'tl' ? 'Pagbabayad' : 'Payment'} #{idx + 1} ({p.payment_method === 'Wallet' ? t('wallet') : t('pay_at_device')})</span>
                         <strong>{formatMoney(p.amount)}</strong>
                       </div>
                     ))}
@@ -322,7 +324,7 @@ export default function History({
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '8px' }}>
                   <button className="secondary-button" type="button" onClick={() => setSelectedItem(null)}>
-                    Close
+                    {t('close')}
                   </button>
                   <button
                     className="danger-button"
@@ -330,7 +332,7 @@ export default function History({
                     onClick={() => setIsConfirmingDelete(true)}
                     style={{ background: '#ff3b30', color: '#fff', border: 'none', borderRadius: '12px', padding: '10px', fontWeight: 'bold', cursor: 'pointer' }}
                   >
-                    Delete Record
+                    {lang === 'tl' ? 'Burahin ang Record' : 'Delete Record'}
                   </button>
                 </div>
               </div>
@@ -338,9 +340,9 @@ export default function History({
               <div style={{ display: 'grid', gap: '16px', textAlign: 'center', color: 'var(--dark)', padding: '10px 0' }}>
                 <span style={{ fontSize: '2.5rem' }}>⚠️</span>
                 <p className="muted" style={{ fontSize: '13px', lineHeight: '1.4' }}>
-                  Are you sure you want to remove this transaction from your history view?
+                  {lang === 'tl' ? 'Sigurado ka bang gusto mong alisin ang transaksyong ito sa iyong history view?' : 'Are you sure you want to remove this transaction from your history view?'}
                   <br />
-                  <strong style={{ color: '#ff3b30' }}>This will only hide it from your view and does not delete the database record.</strong>
+                  <strong style={{ color: '#ff3b30' }}>{lang === 'tl' ? 'Itatago lamang nito ang transaksyon mula sa iyong view at hindi buburahin ang tala sa database.' : 'This will only hide it from your view and does not delete the database record.'}</strong>
                 </p>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '10px' }}>
@@ -349,7 +351,7 @@ export default function History({
                     type="button"
                     onClick={() => setIsConfirmingDelete(false)}
                   >
-                    Cancel
+                    {t('cancel')}
                   </button>
                   <button
                     className="danger-button"
@@ -357,7 +359,7 @@ export default function History({
                     onClick={() => handleDeleteItem(selectedItem.id)}
                     style={{ background: '#ff3b30', color: '#fff', border: 'none', borderRadius: '12px', padding: '10px', fontWeight: 'bold', cursor: 'pointer' }}
                   >
-                    Yes, Delete
+                    {lang === 'tl' ? 'Oo, Burahin' : 'Yes, Delete'}
                   </button>
                 </div>
               </div>
