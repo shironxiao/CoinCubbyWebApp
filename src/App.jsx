@@ -466,6 +466,8 @@ export default function App() {
         onClearAll={handleClearAll}
         browserNotificationStatus={browserNotificationStatus}
         onEnableBrowserNotifications={handleEnableBrowserNotifications}
+        lang={lang}
+        t={t}
         onNavigate={(path) => {
           navigate(path)
           setNotifOpen(false)

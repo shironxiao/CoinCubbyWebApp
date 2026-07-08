@@ -10,6 +10,8 @@ export default function NotificationsDrawer({
   browserNotificationStatus,
   onEnableBrowserNotifications,
   onNavigate,
+  lang,
+  t,
 }) {
   // Prevent body scroll when drawer is open
   useEffect(() => {
@@ -138,8 +140,8 @@ export default function NotificationsDrawer({
       <div className="notif-drawer" role="dialog" aria-modal="true" aria-label="Notifications Panel">
         <div className="notif-header">
           <div className="notif-header-title">
-            <h2>Notifications</h2>
-            {unreadCount > 0 && <span className="notif-unread-tag">{unreadCount} new</span>}
+            <h2>{lang === 'tl' ? 'Mga Abiso' : 'Notifications'}</h2>
+            {unreadCount > 0 && <span className="notif-unread-tag">{unreadCount} {lang === 'tl' ? 'bago' : 'new'}</span>}
           </div>
           <button className="notif-close-btn" onClick={onClose} aria-label="Close notifications">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -157,10 +159,10 @@ export default function NotificationsDrawer({
                 onClick={onMarkAllAsRead}
                 disabled={unreadCount === 0}
               >
-                Mark all as read
+                {lang === 'tl' ? 'Markahan lahat bilang nabasa' : 'Mark all as read'}
               </button>
               <button className="notif-action-link danger" onClick={onClearAll}>
-                Clear all
+                {lang === 'tl' ? 'Burahin lahat' : 'Clear all'}
               </button>
             </>
           )}
@@ -172,22 +174,22 @@ export default function NotificationsDrawer({
               <div>
                 <strong>
                   {browserNotificationStatus === 'denied'
-                    ? 'Device reminders are blocked'
+                    ? (lang === 'tl' ? 'Naka-block ang mga paalala ng device' : 'Device reminders are blocked')
                     : browserNotificationStatus === 'unsupported'
-                      ? 'Device reminders are unavailable'
-                      : 'Enable locker reminders'}
+                      ? (lang === 'tl' ? 'Hindi available ang mga paalala ng device' : 'Device reminders are unavailable')
+                      : (lang === 'tl' ? 'I-enable ang mga paalala ng locker' : 'Enable locker reminders')}
                 </strong>
                 <p>
                   {browserNotificationStatus === 'denied'
-                    ? 'Turn notifications back on in your browser settings to receive locker reminders.'
+                    ? (lang === 'tl' ? 'I-on muli ang mga notification sa iyong browser settings para matanggap ang mga paalala ng locker.' : 'Turn notifications back on in your browser settings to receive locker reminders.')
                     : browserNotificationStatus === 'unsupported'
-                      ? 'This browser does not support web notifications.'
-                      : 'Allow CoinCubby to notify you when your locker status changes.'}
+                      ? (lang === 'tl' ? 'Hindi sinusuportahan ng browser na ito ang mga web notification.' : 'This browser does not support web notifications.')
+                      : (lang === 'tl' ? 'Payagan ang CoinCubby na abisuhan ka kapag nagbago ang status ng iyong locker.' : 'Allow CoinCubby to notify you when your locker status changes.')}
                 </p>
               </div>
               {browserNotificationStatus === 'default' && (
                 <button type="button" onClick={onEnableBrowserNotifications}>
-                  Enable
+                  {lang === 'tl' ? 'I-enable' : 'Enable'}
                 </button>
               )}
             </div>
@@ -201,15 +203,15 @@ export default function NotificationsDrawer({
                   <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
                 </svg>
               </div>
-              <h3>No Notifications Yet</h3>
-              <p>We'll notify you here when locker status changes or events occur.</p>
+              <h3>{lang === 'tl' ? 'Wala pang Mga Abiso' : 'No Notifications Yet'}</h3>
+              <p>{lang === 'tl' ? 'Aabisuhan ka namin dito kapag nagbago ang status ng locker o may nangyaring kaganapan.' : "We'll notify you here when locker status changes or events occur."}</p>
             </div>
           ) : (
             <div className="notif-list">
               {/* Today Group */}
               {groupedNotifications.today.length > 0 && (
                 <div className="notif-group">
-                  <div className="notif-group-title">Today</div>
+                  <div className="notif-group-title">{lang === 'tl' ? 'Ngayon' : 'Today'}</div>
                   {groupedNotifications.today.map((notif) => (
                     <div
                       key={notif.id}
@@ -240,7 +242,7 @@ export default function NotificationsDrawer({
               {/* Yesterday Group */}
               {groupedNotifications.yesterday.length > 0 && (
                 <div className="notif-group">
-                  <div className="notif-group-title">Yesterday</div>
+                  <div className="notif-group-title">{lang === 'tl' ? 'Kahapon' : 'Yesterday'}</div>
                   {groupedNotifications.yesterday.map((notif) => (
                     <div
                       key={notif.id}
@@ -271,7 +273,7 @@ export default function NotificationsDrawer({
               {/* Earlier Group */}
               {groupedNotifications.earlier.length > 0 && (
                 <div className="notif-group">
-                  <div className="notif-group-title">Earlier</div>
+                  <div className="notif-group-title">{lang === 'tl' ? 'Mas Maaga' : 'Earlier'}</div>
                   {groupedNotifications.earlier.map((notif) => (
                     <div
                       key={notif.id}
