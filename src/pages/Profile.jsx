@@ -116,23 +116,28 @@ export default function Profile({ session, onLogout, onNavigate, addNotification
         {loadingProfile ? (
           <div style={{ marginTop: '10px', fontSize: '12px', color: '#888' }}>{lang === 'tl' ? 'Naglo-load ng User ID...' : 'Loading User ID...'}</div>
         ) : profile.coinUserId ? (
-          <div style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '6px',
-            marginTop: '10px',
-            padding: '6px 14px',
-            background: 'var(--dark)',
-            borderRadius: '999px',
-            fontSize: '13px',
-            fontWeight: '700',
-            color: 'var(--label-green)',
-            letterSpacing: '0.15em',
-            fontFamily: 'monospace',
-          }}>
-            <span style={{ opacity: 0.6, fontSize: '11px', fontWeight: 400, letterSpacing: 0 }}>{t('user_id_badge')}</span>
-            {profile.coinUserId}
-          </div>
+          <>
+            <div style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              marginTop: '10px',
+              padding: '6px 14px',
+              background: 'var(--dark)',
+              borderRadius: '999px',
+              fontSize: '13px',
+              fontWeight: '700',
+              color: 'var(--label-green)',
+              letterSpacing: '0.15em',
+              fontFamily: 'monospace',
+            }}>
+              <span style={{ opacity: 0.6, fontSize: '11px', fontWeight: 400, letterSpacing: 0 }}>{t('user_id_badge')}</span>
+              {profile.coinUserId}
+            </div>
+            <p style={{ fontSize: '12px', color: '#888', margin: '8px auto 0 auto', maxWidth: '300px', lineHeight: '1.4' }}>
+              {t('user_id_description')}
+            </p>
+          </>
         ) : (
           <div style={{ marginTop: '10px', fontSize: '12px', color: '#aaa' }}>{t('no_user_id')}</div>
         )}

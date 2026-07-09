@@ -133,6 +133,7 @@ export const translations = {
     // Profile
     profile_title: "Profile",
     user_id_badge: "User ID",
+    user_id_description: "Use this User ID to log in at the physical locker Kiosk to link your online account.",
     no_user_id: "No User ID assigned",
     change_pin: "Change PIN",
     current_pin: "Current 6-Digit PIN",
@@ -278,6 +279,7 @@ export const translations = {
     // Profile
     profile_title: "Profile",
     user_id_badge: "User ID",
+    user_id_description: "Gamitin ang User ID na ito para mag-log in sa physical locker Kiosk para mai-link ang iyong online account.",
     no_user_id: "Walang nakatalagang User ID",
     change_pin: "Palitan ang PIN",
     current_pin: "Kasalukuyang 6-Digit PIN",
