@@ -60,10 +60,10 @@ export default function WelcomeIntro({ onLanguageSelect }) {
       )
     },
     {
-      titleEn: "3. Pay & Get Your PIN",
-      titleTl: "3. Magbayad at Kumuha ng PIN",
-      descEn: "Pay using your online CoinCubby Wallet or insert cash directly at the locker device. You will receive a secure 6-digit PIN to open it.",
-      descTl: "Magbayad gamit ang iyong CoinCubby Wallet o maghulog ng barya sa mismong device. Makakakuha ka ng ligtas na 6-digit PIN para mabuksan ito.",
+      titleEn: "3. Pay & Verify PIN",
+      titleTl: "3. Magbayad at I-verify ang PIN",
+      descEn: "Pay using your online CoinCubby Wallet or insert cash directly at the locker device. Your account's 6-digit password PIN is used for secure return verification.",
+      descTl: "Magbayad gamit ang iyong CoinCubby Wallet o maghulog ng barya sa mismong device. Ang iyong 6-digit password PIN ang gagamitin para sa ligtas na pagbabalik.",
       icon: "🔑",
       visual: (
         <div className="tutorial-visual pin-visual">
@@ -71,7 +71,7 @@ export default function WelcomeIntro({ onLanguageSelect }) {
             <div className="visual-pin-dots">
               <span>●</span><span>●</span><span>●</span><span>●</span><span>●</span><span>●</span>
             </div>
-            <div className="pin-visual-badge">6-Digit Access PIN</div>
+            <div className="pin-visual-badge">6-Digit Password PIN</div>
           </div>
         </div>
       )

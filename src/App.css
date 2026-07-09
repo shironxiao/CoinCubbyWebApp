@@ -2528,6 +2528,10 @@ dd {
 /* Welcome Intro Styles */
 .intro-page {
   background: var(--bg-auth);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
 
 .intro-panel-card {
@@ -2535,7 +2539,10 @@ dd {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   text-align: center;
+  min-height: 100svh;
+  width: 100%;
 }
 
 .intro-header {
@@ -2685,9 +2692,9 @@ dd {
   padding: 24px;
   display: flex;
   flex-direction: column;
-  min-height: 520px;
+  min-height: 100svh;
   justify-content: space-between;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
+  box-shadow: none;
 }
 
 .tutorial-header-bar {
@@ -2714,20 +2721,20 @@ dd {
 }
 
 .tutorial-skip-btn {
-  background: rgba(0, 0, 0, 0.04);
-  border: none;
-  padding: 6px 14px;
+  background: var(--dark);
+  border: 1px solid var(--dark);
+  padding: 6px 16px;
   border-radius: 20px;
   font-size: 13px;
-  font-weight: 600;
-  color: var(--gray);
+  font-weight: 700;
+  color: var(--white);
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .tutorial-skip-btn:hover {
-  background: rgba(0, 0, 0, 0.08);
-  color: var(--dark);
+  background: rgba(0, 0, 0, 0.8);
+  color: var(--white);
 }
 
 .tutorial-body {
