@@ -5,6 +5,12 @@ const lastError = document.querySelector('#lastError')
 const testButton = document.querySelector('#testButton')
 const lockerInput = document.querySelector('#lockerInput')
 
+const paymentKeyAmounts = {
+  F12: 20,
+  F13: 50,
+  F14: 100,
+}
+
 async function refreshStatus() {
   try {
     const response = await fetch('/api/status')
@@ -34,6 +40,27 @@ testButton.addEventListener('click', async () => {
 
   const result = await response.json()
   statusText.textContent = result.ok ? `Locker ${lockerId} opened` : result.error
+})
+
+document.addEventListener('keydown', async (event) => {
+  const amount = paymentKeyAmounts[event.key]
+  if (!amount) return
+
+  event.preventDefault()
+  statusText.textContent = `Detected payment: ${amount.toFixed(2)}`
+
+  const response = await fetch('/api/payment-key', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ amount_inserted: amount }),
+  })
+
+  const result = await response.json()
+  statusText.textContent = result.ok
+    ? `Payment sent: ${amount.toFixed(2)}`
+    : result.error || 'Payment failed'
+
+  await refreshStatus()
 })
 
 refreshStatus()

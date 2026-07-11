@@ -64,5 +64,32 @@ The included local page shows:
 - Last command
 - Last error
 - Relay test button
+- Payment key input for active payment sessions
 
 The customer-facing physical rental screen can be added later when you have the LCD.
+
+## Payment Input Mapping
+
+The current bill acceptor key mapping is:
+
+```text
+F12 = 20 pesos
+F13 = 50 pesos
+F14 = 100 pesos
+```
+
+When the local page is open and focused, these keypresses are sent to the active Supabase payment session.
+
+The coin acceptor uses GPIO pulses:
+
+```text
+1 pulse = 5 pesos
+2 pulses = 10 pesos
+```
+
+Set the coin acceptor input pin in `.env`:
+
+```text
+COIN_PULSE_GPIO=4
+COIN_PULSE_VALUE=5
+```

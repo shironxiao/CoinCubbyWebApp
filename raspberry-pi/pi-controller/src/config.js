@@ -40,6 +40,9 @@ export const config = {
   deviceToken: process.env.DEVICE_TOKEN || 'change-me',
   relayActiveHigh: boolFromEnv('RELAY_ACTIVE_HIGH', true),
   relayPulseMs: numberFromEnv('RELAY_PULSE_MS', 1200),
+  coinPulseGpio: numberFromEnv('COIN_PULSE_GPIO', 4),
+  coinPulseValue: numberFromEnv('COIN_PULSE_VALUE', 5),
+  coinPulseDebounceMs: numberFromEnv('COIN_PULSE_DEBOUNCE_MS', 80),
   commandPollMs: numberFromEnv('COMMAND_POLL_MS', 2000),
   heartbeatMs: numberFromEnv('HEARTBEAT_MS', 15000),
   relayPins: {
@@ -61,4 +64,3 @@ export const config = {
     16: numberFromEnv('LOCKER_16_GPIO', 21),
   },
 }
-

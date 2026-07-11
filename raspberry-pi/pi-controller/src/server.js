@@ -60,6 +60,30 @@ export function startServer(deviceState) {
         return json(response, 200, result)
       }
 
+      if (request.method === 'POST' && url.pathname === '/api/payment-key') {
+        const body = await readJson(request)
+        const amountInserted = Number(body.amount_inserted || 0)
+
+        if (!deviceState.activePaymentSessionId) {
+          return json(response, 400, { error: 'No active payment session.' })
+        }
+
+        if (amountInserted <= 0) {
+          return json(response, 400, { error: 'Invalid payment amount.' })
+        }
+
+        const result = await reportInsertedPayment(deviceState.activePaymentSessionId, amountInserted)
+        deviceState.activePaymentAmountInserted += amountInserted
+        deviceState.statusMessage = `Accepted payment: ${amountInserted.toFixed(2)}`
+
+        return json(response, 200, {
+          ok: true,
+          amount_inserted: amountInserted,
+          payment_session_id: deviceState.activePaymentSessionId,
+          result,
+        })
+      }
+
       if (request.method === 'GET') {
         return serveStatic(request, response)
       }
