@@ -208,8 +208,10 @@ export default function App() {
             : [
                 {
                   id: 'welcome',
-                  title: 'Welcome to CoinCubby!',
-                  content: 'You can now rent lockers, check your balance, and view transaction history.',
+                  title: lang === 'tl' ? 'Maligayang Pagdating sa CoinCubby!' : 'Welcome to CoinCubby!',
+                  content: lang === 'tl'
+                    ? 'Maaari ka nang mag-rent ng locker, tingnan ang iyong balanse, at suriin ang kasaysayan ng transaksyon.'
+                    : 'You can now rent lockers, check your balance, and view transaction history.',
                   type: 'info',
                   timestamp: new Date().toISOString(),
                   isRead: false,

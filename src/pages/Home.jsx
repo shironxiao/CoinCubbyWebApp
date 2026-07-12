@@ -116,9 +116,13 @@ export default function Home({
           await activateRental(paymentTx.transactionId, paymentTx.lockerId, session.accessToken)
           
           if (addNotification) {
+            const endTime = new Date(Date.now() + Number(paymentTx.duration || 1) * 3600000)
+              .toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
             addNotification({
-              title: 'Locker Rented',
-              content: `Locker ${paymentTx.lockerNumber} is active. PIN: ${paymentTx.qrToken}`,
+              title: lang === 'tl' ? 'Locker na Narentahan' : 'Locker Rented',
+              content: lang === 'tl'
+                ? `Ang locker ${paymentTx.lockerNumber} ay aktibo na. Magtatapos ang renta sa ${endTime}.`
+                : `Locker ${paymentTx.lockerNumber} is now active. Rental ends at ${endTime}.`,
               type: 'rental_start',
             })
           }
@@ -213,11 +217,20 @@ export default function Home({
       } else {
         // Trigger notification
         if (addNotification) {
+          const notifContent = isOpenTime
+            ? (lang === 'tl'
+                ? `Ang locker ${selectedLocker.id} (${selectedLocker.size}) ay aktibo na. Ibalik ito anumang oras mula sa Renta tab.`
+                : `Locker ${selectedLocker.id} (${selectedLocker.size}) is now active. Return it anytime from the Rent tab.`)
+            : (() => {
+                const endTime = new Date(Date.now() + Number(duration) * 3600000)
+                  .toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                return lang === 'tl'
+                  ? `Ang locker ${selectedLocker.id} (${selectedLocker.size}) ay aktibo na. Magtatapos ang renta sa ${endTime}.`
+                  : `Locker ${selectedLocker.id} (${selectedLocker.size}) is now active. Rental ends at ${endTime}.`
+              })()
           addNotification({
             title: lang === 'tl' ? 'Locker na Narentahan' : 'Locker Rented',
-            content: lang === 'tl'
-              ? `Ang locker ${selectedLocker.id} (${selectedLocker.size}) ay aktibo na. PIN: ${qrToken}`
-              : `Locker ${selectedLocker.id} (${selectedLocker.size}) is active. PIN: ${qrToken}`,
+            content: notifContent,
             type: 'rental_start',
           })
         }
