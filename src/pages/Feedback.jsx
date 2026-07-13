@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { submitFeedback, fetchUserFeedback, fetchGlobalFeedback, hasFeedbackForTransaction } from '../lib/supabase'
 import AlertDialog from '../components/AlertDialog'
 
@@ -35,10 +35,10 @@ function ratingLabel(r, lang) {
 }
 
 export default function FeedbackPage({ session, rentalHistory, loadingData, t, lang }) {
-  const [activeTab, setActiveTab] = useState('my-feedback') // 'my-feedback' or 'global'
-  const [pending, setPending] = useState([]) // completed rentals without feedback yet
-  const [submitted, setSubmitted] = useState([]) // previously submitted feedback rows
-  const [globalFeedback, setGlobalFeedback] = useState([]) // all feedback from all users
+  const [activeTab, setActiveTab] = useState('my-feedback')
+  const [pending, setPending] = useState([])
+  const [submitted, setSubmitted] = useState([])
+  const [globalFeedback, setGlobalFeedback] = useState([])
   const [loadingFb, setLoadingFb] = useState(true)
   const [loadingGlobal, setLoadingGlobal] = useState(false)
   const [message, setMessage] = useState('')
@@ -47,30 +47,47 @@ export default function FeedbackPage({ session, rentalHistory, loadingData, t, l
   // Per-row state: { [transactionId]: { rating, comment, saving, done } }
   const [rowState, setRowState] = useState({})
 
+  // Keep a ref to rentalHistory so the effect can read the latest value
+  // without rentalHistory being a dependency (avoids re-triggering on every
+  // parent re-render which causes the typing-interruption bug).
+  const rentalHistoryRef = useRef(rentalHistory)
+  useEffect(() => {
+    rentalHistoryRef.current = rentalHistory
+  }, [rentalHistory])
+
   function setRow(txId, patch) {
     setRowState((prev) => ({ ...prev, [txId]: { ...prev[txId], ...patch } }))
   }
 
-  // Load User Feedback (Pending and Submitted)
+  // Use stable primitive values (userId, token, loadingData) as dependencies
+  // instead of the session object or rentalHistory array, which get new
+  // references on every parent re-render and would reset the form mid-typing.
+  const userId = session?.userId
+  const accessToken = session?.accessToken
+
   useEffect(() => {
-    if (!session?.accessToken || !session?.userId || loadingData) return
+    if (!accessToken || !userId || loadingData) return
 
     async function loadFeedback() {
       setLoadingFb(true)
       try {
-        const fbRows = await fetchUserFeedback(session.userId, session.accessToken)
+        const fbRows = await fetchUserFeedback(userId, accessToken)
         setSubmitted(fbRows || [])
         const submittedTxIds = new Set((fbRows || []).map((r) => r.transaction_id))
 
-        const completedPending = (rentalHistory || []).filter(
+        const completedPending = (rentalHistoryRef.current || []).filter(
           (item) => item.status === 'Completed' && !submittedTxIds.has(item.id),
         )
         setPending(completedPending)
 
+        // Initialise row state only for items that don't have state yet
+        // so that anything the user is currently typing is NOT overwritten.
         setRowState((prev) => {
           const next = { ...prev }
           completedPending.forEach((item) => {
-            if (!next[item.id]) next[item.id] = { rating: 5, comment: '', saving: false, done: false }
+            if (!next[item.id]) {
+              next[item.id] = { rating: 5, comment: '', saving: false, done: false }
+            }
           })
           return next
         })
@@ -82,7 +99,8 @@ export default function FeedbackPage({ session, rentalHistory, loadingData, t, l
     }
 
     loadFeedback()
-  }, [session, rentalHistory, loadingData])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId, accessToken, loadingData])
 
   // Load Global Feedback
   useEffect(() => {
