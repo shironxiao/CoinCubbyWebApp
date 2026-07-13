@@ -305,7 +305,7 @@ export const translations = {
     language_description: "Wika ng App",
 
     // Feedback
-    feedback: "Feedback",
+    feedback: "Puna",
     feedback_title: "Puna sa Renta",
     feedback_pending_label: "MGA TAPOS NA RENTA NA WALANG FEEDBACK",
     feedback_no_pending: "Wala kang mga natapos na renta na marereytingan pa.",
