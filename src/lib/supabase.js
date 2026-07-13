@@ -611,16 +611,54 @@ export async function fetchProfile(session) {
     headers: authHeaders(session?.accessToken),
   })
 
-  const customers = await request(
+  let customers = await request(
     `/rest/v1/customers?customer_id=eq.${user.id}&select=customer_id,full_name,email,user_id`,
     { headers: authHeaders(session?.accessToken, { Accept: 'application/json' }) },
   )
 
-  console.log('API fetchProfile result:', { user, customer: customers?.[0] })
+  let customer = customers?.[0] || null
+
+  // Self-heal: If customer row is missing, or user_id is missing or invalid, generate and save it
+  if (!customer || !customer.user_id || !/^\d{6}$/.test(customer.user_id)) {
+    try {
+      const newUserId = await generateUniqueUserId()
+      const fullName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'User'
+      const email = user.email || ''
+
+      const body = {
+        customer_id: user.id,
+        full_name: fullName.slice(0, 50),
+        email: email,
+        user_id: newUserId,
+      }
+
+      await request('/rest/v1/customers?on_conflict=customer_id', {
+        method: 'POST',
+        headers: authHeaders(session?.accessToken, {
+          'Content-Type': 'application/json',
+          Prefer: 'resolution=merge-duplicates,return=representation',
+        }),
+        body: JSON.stringify(body),
+      })
+
+      // Fetch the fresh row to ensure UI displays it immediately
+      const updatedCustomers = await request(
+        `/rest/v1/customers?customer_id=eq.${user.id}&select=customer_id,full_name,email,user_id`,
+        { headers: authHeaders(session?.accessToken, { Accept: 'application/json' }) },
+      )
+      if (updatedCustomers && updatedCustomers.length > 0) {
+        customer = updatedCustomers[0]
+      }
+    } catch (err) {
+      console.error('Failed to auto-heal missing customer user_id:', err)
+    }
+  }
+
+  console.log('API fetchProfile result:', { user, customer })
 
   return {
     user,
-    customer: customers?.[0] || null,
+    customer,
   }
 }
 
