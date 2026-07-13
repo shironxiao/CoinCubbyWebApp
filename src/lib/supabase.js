@@ -1044,3 +1044,14 @@ export async function hasFeedbackForTransaction(transactionId, token) {
   return !!(rows && rows.length > 0)
 }
 
+/**
+ * Fetches all feedback from the public.feedback table to display globally.
+ * Includes reviewer name from the customers table.
+ */
+export async function fetchGlobalFeedback(token) {
+  return request(
+    '/rest/v1/feedback?select=feedback_id,rating,comment,created_at,customers(full_name)&order=created_at.desc&limit=30',
+    { headers: authHeaders(token) },
+  )
+}
+

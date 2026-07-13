@@ -152,7 +152,11 @@ export const translations = {
     feedback_no_pending: "You have no completed rentals to rate yet.",
     feedback_comment_placeholder: "Tell us about your experience (optional)...",
     feedback_submit: "Submit Feedback",
-    feedback_submitted_label: "PREVIOUSLY SUBMITTED FEEDBACK"
+    feedback_submitted_label: "PREVIOUSLY SUBMITTED FEEDBACK",
+    feedback_tab_my: "Rate My Rentals",
+    feedback_tab_global: "Global Reviews",
+    feedback_global_label: "REVIEWS FROM ALL USERS",
+    feedback_no_global: "No global reviews available yet."
   },
   tl: {
     // Welcome Onboarding
@@ -307,6 +311,10 @@ export const translations = {
     feedback_no_pending: "Wala kang mga natapos na renta na marereytingan pa.",
     feedback_comment_placeholder: "Ibahagi ang iyong karanasan (opsyonal)...",
     feedback_submit: "Isumite ang Puna",
-    feedback_submitted_label: "MGA NAISUMITENG PUNA"
+    feedback_submitted_label: "MGA NAISUMITENG PUNA",
+    feedback_tab_my: "Reytingan ang Aking Renta",
+    feedback_tab_global: "Pangkalahatang Feedback",
+    feedback_global_label: "MGA PUNA MULA SA LAHAT NG GUMAGAMIT",
+    feedback_no_global: "Wala pang pangkalahatang puna sa kasalukuyan."
   }
 }

@@ -10,6 +10,7 @@ export default function History({
   refreshAllData,
   t,
   lang,
+  onNavigate,
 }) {
   const items = rentalHistory
   const loading = loadingData
@@ -320,6 +321,20 @@ export default function History({
                       </div>
                     ))}
                   </div>
+                )}
+
+                {selectedItem.status === 'Completed' && (
+                  <button
+                    className="primary-button xml-black-button"
+                    style={{ width: '100%', marginBottom: '4px' }}
+                    type="button"
+                    onClick={() => {
+                      setSelectedItem(null)
+                      onNavigate('feedback')
+                    }}
+                  >
+                    {lang === 'tl' ? 'Magbigay ng Feedback' : 'Give Feedback'}
+                  </button>
                 )}
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '8px' }}>

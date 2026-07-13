@@ -195,8 +195,8 @@ export default function App() {
     ['home', t('home')],
     ['rent', t('rental')],
     ['history', t('history')],
-    ['profile', t('profile')],
     ['feedback', t('feedback')],
+    ['profile', t('profile')],
   ]
 
   // Load user-specific notifications
@@ -348,6 +348,7 @@ export default function App() {
           refreshAllData={refreshAllData}
           t={t}
           lang={lang}
+          onNavigate={navigate}
         />
       )
     }
