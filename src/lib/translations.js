@@ -143,7 +143,16 @@ export const translations = {
     save_pin: "Save PIN",
     sign_out: "Sign Out",
     language_label: "Language / Wika",
-    language_description: "App Language"
+    language_description: "App Language",
+
+    // Feedback
+    feedback: "Feedback",
+    feedback_title: "Rental Feedback",
+    feedback_pending_label: "COMPLETED RENTALS AWAITING FEEDBACK",
+    feedback_no_pending: "You have no completed rentals to rate yet.",
+    feedback_comment_placeholder: "Tell us about your experience (optional)...",
+    feedback_submit: "Submit Feedback",
+    feedback_submitted_label: "PREVIOUSLY SUBMITTED FEEDBACK"
   },
   tl: {
     // Welcome Onboarding
@@ -289,6 +298,15 @@ export const translations = {
     save_pin: "I-save ang PIN",
     sign_out: "Mag-sign Out",
     language_label: "Wika / Language",
-    language_description: "Wika ng App"
+    language_description: "Wika ng App",
+
+    // Feedback
+    feedback: "Feedback",
+    feedback_title: "Puna sa Renta",
+    feedback_pending_label: "MGA TAPOS NA RENTA NA WALANG FEEDBACK",
+    feedback_no_pending: "Wala kang mga natapos na renta na marereytingan pa.",
+    feedback_comment_placeholder: "Ibahagi ang iyong karanasan (opsyonal)...",
+    feedback_submit: "Isumite ang Puna",
+    feedback_submitted_label: "MGA NAISUMITENG PUNA"
   }
 }

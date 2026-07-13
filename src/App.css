@@ -3036,6 +3036,156 @@ dd {
   }
 }
 
+/* Feedback Section Styles */
+.feedback-page {
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.fb-section {
+  margin-bottom: 24px;
+}
+
+.fb-section-label {
+  margin: 16px 0 8px;
+  color: var(--gray);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+}
+
+.fb-empty {
+  padding: 32px 16px;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  color: var(--gray);
+  text-align: center;
+  font-size: 14px;
+}
+
+.fb-cards {
+  display: grid;
+  gap: 16px;
+}
+
+.fb-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+}
+
+.fb-card--done {
+  background: #fdfdfd;
+  opacity: 0.95;
+  box-shadow: none;
+}
+
+.fb-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.fb-locker-badge {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--dark);
+}
+
+.fb-status-badge {
+  padding: 4px 8px;
+  background: var(--bg-app);
+  border-radius: 6px;
+  font-size: 11px;
+  color: var(--gray);
+  font-weight: 700;
+}
+
+.fb-stars {
+  display: flex;
+  gap: 6px;
+}
+
+.fb-star {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font-size: 28px;
+  line-height: 1;
+  color: #dddddd;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+
+.fb-star:hover {
+  transform: scale(1.15);
+}
+
+.fb-star--on {
+  color: #ffb400; /* Star Gold */
+}
+
+.fb-rating-label {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--green);
+}
+
+.fb-textarea {
+  width: 100%;
+  padding: 10px;
+  box-sizing: border-box;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg-app);
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--dark);
+  resize: vertical;
+  outline: none;
+}
+
+.fb-textarea:focus {
+  border-color: var(--green);
+  background: var(--white);
+}
+
+.fb-submit-btn {
+  margin-top: 4px;
+}
+
+.fb-done-stars {
+  display: flex;
+  gap: 2px;
+}
+
+.fb-done-stars .fb-star {
+  font-size: 16px;
+  cursor: default;
+  transform: none !important;
+}
+
+.fb-done-comment {
+  margin: 0;
+  font-size: 13px;
+  color: var(--dark);
+  line-height: 1.4;
+  white-space: pre-wrap;
+}
+
+.fb-done-date {
+  margin: 0;
+  font-size: 11px;
+  color: var(--gray);
+}
+
 
 
 

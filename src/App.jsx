@@ -8,6 +8,7 @@ import Register from './pages/Register'
 import Rent from './pages/Rent'
 import ResetPassword from './pages/ResetPassword'
 import WelcomeIntro from './pages/WelcomeIntro'
+import Feedback from './pages/Feedback'
 import NotificationsDrawer from './components/NotificationsDrawer'
 import { translations } from './lib/translations'
 import {
@@ -29,7 +30,7 @@ import {
   mapHistory,
 } from './lib/supabase'
 
-const protectedPages = ['home', 'rent', 'history', 'profile']
+const protectedPages = ['home', 'rent', 'history', 'profile', 'feedback']
 
 function pageFromHash() {
   return window.location.hash.replace('#/', '') || 'login'
@@ -195,6 +196,7 @@ export default function App() {
     ['rent', t('rental')],
     ['history', t('history')],
     ['profile', t('profile')],
+    ['feedback', t('feedback')],
   ]
 
   // Load user-specific notifications
@@ -359,6 +361,17 @@ export default function App() {
           t={t}
           lang={lang}
           onLanguageChange={changeLanguage}
+        />
+      )
+    }
+    if (page === 'feedback') {
+      return (
+        <Feedback
+          session={session}
+          rentalHistory={rentalHistory}
+          loadingData={loadingData}
+          t={t}
+          lang={lang}
         />
       )
     }

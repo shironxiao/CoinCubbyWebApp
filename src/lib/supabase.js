@@ -999,3 +999,48 @@ export function mapHistory(row) {
   }
 }
 
+/**
+ * Submits a star rating + optional comment for a completed transaction.
+ * Table: public.feedback (feedback_id, transaction_id, customer_id, rating, comment, created_at)
+ * - transaction_id and customer_id are required (FK constraints).
+ * - rating must be 1–5 (DB check constraint).
+ * - comment is optional.
+ */
+export async function submitFeedback({ transactionId, customerId, rating, comment, token }) {
+  return request('/rest/v1/feedback', {
+    method: 'POST',
+    headers: authHeaders(token, {
+      'Content-Type': 'application/json',
+      Prefer: 'return=minimal',
+    }),
+    body: JSON.stringify({
+      transaction_id: transactionId,
+      customer_id: customerId,
+      rating: Number(rating),
+      comment: comment?.trim() || null,
+    }),
+  })
+}
+
+/**
+ * Fetches all feedback rows submitted by the current customer.
+ * Also joins the transaction so we can show the locker number.
+ */
+export async function fetchUserFeedback(customerId, token) {
+  return request(
+    `/rest/v1/feedback?customer_id=eq.${customerId}&select=feedback_id,transaction_id,rating,comment,created_at,transactions(locker_id,lockers(locker_number))&order=created_at.desc`,
+    { headers: authHeaders(token) },
+  )
+}
+
+/**
+ * Checks whether the user has already submitted feedback for a given transaction.
+ */
+export async function hasFeedbackForTransaction(transactionId, token) {
+  const rows = await request(
+    `/rest/v1/feedback?transaction_id=eq.${transactionId}&select=feedback_id&limit=1`,
+    { headers: authHeaders(token) },
+  ).catch(() => null)
+  return !!(rows && rows.length > 0)
+}
+
