@@ -325,7 +325,7 @@ export default function Home({
             // Bill: use half-hour step formula (matches what is actually charged)
             const prepaidCost = isOpen ? 0 : (totalMs / 3600000) * ratePerHr
 
-            function calcStepBill(elMs) {
+            function calcOpenBill(elMs) {
               const mins = Math.floor(elMs / 60000)
               const hrs = Math.floor(mins / 60)
               const rem = mins % 60
@@ -334,8 +334,19 @@ export default function Home({
               return Math.floor(mult * ratePerHr)
             }
 
-            const overtimeCost = calcStepBill(overtimeMs)
-            const openCost     = calcStepBill(elapsedMs)
+            function calcOvertimeBill(otMs) {
+              const mins = Math.floor(otMs / 60000)
+              const blocks = Math.floor(mins / 30)
+              const rem = mins % 30
+              let mult = blocks * 0.5
+              if (rem > 10) {
+                mult += 0.5
+              }
+              return Math.floor(mult * ratePerHr)
+            }
+
+            const overtimeCost = calcOvertimeBill(overtimeMs)
+            const openCost     = calcOpenBill(elapsedMs)
             const billLabel = isOpen
               ? `${lang === 'tl' ? 'Kabayaran' : 'Bill'}: ${formatMoney(openCost, false)}`
               : isOverdue

@@ -19,24 +19,29 @@ function calculateOvertimeFee(item, currentTick) {
   if (item.isOpenTime) {
     const durationMs = Math.max(0, currentTick - item.startMs)
     mins = Math.floor(durationMs / 60000)
+    const hours = Math.floor(mins / 60)
+    const rem = mins % 60
+    let multiplier = hours
+    if (rem > 0) {
+      if (rem <= 30) {
+        multiplier += 0.5
+      } else {
+        multiplier += 1.0
+      }
+    }
+    return Math.floor(multiplier * item.ratePerHr)
   } else {
     if (currentTick <= item.endMs) return 0
     const overtimeMs = currentTick - item.endMs
     mins = Math.floor(overtimeMs / 60000)
-  }
-
-  const hours = Math.floor(mins / 60)
-  const rem = mins % 60
-  let multiplier = hours
-  if (rem > 0) {
-    if (rem <= 30) {
+    const blocks = Math.floor(mins / 30)
+    const rem = mins % 30
+    let multiplier = blocks * 0.5
+    if (rem > 10) {
       multiplier += 0.5
-    } else {
-      multiplier += 1.0
     }
+    return Math.floor(multiplier * item.ratePerHr)
   }
-
-  return Math.floor(multiplier * item.ratePerHr)
 }
 
 export default function Rent({
