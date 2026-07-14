@@ -87,34 +87,55 @@ export default function Home({
     return () => clearTimeout(timer)
   }, [paymentTx, secondsLeft, hasTimedOut])
 
-  // Polling for cash insertions at the device
+  // Polling for cash insertions at the device.
+  // Primary: reads from payment_sessions.amount_paid (Pi updates this as coins are inserted).
+  // Fallback: reads from payments table if there is no valid session (e.g. mock/no device).
   useEffect(() => {
     if (!paymentTx || hasTimedOut) return
 
     let isMounted = true
     const interval = setInterval(async () => {
       try {
+        // Only fetch the real session (mock- IDs return null from fetchPaymentSession)
         const paymentSession = paymentTx.paymentSessionId
           ? await fetchPaymentSession(paymentTx.paymentSessionId, session.accessToken)
           : null
-        const payments = paymentSession
-          ? [{ amount: paymentSession.amount_paid }]
-          : await fetchTransactionPayments(paymentTx.transactionId, session.accessToken)
         if (!isMounted) return
 
-        const sum = (payments || []).reduce((acc, p) => acc + Number(p.amount || 0), 0)
-        
-        setInsertedAmount((prev) => {
-          if (sum > prev) {
-            setSecondsLeft(60) // reset the timer back to 60!
+        let amountPaid = 0
+        let amountDue  = paymentTx.totalAmount
+        let isPaid     = false
+
+        if (paymentSession) {
+          // Happy path: Pi is updating payment_sessions directly
+          amountPaid = Number(paymentSession.amount_paid || 0)
+          amountDue  = Number(paymentSession.amount_due  || paymentTx.totalAmount)
+          isPaid     = paymentSession.status === 'Paid' || amountPaid >= amountDue
+
+          // Sync displayed total if session amount_due differs
+          if (amountDue !== paymentTx.totalAmount) {
+            setPaymentTx((prev) => prev ? { ...prev, totalAmount: amountDue } : prev)
           }
-          return sum
+        } else {
+          // Fallback: no real session (mock device or session creation failed)
+          // Poll the payments table rows instead
+          const payments = await fetchTransactionPayments(paymentTx.transactionId, session.accessToken)
+          if (!isMounted) return
+          amountPaid = (payments || []).reduce((acc, p) => acc + Number(p.amount || 0), 0)
+          isPaid     = amountPaid >= amountDue
+        }
+
+        setInsertedAmount((prev) => {
+          if (amountPaid > prev) {
+            setSecondsLeft(60) // reset countdown when new coins detected
+          }
+          return amountPaid
         })
 
-        if (sum >= paymentTx.totalAmount || paymentSession?.status === 'Paid') {
+        if (isPaid) {
           clearInterval(interval)
           await activateRental(paymentTx.transactionId, paymentTx.lockerId, session.accessToken)
-          
+
           if (addNotification) {
             const endTime = new Date(Date.now() + Number(paymentTx.duration || 1) * 3600000)
               .toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
@@ -141,6 +162,7 @@ export default function Home({
       clearInterval(interval)
     }
   }, [paymentTx, hasTimedOut, session?.accessToken, selectedModuleId, addNotification, onNavigate])
+
 
   function handleContinuePayment() {
     setSecondsLeft(60)
@@ -208,6 +230,7 @@ export default function Home({
           lockerId: selectedLocker.dbId,
           lockerNumber: selectedLocker.id,
           totalAmount: total,
+          duration,
           paymentSessionId: paymentSession?.payment_session_id,
         })
         setInsertedAmount(0)

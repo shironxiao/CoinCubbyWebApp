@@ -110,6 +110,18 @@ export const translations = {
     pay_via_wallet: "Pay via Wallet",
     insufficient_wallet_overtime: "Insufficient wallet balance. Please insert coins at the device to pay.",
 
+    // Locker Door Control
+    locker_control: "Locker Control",
+    unlock_locker: "Unlock Locker",
+    lock_locker: "Lock Locker",
+    unlock_instruction: "Tap the button below to unlock the locker door. You can retrieve or place your items inside.",
+    lock_instruction: "Tap the button below to lock the locker door. Make sure all your items are safely inside before locking.",
+    unlocking: "Unlocking...",
+    locking: "Locking...",
+    unlock_success: "Locker unlocked successfully! You may now open the door.",
+    lock_success: "Locker locked successfully! Your items are secured.",
+    door_warning: "Make sure the locker door is fully closed before locking.",
+
     // History
     rental_history: "Rental History",
     clear_all: "Clear All",
@@ -268,6 +280,18 @@ export const translations = {
     overtime_fee: "Bayad sa Labis na Oras",
     pay_via_wallet: "Magbayad gamit ang Wallet",
     insufficient_wallet_overtime: "Kulang ang balanse sa iyong wallet. Mangyaring maghulog ng barya sa kiosk.",
+
+    // Locker Door Control
+    locker_control: "Kontrol ng Locker",
+    unlock_locker: "Buksan ang Locker",
+    lock_locker: "I-lock ang Locker",
+    unlock_instruction: "Pindutin ang pindutan sa ibaba upang buksan ang locker. Maaari kang kumuha o maglagay ng gamit sa loob.",
+    lock_instruction: "Pindutin ang pindutan sa ibaba upang i-lock ang locker. Siguraduhing nasa loob ang lahat ng gamit mo bago i-lock.",
+    unlocking: "Binubuksan...",
+    locking: "Nilo-lock...",
+    unlock_success: "Nabuksan ang locker! Maaari mo na itong buksan.",
+    lock_success: "Na-lock na ang locker! Ligtas ang iyong mga gamit.",
+    door_warning: "Siguraduhing nakasara nang buo ang pinto ng locker bago i-lock.",
 
     // History
     rental_history: "Kasaysayan ng Renta",
