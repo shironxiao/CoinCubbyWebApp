@@ -301,9 +301,9 @@ export default function Home({
       {activeRentals.length > 0 && (
         <div className="home-rentals-container">
           {activeRentals.map((rental) => {
-            const isOpen = !rental.end_time
-            const startMs = parseTimestamp(rental.start_time)
-            const endMs   = parseTimestamp(rental.end_time)
+            const isOpen = rental.isOpenTime
+            const startMs = rental.startMs
+            const endMs   = rental.endMs
             const totalMs  = isOpen ? null : Math.max(1, endMs - startMs)
             const elapsedMs = Math.max(0, tick - startMs)
             const isOverdue = !isOpen && tick > endMs
@@ -311,8 +311,7 @@ export default function Home({
             const remainMs  = isOpen ? 0 : Math.max(0, endMs - tick)
             const progress  = isOpen ? 100 : Math.min(100, (elapsedMs / totalMs) * 100)
 
-            const sizeInfo     = sizeFromType(rental.lockers?.size_type_id)
-            const ratePerHr    = sizeInfo.rate
+            const ratePerHr    = rental.ratePerHr
 
             // Timer: elapsed for open, overtime elapsed for overdue, remaining for fixed-in-time
             const timerMs = isOpen ? elapsedMs : isOverdue ? overtimeMs : remainMs
@@ -343,12 +342,12 @@ export default function Home({
                 ? `${lang === 'tl' ? 'May Labis na Oras' : 'Overtime Due'}: ${formatMoney(overtimeCost, false)}`
                 : `${lang === 'tl' ? 'Bayad' : 'Paid'}: ${formatMoney(prepaidCost, false)}`
 
-            const lockerLabel = rental.lockers?.locker_number || rental.locker_id
-            const sizeLabel   = sizeInfo.label
+            const lockerLabel = rental.lockerNumber
+            const sizeLabel   = rental.sizeName
             return (
               <div
                 className={`home-rental-bar-card${isOverdue ? ' home-rental-bar-card--overdue' : ''}`}
-                key={rental.transaction_id}
+                key={rental.transactionId}
               >
                 {/* top row */}
                 <div className="hbar-top">
