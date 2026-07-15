@@ -231,7 +231,8 @@ const FALLBACK_RATES = { 1: 10, 2: 20, 3: 30 }
 export function sizeFromType(sizeTypeId, ratesMap) {
   const id = Number(sizeTypeId) || 1
   const label = SIZE_LABELS[id] || 'Small'
-  const rate = (ratesMap && ratesMap[id] != null) ? Number(ratesMap[id]) : (FALLBACK_RATES[id] || 10)
+  const activeMap = ratesMap || _ratesCache
+  const rate = (activeMap && activeMap[id] != null) ? Number(activeMap[id]) : (FALLBACK_RATES[id] || 10)
   return { label, rate, price_per_minute: rate / 60 }
 }
 
@@ -963,7 +964,7 @@ export function mapRental(row) {
   const startMs = parseTimestamp(row.start_time)
   const endMs = parseTimestamp(row.end_time)
   const isOpenTime = !row.end_time
-  const ratePerHr = size.rate
+  const ratePerHr = row.rates?.price_per_hour != null ? Number(row.rates.price_per_hour) : size.rate
 
   return {
     transactionId: row.transaction_id,
