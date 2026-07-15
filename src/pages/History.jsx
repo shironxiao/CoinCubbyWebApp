@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { formatMoney, sizeFromType, mapHistory } from '../lib/supabase'
 import { formatDateTime, formatMinutes } from '../lib/time'
 import AlertDialog from '../components/AlertDialog'
@@ -18,45 +18,12 @@ export default function History({
   const [timeFilter, setTimeFilter] = useState('all') // 'all', 'today', 'week', 'month'
   const [statusFilter, setStatusFilter] = useState('all') // 'all', 'active', 'completed'
   const [selectedItem, setSelectedItem] = useState(null)
-  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 8
-  const [deletedIds, setDeletedIds] = useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem(`coincubby.deleted_transactions.${session?.userId}`)) || []
-    } catch {
-      return []
-    }
-  })
-
-  useEffect(() => {
-    if (session?.userId) {
-      try {
-        const stored = JSON.parse(localStorage.getItem(`coincubby.deleted_transactions.${session.userId}`)) || []
-        setDeletedIds(stored)
-      } catch {
-        setDeletedIds([])
-      }
-    } else {
-      setDeletedIds([])
-    }
-  }, [session?.userId])
-
-  function handleDeleteItem(id) {
-    const updated = [...deletedIds, id]
-    setDeletedIds(updated)
-    if (session?.userId) {
-      localStorage.setItem(`coincubby.deleted_transactions.${session.userId}`, JSON.stringify(updated))
-    }
-    setSelectedItem(null)
-    setIsConfirmingDelete(false)
-  }
 
   useEffect(() => {
     setCurrentPage(1)
   }, [timeFilter, statusFilter])
-
-  // Data is loaded and synced globally
 
   const filteredItems = useMemo(() => {
     const now = new Date()
@@ -67,11 +34,6 @@ export default function History({
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime()
 
     return items.filter((item) => {
-      // Exclude soft-deleted transactions
-      if (deletedIds.includes(item.id)) {
-        return false
-      }
-
       // 1. Status Filter
       if (statusFilter !== 'all') {
         if (item.status.toLowerCase() !== statusFilter.toLowerCase()) {
@@ -97,7 +59,7 @@ export default function History({
 
       return true
     })
-  }, [items, timeFilter, statusFilter, deletedIds])
+  }, [items, timeFilter, statusFilter])
 
   const summary = useMemo(
     () => ({
@@ -250,140 +212,98 @@ export default function History({
       )}
 
       {selectedItem && (
-        <div className="modal-backdrop" role="presentation" onClick={() => {
-          setSelectedItem(null)
-          setIsConfirmingDelete(false)
-        }}>
+        <div className="modal-backdrop" role="presentation" onClick={() => setSelectedItem(null)}>
           <div className="rent-sheet xml-rent-sheet" onClick={(e) => e.stopPropagation()} style={{ padding: '24px', gap: '16px' }}>
             <div className="sheet-title" style={{ borderBottom: '1px solid rgba(0, 0, 0, 0.08)', paddingBottom: '12px', marginBottom: '8px' }}>
-              <h2>{isConfirmingDelete ? (lang === 'tl' ? 'Burahin ang Record?' : 'Delete Record?') : t('details')}</h2>
+              <h2>{t('details')}</h2>
               <p className="muted" style={{ fontFamily: 'monospace', wordBreak: 'break-all', marginTop: '4px' }}>ID: {selectedItem.id}</p>
-              <button className="icon-button" type="button" onClick={() => {
-                setSelectedItem(null)
-                setIsConfirmingDelete(false)
-              }}>
+              <button className="icon-button" type="button" onClick={() => setSelectedItem(null)}>
                 X
               </button>
             </div>
 
-            {!isConfirmingDelete ? (
-              <div style={{ display: 'grid', gap: '14px', color: 'var(--dark)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ color: '#888', fontSize: '13px' }}>{t('locker_label')}</span>
-                  <strong style={{ fontSize: '15px' }}>{lang === 'tl' ? 'Locker' : 'Locker'} #{selectedItem.lockerNumber} ({selectedItem.sizeName})</strong>
-                </div>
-
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ color: '#888', fontSize: '13px' }}>{t('status')}</span>
-                  <span className={`status-badge ${selectedItem.status.toLowerCase()}`} style={{ margin: 0, padding: '4px 10px', borderRadius: '6px', fontWeight: 'bold' }}>
-                    {selectedItem.status === 'Active' ? t('filter_active') : selectedItem.status === 'Completed' ? t('completed') : selectedItem.status}
-                  </span>
-                </div>
-
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ color: '#888', fontSize: '13px' }}>{t('start_time')}</span>
-                  <span style={{ fontSize: '13px', fontWeight: '500' }}>{formatDateTime(selectedItem.startTime)}</span>
-                </div>
-
-                {selectedItem.endTime && (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ color: '#888', fontSize: '13px' }}>{t('end_time')}</span>
-                    <span style={{ fontSize: '13px', fontWeight: '500' }}>{formatDateTime(selectedItem.endTime)}</span>
-                  </div>
-                )}
-
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ color: '#888', fontSize: '13px' }}>{t('duration')}</span>
-                  <span style={{ fontSize: '13px', fontWeight: '500' }}>
-                    {selectedItem.durationMinutes ? formatMinutes(selectedItem.durationMinutes) : (lang === 'tl' ? 'Walang Takdang Oras' : 'Open-Ended')}
-                  </span>
-                </div>
-
-                <div style={{ borderTop: '1px dashed rgba(0, 0, 0, 0.08)', marginTop: '8px', paddingTop: '12px' }} />
-
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ color: '#888', fontSize: '13px' }}>{t('payment_method')}</span>
-                  <span style={{ fontSize: '13px', fontWeight: '500' }}>{selectedItem.paymentMethod === 'Wallet' ? t('wallet') : t('pay_at_device')}</span>
-                </div>
-
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ color: '#888', fontSize: '13px', fontWeight: '600' }}>{lang === 'tl' ? 'Kabuuan ng Bayad' : 'Total Amount Paid'}</span>
-                  <strong style={{ fontSize: '16px', color: '#4cd964' }}>{formatMoney(selectedItem.amount)}</strong>
-                </div>
-
-                {selectedItem.paymentsList && selectedItem.paymentsList.length > 1 && (
-                  <div style={{ marginTop: '4px', background: 'rgba(0, 0, 0, 0.02)', padding: '10px', borderRadius: '8px', border: '1px solid rgba(0, 0, 0, 0.05)' }}>
-                    <span style={{ fontSize: '10px', color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 'bold', display: 'block', marginBottom: '6px' }}>{lang === 'tl' ? 'Detalye ng Pagbabayad' : 'Payment Breakdown'}</span>
-                    {selectedItem.paymentsList.map((p, idx) => (
-                      <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', marginBottom: '4px', color: '#555' }}>
-                        <span>{lang === 'tl' ? 'Pagbabayad' : 'Payment'} #{idx + 1} ({p.payment_method === 'Wallet' ? t('wallet') : t('pay_at_device')})</span>
-                        <strong>{formatMoney(p.amount)}</strong>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {selectedItem.status === 'Completed' && (
-                  <button
-                    className="primary-button xml-black-button"
-                    style={{ width: '100%', marginBottom: '4px' }}
-                    type="button"
-                    onClick={() => {
-                      setSelectedItem(null)
-                      onNavigate('feedback')
-                    }}
-                  >
-                    {lang === 'tl' ? 'Magbigay ng Feedback' : 'Give Feedback'}
-                  </button>
-                )}
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '8px' }}>
-                  <button className="secondary-button" type="button" onClick={() => setSelectedItem(null)}>
-                    {t('close')}
-                  </button>
-                  <button
-                    className="danger-button"
-                    type="button"
-                    onClick={() => setIsConfirmingDelete(true)}
-                    style={{ background: '#ff3b30', color: '#fff', border: 'none', borderRadius: '12px', padding: '10px', fontWeight: 'bold', cursor: 'pointer' }}
-                  >
-                    {lang === 'tl' ? 'Burahin ang Record' : 'Delete Record'}
-                  </button>
-                </div>
+            <div style={{ display: 'grid', gap: '14px', color: 'var(--dark)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: '#888', fontSize: '13px' }}>{t('locker_label')}</span>
+                <strong style={{ fontSize: '15px' }}>{lang === 'tl' ? 'Locker' : 'Locker'} #{selectedItem.lockerNumber} ({selectedItem.sizeName})</strong>
               </div>
-            ) : (
-              <div style={{ display: 'grid', gap: '16px', textAlign: 'center', color: 'var(--dark)', padding: '10px 0' }}>
-                <span style={{ fontSize: '2.5rem' }}>⚠️</span>
-                <p className="muted" style={{ fontSize: '13px', lineHeight: '1.4' }}>
-                  {lang === 'tl' ? 'Sigurado ka bang gusto mong alisin ang transaksyong ito sa iyong history view?' : 'Are you sure you want to remove this transaction from your history view?'}
-                  <br />
-                  <strong style={{ color: '#ff3b30' }}>{lang === 'tl' ? 'Itatago lamang nito ang transaksyon mula sa iyong view at hindi buburahin ang tala sa database.' : 'This will only hide it from your view and does not delete the database record.'}</strong>
-                </p>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '10px' }}>
-                  <button
-                    className="secondary-button"
-                    type="button"
-                    onClick={() => setIsConfirmingDelete(false)}
-                  >
-                    {t('cancel')}
-                  </button>
-                  <button
-                    className="danger-button"
-                    type="button"
-                    onClick={() => handleDeleteItem(selectedItem.id)}
-                    style={{ background: '#ff3b30', color: '#fff', border: 'none', borderRadius: '12px', padding: '10px', fontWeight: 'bold', cursor: 'pointer' }}
-                  >
-                    {lang === 'tl' ? 'Oo, Burahin' : 'Yes, Delete'}
-                  </button>
-                </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: '#888', fontSize: '13px' }}>{t('status')}</span>
+                <span className={`status-badge ${selectedItem.status.toLowerCase()}`} style={{ margin: 0, padding: '4px 10px', borderRadius: '6px', fontWeight: 'bold' }}>
+                  {selectedItem.status === 'Active' ? t('filter_active') : selectedItem.status === 'Completed' ? t('completed') : selectedItem.status}
+                </span>
               </div>
-            )}
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: '#888', fontSize: '13px' }}>{t('start_time')}</span>
+                <span style={{ fontSize: '13px', fontWeight: '500' }}>{formatDateTime(selectedItem.startTime)}</span>
+              </div>
+
+              {selectedItem.endTime && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ color: '#888', fontSize: '13px' }}>{t('end_time')}</span>
+                  <span style={{ fontSize: '13px', fontWeight: '500' }}>{formatDateTime(selectedItem.endTime)}</span>
+                </div>
+              )}
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: '#888', fontSize: '13px' }}>{t('duration')}</span>
+                <span style={{ fontSize: '13px', fontWeight: '500' }}>
+                  {selectedItem.durationMinutes ? formatMinutes(selectedItem.durationMinutes) : (lang === 'tl' ? 'Walang Takdang Oras' : 'Open-Ended')}
+                </span>
+              </div>
+
+              <div style={{ borderTop: '1px dashed rgba(0, 0, 0, 0.08)', marginTop: '8px', paddingTop: '12px' }} />
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: '#888', fontSize: '13px' }}>{t('payment_method')}</span>
+                <span style={{ fontSize: '13px', fontWeight: '500' }}>{selectedItem.paymentMethod === 'Wallet' ? t('wallet') : t('pay_at_device')}</span>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: '#888', fontSize: '13px', fontWeight: '600' }}>{lang === 'tl' ? 'Kabuuan ng Bayad' : 'Total Amount Paid'}</span>
+                <strong style={{ fontSize: '16px', color: '#4cd964' }}>{formatMoney(selectedItem.amount)}</strong>
+              </div>
+
+              {selectedItem.paymentsList && selectedItem.paymentsList.length > 1 && (
+                <div style={{ marginTop: '4px', background: 'rgba(0, 0, 0, 0.02)', padding: '10px', borderRadius: '8px', border: '1px solid rgba(0, 0, 0, 0.05)' }}>
+                  <span style={{ fontSize: '10px', color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 'bold', display: 'block', marginBottom: '6px' }}>{lang === 'tl' ? 'Detalye ng Pagbabayad' : 'Payment Breakdown'}</span>
+                  {selectedItem.paymentsList.map((p, idx) => (
+                    <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', marginBottom: '4px', color: '#555' }}>
+                      <span>{lang === 'tl' ? 'Pagbabayad' : 'Payment'} #{idx + 1} ({p.payment_method === 'Wallet' ? t('wallet') : t('pay_at_device')})</span>
+                      <strong>{formatMoney(p.amount)}</strong>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {selectedItem.status === 'Completed' && (
+                <button
+                  className="primary-button xml-black-button"
+                  style={{ width: '100%', marginBottom: '4px' }}
+                  type="button"
+                  onClick={() => {
+                    setSelectedItem(null)
+                    onNavigate('feedback')
+                  }}
+                >
+                  {lang === 'tl' ? 'Magbigay ng Feedback' : 'Give Feedback'}
+                </button>
+              )}
+
+              <button
+                className="secondary-button"
+                type="button"
+                onClick={() => setSelectedItem(null)}
+                style={{ width: '100%', marginTop: '8px' }}
+              >
+                {t('close')}
+              </button>
+            </div>
           </div>
         </div>
       )}
-
-      {/* Clear All Modal has been removed as pagination was added instead */}
     </main>
   )
 }
