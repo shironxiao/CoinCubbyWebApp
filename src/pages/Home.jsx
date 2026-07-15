@@ -1,28 +1,12 @@
-/* eslint-disable react-hooks/set-state-in-effect */
 import { useEffect, useMemo, useRef, useState } from 'react'
-import {
-  activateRental,
-  cancelPaymentSession,
-  createRental,
-  fetchPaymentSession,
-  fetchTransactionPayments,
-  formatMoney,
-  parseTimestamp,
-  sizeFromType,
-  syncWalletBalance,
-  updateLockerStatus,
-} from '../lib/supabase'
+import { formatMoney } from '../lib/supabase'
 import { formatDuration } from '../lib/time'
-import AlertDialog from '../components/AlertDialog'
 
 function statusClass(status) {
   return String(status || 'Available').toLowerCase().replaceAll(' ', '-')
 }
 
 export default function Home({
-  session,
-  onNavigate,
-  addNotification,
   modules,
   selectedModuleId,
   setSelectedModuleId,
@@ -31,21 +15,10 @@ export default function Home({
   activeRentals,
   ratesMap,
   loadingData,
-  refreshAllData,
   t,
   lang,
 }) {
   const lockerPanelRef = useRef(null)
-  const [selectedLocker, setSelectedLocker] = useState(null)
-  const [duration, setDuration] = useState('1')
-  const [rentalType, setRentalType] = useState('fixed')
-  const [paymentMethod, setPaymentMethod] = useState('Wallet')
-  const [saving, setSaving] = useState(false)
-  const [message, setMessage] = useState('')
-  const [paymentTx, setPaymentTx] = useState(null)
-  const [insertedAmount, setInsertedAmount] = useState(0)
-  const [secondsLeft, setSecondsLeft] = useState(60)
-  const [hasTimedOut, setHasTimedOut] = useState(false)
   const [tick, setTick] = useState(() => Date.now())
 
   const balance = walletBalance
@@ -69,213 +42,6 @@ export default function Home({
     const timer = setInterval(() => setTick(Date.now()), 1000)
     return () => clearInterval(timer)
   }, [])
-
-  // Countdown timer for Pay at Device
-  useEffect(() => {
-    if (!paymentTx || hasTimedOut || secondsLeft <= 0) return
-
-    const timer = setTimeout(() => {
-      setSecondsLeft((prev) => {
-        if (prev <= 1) {
-          setHasTimedOut(true)
-          return 0
-        }
-        return prev - 1
-      })
-    }, 1000)
-
-    return () => clearTimeout(timer)
-  }, [paymentTx, secondsLeft, hasTimedOut])
-
-  // Polling for cash insertions at the device.
-  // Primary: reads from payment_sessions.amount_paid (Pi updates this as coins are inserted).
-  // Fallback: reads from payments table if there is no valid session (e.g. mock/no device).
-  useEffect(() => {
-    if (!paymentTx || hasTimedOut) return
-
-    let isMounted = true
-    const interval = setInterval(async () => {
-      try {
-        // Only fetch the real session (mock- IDs return null from fetchPaymentSession)
-        const paymentSession = paymentTx.paymentSessionId
-          ? await fetchPaymentSession(paymentTx.paymentSessionId, session.accessToken)
-          : null
-        if (!isMounted) return
-
-        let amountPaid = 0
-        let amountDue  = paymentTx.totalAmount
-        let isPaid     = false
-
-        if (paymentSession) {
-          // Happy path: Pi is updating payment_sessions directly
-          amountPaid = Number(paymentSession.amount_paid || 0)
-          amountDue  = Number(paymentSession.amount_due  || paymentTx.totalAmount)
-          isPaid     = paymentSession.status === 'Paid' || amountPaid >= amountDue
-
-          // Sync displayed total if session amount_due differs
-          if (amountDue !== paymentTx.totalAmount) {
-            setPaymentTx((prev) => prev ? { ...prev, totalAmount: amountDue } : prev)
-          }
-        } else {
-          // Fallback: no real session (mock device or session creation failed)
-          // Poll the payments table rows instead
-          const payments = await fetchTransactionPayments(paymentTx.transactionId, session.accessToken)
-          if (!isMounted) return
-          amountPaid = (payments || []).reduce((acc, p) => acc + Number(p.amount || 0), 0)
-          isPaid     = amountPaid >= amountDue
-        }
-
-        setInsertedAmount((prev) => {
-          if (amountPaid > prev) {
-            setSecondsLeft(60) // reset countdown when new coins detected
-          }
-          return amountPaid
-        })
-
-        if (isPaid) {
-          clearInterval(interval)
-          await activateRental(paymentTx.transactionId, paymentTx.lockerId, session.accessToken)
-
-          if (addNotification) {
-            const endTime = new Date(Date.now() + Number(paymentTx.duration || 1) * 3600000)
-              .toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-            addNotification({
-              title: lang === 'tl' ? 'Locker na Narentahan' : 'Locker Rented',
-              content: lang === 'tl'
-                ? `Ang locker ${paymentTx.lockerNumber} ay aktibo na. Magtatapos ang renta sa ${endTime}.`
-                : `Locker ${paymentTx.lockerNumber} is now active. Rental ends at ${endTime}.`,
-              type: 'rental_start',
-            })
-          }
-
-          setPaymentTx(null)
-          await refreshAllData()
-          onNavigate('rent')
-        }
-      } catch (err) {
-        console.error('Error polling payments:', err)
-      }
-    }, 1500)
-
-    return () => {
-      isMounted = false
-      clearInterval(interval)
-    }
-  }, [paymentTx, hasTimedOut, session?.accessToken, selectedModuleId, addNotification, onNavigate])
-
-
-  function handleContinuePayment() {
-    setSecondsLeft(60)
-    setHasTimedOut(false)
-  }
-
-  function returnActiveRental() {
-    onNavigate('rent')
-  }
-
-  function openRental(locker) {
-    if (locker.status !== 'Available') {
-      setMessage(lang === 'tl' ? `Hindi bakante ang Locker ${locker.id}.` : `Locker ${locker.id} is not available.`)
-      return
-    }
-
-    setSelectedLocker(locker)
-    setDuration('1')
-    setRentalType('fixed')
-    setPaymentMethod('Wallet')
-  }
-
-  function handleQuickRent() {
-    const firstAvailable = filteredLockers.find((locker) => locker.status === 'Available')
-    if (firstAvailable) {
-      openRental(firstAvailable)
-    } else {
-      setMessage(lang === 'tl' ? 'Walang bakanteng mga locker sa kasalukuyan.' : 'No lockers are currently available.')
-    }
-  }
-
-  async function confirmRental(event) {
-    event.preventDefault()
-    if (!selectedLocker) return
-
-    const isOpenTime = rentalType === 'open'
-    if (!isOpenTime && (!duration || Number(duration) <= 0)) {
-      setMessage('Duration must be at least 1 hour.')
-      return
-    }
-
-    // Check if wallet has sufficient balance
-    if (paymentMethod === 'Wallet' && !isOpenTime && balance < total) {
-      setMessage('Insufficient wallet balance to start rental.')
-      return
-    }
-
-    setSaving(true)
-    setMessage('')
-    try {
-      const { transactionId, qrToken, paymentSession } = await createRental({
-        locker: selectedLocker,
-        duration,
-        isOpenTime,
-        paymentMethod: isOpenTime ? 'Device' : paymentMethod,
-        session,
-      })
-      
-      const isDevicePending = !isOpenTime && paymentMethod === 'Device'
-
-      if (isDevicePending) {
-        setPaymentTx({
-          transactionId,
-          qrToken,
-          lockerId: selectedLocker.dbId,
-          lockerNumber: selectedLocker.id,
-          totalAmount: total,
-          duration,
-          paymentSessionId: paymentSession?.payment_session_id,
-        })
-        setInsertedAmount(0)
-        setSecondsLeft(60)
-        setHasTimedOut(false)
-        setSelectedLocker(null)
-      } else {
-        // Trigger notification
-        if (addNotification) {
-          const notifContent = isOpenTime
-            ? (lang === 'tl'
-                ? `Ang locker ${selectedLocker.id} (${selectedLocker.size}) ay aktibo na. Ibalik ito anumang oras mula sa Renta tab.`
-                : `Locker ${selectedLocker.id} (${selectedLocker.size}) is now active. Return it anytime from the Rent tab.`)
-            : (() => {
-                const endTime = new Date(Date.now() + Number(duration) * 3600000)
-                  .toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                return lang === 'tl'
-                  ? `Ang locker ${selectedLocker.id} (${selectedLocker.size}) ay aktibo na. Magtatapos ang renta sa ${endTime}.`
-                  : `Locker ${selectedLocker.id} (${selectedLocker.size}) is now active. Rental ends at ${endTime}.`
-              })()
-          addNotification({
-            title: lang === 'tl' ? 'Locker na Narentahan' : 'Locker Rented',
-            content: notifContent,
-            type: 'rental_start',
-          })
-        }
-
-        // Deduct from wallet if paid via Wallet
-        if (paymentMethod === 'Wallet' && !isOpenTime) {
-          const finalBalance = Math.max(0, balance - total)
-          await syncWalletBalance(session, finalBalance)
-        }
-
-        setSelectedLocker(null)
-        await refreshAllData()
-        onNavigate('rent')
-      }
-    } catch (err) {
-      setMessage(lang === 'tl' ? 'Hindi mai-save ang renta. Pakisuri kung may device na nakakonekta.' : (err.message || 'Could not save rental.'))
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  const total = selectedLocker ? Number(duration || 0) * selectedLocker.rate : 0
 
   return (
     <main className={`page xml-page xml-home ${activeRentals.length === 0 ? 'no-active-rental' : ''}`}>
@@ -311,13 +77,13 @@ export default function Home({
           )}
         </div>
 
-        {/* Rent Now button */}
+        {/* View Lockers button */}
         <button
           className="rent-now-button"
           type="button"
           onClick={() => lockerPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
         >
-          {lang === 'tl' ? 'Rentahan Na' : 'Rent Now'}
+          {lang === 'tl' ? 'Tingnan ang mga Locker' : 'View Lockers'}
         </button>
       </section>
 
@@ -409,14 +175,6 @@ export default function Home({
                   <span className="hbar-timer">{timer}</span>
                   <span className={`hbar-bill${isOverdue ? ' hbar-bill--overdue' : ''}`}>{billLabel}</span>
                 </div>
-                {/* return button */}
-                <button
-                  className="hbar-return-btn"
-                  type="button"
-                  onClick={() => returnActiveRental(rental)}
-                >
-                  {t('return_locker')}
-                </button>
               </div>
             )
           })}
@@ -470,17 +228,15 @@ export default function Home({
           ))}
         </div>
 
-      {message && <AlertDialog type="error" message={message} onClose={() => setMessage('')} />}
       {loading ? (
         <p className="muted">{t('loading_lockers')}</p>
       ) : (
         <div className="locker-grid">
           {filteredLockers.map((locker) => (
-            <button
+            <div
               key={locker.dbId}
               className={`locker-tile ${statusClass(locker.status)}`}
-              type="button"
-              onClick={() => openRental(locker)}
+              style={{ cursor: 'default' }}
             >
               <span className="locker-icon locker-glyph" aria-hidden="true"></span>
               <strong>{locker.id}</strong>
@@ -492,195 +248,11 @@ export default function Home({
                   : locker.status}
               </small>
               <b>{locker.size} S</b>
-            </button>
+            </div>
           ))}
         </div>
       )}
       </section>
-
-      {selectedLocker && (
-        <div className="modal-backdrop" role="presentation">
-          <form className="rent-sheet xml-rent-sheet" onSubmit={confirmRental}>
-            <div className="sheet-title">
-              <div>
-                <h2>{lang === 'tl' ? 'Rentahan ang Locker' : 'Rent Locker'} {selectedLocker.id}</h2>
-                <p className="muted">
-                  {t('size_label')}: {selectedLocker.size} | {t('rate_label')}: {formatMoney(selectedLocker.rate, false)}/hr
-                </p>
-              </div>
-              <button className="icon-button" type="button" onClick={() => setSelectedLocker(null)}>
-                X
-              </button>
-            </div>
-
-            <p className="xml-section-label">{lang === 'tl' ? 'Uri ng Renta' : 'Rental Type'}</p>
-            <div className="segmented xml-radio-row">
-              <button
-                type="button"
-                className={rentalType === 'fixed' ? 'active' : ''}
-                onClick={() => {
-                  setRentalType('fixed')
-                  setPaymentMethod('Wallet')
-                }}
-              >
-                {lang === 'tl' ? 'Takdang Oras' : 'Fixed Duration'}
-              </button>
-              <button
-                type="button"
-                className={rentalType === 'open' ? 'active' : ''}
-                onClick={() => {
-                  setRentalType('open')
-                  setPaymentMethod('Device')
-                }}
-              >
-                {t('open_time')}
-              </button>
-            </div>
-
-            {rentalType === 'fixed' && (
-              <label className="xml-field plain">
-                <span>{lang === 'tl' ? 'Tagal' : 'Duration'}</span>
-                <input
-                  min="1"
-                  type="number"
-                  value={duration}
-                  onChange={(event) => setDuration(event.target.value)}
-                />
-              </label>
-            )}
-
-            {rentalType === 'fixed' ? (
-              <>
-                <p className="xml-section-label">{t('payment_method')}</p>
-                <div className="payment-options xml-payment-options">
-                  <button
-                    type="button"
-                    className={paymentMethod === 'Wallet' ? 'selected' : ''}
-                    onClick={() => setPaymentMethod('Wallet')}
-                  >
-                    {t('wallet')} ({formatMoney(total || selectedLocker.rate)})
-                  </button>
-                  <button
-                    type="button"
-                    className={paymentMethod === 'Device' ? 'selected' : ''}
-                    onClick={() => setPaymentMethod('Device')}
-                  >
-                    {t('pay_at_device')}
-                  </button>
-                </div>
-
-                <div className="total-row">
-                  <span>{lang === 'tl' ? 'Kabuuan' : 'Total Amount'}</span>
-                  <strong>{formatMoney(total)}</strong>
-                </div>
-              </>
-            ) : (
-              <div style={{ background: 'var(--label-green, #e8f5e9)', border: '1px solid #a5d6a7', borderRadius: '10px', padding: '12px 14px', fontSize: '13px', color: '#2e7d32', lineHeight: '1.5' }}>
-                💡 <strong>{lang === 'tl' ? 'Magbayad pagbalik.' : 'Pay on return.'}</strong> {lang === 'tl' ? 'Sisingilin ka ng kalahati ng halaga bawat oras kapag ibinalik mo ang locker.' : 'You will be billed at half the hourly rate when you return the locker.'}
-              </div>
-            )}
-
-            <div className="action-row">
-              <button className="secondary-button" type="button" onClick={() => setSelectedLocker(null)}>
-                {t('cancel')}
-              </button>
-              <button className="primary-button xml-black-button" type="submit" disabled={saving}>
-                {saving ? t('processing') : rentalType === 'open' ? (lang === 'tl' ? 'Simulan ang Renta' : 'Start Rental') : (lang === 'tl' ? 'Kumpirmahin ang Renta' : 'Confirm Rental')}
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
-
-      {paymentTx && (
-        <div className="modal-backdrop" role="presentation">
-          <div className="rent-sheet xml-rent-sheet">
-            <div className="sheet-title">
-              <div>
-                <h2>{lang === 'tl' ? 'Ihulog ang Pera sa Kiosk' : 'Insert Money at Device'}</h2>
-                <p className="muted">{lang === 'tl' ? 'Locker' : 'Locker'} {paymentTx.lockerNumber} · {lang === 'tl' ? 'Naghihintay ng Bayad' : 'Payment Pending'}</p>
-              </div>
-              <button 
-                className="icon-button" 
-                type="button" 
-                onClick={async () => {
-                  try {
-                    await cancelPaymentSession(paymentTx.paymentSessionId, session.accessToken)
-                    await updateLockerStatus(paymentTx.lockerId, 'Available', session.accessToken)
-                    await refreshAllData()
-                  } catch (err) {
-                    console.error('Error cancelling rental payment:', err)
-                  }
-                  setPaymentTx(null)
-                }}
-              >
-                X
-              </button>
-            </div>
-
-            <div className="payment-status-card">
-              <div className="amount-stat">
-                <span>{lang === 'tl' ? 'Dapat Bayaran' : 'Total Due'}</span>
-                <strong>{formatMoney(paymentTx.totalAmount)}</strong>
-              </div>
-              <div className="amount-stat">
-                <span>{t('inserted')}</span>
-                <strong className="inserted-text">{formatMoney(insertedAmount)}</strong>
-              </div>
-              <div className="amount-stat">
-                <span>{t('remaining')}</span>
-                <strong className="remaining-text">
-                  {formatMoney(Math.max(0, paymentTx.totalAmount - insertedAmount))}
-                </strong>
-              </div>
-            </div>
-
-            {hasTimedOut ? (
-              <div className="timeout-container">
-                <p className="alert">{t('timeout_title')}</p>
-                <button
-                  className="primary-button xml-black-button continue-payment-btn"
-                  type="button"
-                  onClick={handleContinuePayment}
-                >
-                  {t('continue_payment')}
-                </button>
-              </div>
-            ) : (
-              <div className="timer-container">
-                <div className="progress-bar-bg">
-                  <div 
-                    className="progress-bar-fill" 
-                    style={{ width: `${(secondsLeft / 60) * 100}%` }}
-                  ></div>
-                </div>
-                <p className="timer-text">
-                  {lang === 'tl' ? 'Mangyaring ihulog ang barya. Natitirang oras:' : 'Please insert cash. Time remaining:'} <strong>{secondsLeft}s</strong>
-                </p>
-              </div>
-            )}
-
-            <div className="action-row">
-              <button 
-                className="secondary-button" 
-                type="button" 
-                onClick={async () => {
-                  try {
-                    await cancelPaymentSession(paymentTx.paymentSessionId, session.accessToken)
-                    await updateLockerStatus(paymentTx.lockerId, 'Available', session.accessToken)
-                    await refreshAllData()
-                  } catch (err) {
-                    console.error('Error cancelling rental payment:', err)
-                  }
-                  setPaymentTx(null)
-                }}
-              >
-                {t('cancel')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </main>
   )
 }
