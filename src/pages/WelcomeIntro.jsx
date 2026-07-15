@@ -7,12 +7,12 @@ export default function WelcomeIntro({ onLanguageSelect }) {
   const [slideIndex, setSlideIndex] = useState(0)
 
   const slides = [
+    // ── 0. Welcome ──────────────────────────────────────────────────────────
     {
       titleEn: "Welcome to CoinCubby",
       titleTl: "Maligayang Pagdating sa CoinCubby",
-      descEn: "Your smart, secure, and easy-to-use coin-operated public locker system.",
-      descTl: "Ang iyong matalino, ligtas, at madaling-gamiting locker na hulugan ng barya.",
-      icon: "📦",
+      descEn:  "Your smart, secure, coin-operated public locker system. Here's how to use the kiosk in just a few steps.",
+      descTl:  "Ang iyong matalino at ligtas na coin-operated locker system. Narito ang paraan ng paggamit ng kiosk sa ilang hakbang.",
       visual: (
         <div className="tutorial-visual welcome-visual">
           <img className="intro-logo pulse-logo" src={logo} alt="CoinCubby Logo" />
@@ -20,14 +20,55 @@ export default function WelcomeIntro({ onLanguageSelect }) {
             <span className="coin">🪙</span>
           </div>
         </div>
-      )
+      ),
     },
+
+    // ── 1. Enter User ID ─────────────────────────────────────────────────────
     {
-      titleEn: "1. Choose Your Locker",
-      titleTl: "1. Pumili ng Iyong Locker",
-      descEn: "Find an available locker on the home screen. Green tiles mean the locker is empty and ready for you to rent.",
-      descTl: "Humanap ng bakanteng locker sa home screen. Ang berdeng tiles ay nangangahulugang bakante ito at maaari mong rentahan.",
-      icon: "🟩",
+      titleEn: "Step 1 — Enter Your User ID",
+      titleTl: "Hakbang 1 — Ilagay ang Iyong User ID",
+      descEn:  "At the kiosk, type your 6-digit User ID. You can find this ID on the Profile screen of this app.",
+      descTl:  "Sa kiosk, ilagay ang iyong 6-digit User ID. Makikita mo ito sa Profile screen ng app na ito.",
+      visual: (
+        <div className="tutorial-visual kiosk-login-visual">
+          <div className="kiosk-screen-mock">
+            <div className="kiosk-field-label">User ID</div>
+            <div className="kiosk-input-row">
+              {['1','2','3','4','5','6'].map((d,i) => (
+                <span key={i} className={`kiosk-digit ${i < 4 ? 'filled' : 'cursor-blink'}`}>{i < 4 ? d : ''}</span>
+              ))}
+            </div>
+            <div className="kiosk-field-hint">Your 6-digit profile ID</div>
+          </div>
+        </div>
+      ),
+    },
+
+    // ── 2. Enter PIN ─────────────────────────────────────────────────────────
+    {
+      titleEn: "Step 2 — Enter Your 6-Digit PIN",
+      titleTl: "Hakbang 2 — Ilagay ang Iyong 6-Digit PIN",
+      descEn:  "After your User ID, enter your 6-digit account PIN. This is the same password you use in this app.",
+      descTl:  "Pagkatapos ng User ID, ilagay ang iyong 6-digit PIN. Ito ang parehong password na ginagamit mo sa app na ito.",
+      visual: (
+        <div className="tutorial-visual pin-visual">
+          <div className="pin-visual-card" style={{ minWidth: 180 }}>
+            <div className="visual-pin-dots">
+              <span>●</span><span>●</span><span>●</span>
+              <span>●</span><span>●</span><span className="pin-dot-empty">○</span>
+            </div>
+            <div className="pin-visual-badge">6-Digit Account PIN</div>
+          </div>
+        </div>
+      ),
+    },
+
+    // ── 3. Select a Locker ───────────────────────────────────────────────────
+    {
+      titleEn: "Step 3 — Select a Locker",
+      titleTl: "Hakbang 3 — Pumili ng Locker",
+      descEn:  "The kiosk shows all available lockers. Tap a green locker to select it. Green means it is empty and ready.",
+      descTl:  "Ipinapakita ng kiosk ang lahat ng bakanteng locker. I-tap ang berdeng locker para piliin ito. Berde ang bakante.",
       visual: (
         <div className="tutorial-visual grid-visual">
           <div className="mini-grid">
@@ -36,14 +77,15 @@ export default function WelcomeIntro({ onLanguageSelect }) {
             <div className="mini-tile occupied">L-03<br/><span>Occupied</span></div>
           </div>
         </div>
-      )
+      ),
     },
+
+    // ── 4. Choose Rental Type ────────────────────────────────────────────────
     {
-      titleEn: "2. Pick a Rental Type",
-      titleTl: "2. Piliin ang Uri ng Renta",
-      descEn: "Select Fixed Duration to rent for a set number of hours, or choose Open Time if you prefer to pay when returning the locker.",
-      descTl: "Pumili ng Takdang Oras para sa partikular na oras, o Bukas na Oras kung nais mong magbayad kapag ibinalik mo na ang locker.",
-      icon: "⏰",
+      titleEn: "Step 4 — Choose Rental Type",
+      titleTl: "Hakbang 4 — Piliin ang Uri ng Renta",
+      descEn:  "Fixed Duration: pay upfront for a set number of hours. Open Time: the timer runs and you pay when you return the locker.",
+      descTl:  "Fixed Duration: bayad muna para sa takdang oras. Open Time: tatakbo ang timer at babayaran mo kapag ibinalik mo na ang locker.",
       visual: (
         <div className="tutorial-visual type-visual">
           <div className="mini-types">
@@ -57,41 +99,72 @@ export default function WelcomeIntro({ onLanguageSelect }) {
             </div>
           </div>
         </div>
-      )
+      ),
     },
+
+    // ── 5. Confirm Details ───────────────────────────────────────────────────
     {
-      titleEn: "3. Pay & Verify PIN",
-      titleTl: "3. Magbayad at I-verify ang PIN",
-      descEn: "Pay using your online CoinCubby Wallet or insert cash directly at the locker device. Your account's 6-digit password PIN is used for secure return verification.",
-      descTl: "Magbayad gamit ang iyong CoinCubby Wallet o maghulog ng barya sa mismong device. Ang iyong 6-digit password PIN ang gagamitin para sa ligtas na pagbabalik.",
-      icon: "🔑",
+      titleEn: "Step 5 — Confirm Your Details",
+      titleTl: "Hakbang 5 — Kumpirmahin ang mga Detalye",
+      descEn:  "Review your selected locker, rental type, duration, and total amount before you proceed. Tap Confirm when ready.",
+      descTl:  "Suriin ang iyong piniling locker, uri ng renta, tagal, at kabuuang bayad bago magpatuloy. I-tap ang Kumpirmahin.",
       visual: (
-        <div className="tutorial-visual pin-visual">
-          <div className="pin-visual-card">
-            <div className="visual-pin-dots">
-              <span>●</span><span>●</span><span>●</span><span>●</span><span>●</span><span>●</span>
+        <div className="tutorial-visual confirm-visual">
+          <div className="kiosk-confirm-card">
+            <div className="kiosk-confirm-row"><span>Locker</span><strong>L-02</strong></div>
+            <div className="kiosk-confirm-row"><span>Type</span><strong>Fixed</strong></div>
+            <div className="kiosk-confirm-row"><span>Duration</span><strong>2 hrs</strong></div>
+            <div className="kiosk-confirm-row total-row"><span>Total</span><strong>₱20.00</strong></div>
+            <div className="kiosk-confirm-btn">Confirm ✓</div>
+          </div>
+        </div>
+      ),
+    },
+
+    // ── 6. Pay at Device ─────────────────────────────────────────────────────
+    {
+      titleEn: "Step 6 — Pay at the Device",
+      titleTl: "Hakbang 6 — Magbayad sa Device",
+      descEn:  "For Fixed Duration, insert coins or bills into the coin slot until the total is reached. The locker will automatically open once fully paid.",
+      descTl:  "Para sa Fixed Duration, ihulog ang barya o papel na pera sa coin slot hanggang maabot ang kabuuan. Awtomatikong magbubukas ang locker.",
+      visual: (
+        <div className="tutorial-visual pay-visual">
+          <div className="kiosk-pay-mock">
+            <div className="coin-slot-icon">🪙</div>
+            <div className="pay-progress-bar">
+              <div className="pay-progress-fill" style={{ width: '72%' }} />
             </div>
-            <div className="pin-visual-badge">6-Digit Password PIN</div>
+            <div className="pay-labels">
+              <span>Inserted: ₱14</span>
+              <span>Total: ₱20</span>
+            </div>
           </div>
         </div>
-      )
+      ),
     },
+
+    // ── 7. Store & Lock ──────────────────────────────────────────────────────
     {
-      titleEn: "4. Return When Done",
-      titleTl: "4. Ibalik Kapag Tapos Na",
-      descEn: "When you are ready to get your items, go to the Rent tab, click Return Locker, verify your PIN, and lock it back up safely.",
-      descTl: "Kapag kukunin mo na ang iyong mga gamit, pumunta sa tab na Renta, i-click ang Ibalik ang Locker, ilagay ang PIN, at i-lock ito nang maayos.",
-      icon: "↩️",
+      titleEn: "Step 7 — Store & Lock Your Belongings",
+      titleTl: "Hakbang 7 — Ilagay at I-lock ang Iyong mga Gamit",
+      descEn:  "The locker door opens automatically. Place your items inside, then firmly close the door. It locks automatically — you're all set!",
+      descTl:  "Awtomatikong magbubukas ang pinto ng locker. Ilagay ang iyong mga gamit, pagkatapos ay isara nang mahigpit ang pinto. Naka-lock na ito — tapos ka na!",
       visual: (
-        <div className="tutorial-visual return-visual">
-          <div className="return-success-badge">
-            <span className="success-icon">✓</span>
-            <strong>Rental Completed</strong>
-            <small>Locker Safely Locked</small>
+        <div className="tutorial-visual store-visual">
+          <div className="locker-door-mock">
+            <div className="locker-body">
+              <div className="locker-handle" />
+              <div className="locker-status-light locked" />
+            </div>
+            <div className="locker-done-label">
+              <span className="success-icon">✓</span>
+              <strong>Locker Locked!</strong>
+              <small>Your items are safe</small>
+            </div>
           </div>
         </div>
-      )
-    }
+      ),
+    },
   ]
 
   function handleLangProceed() {
