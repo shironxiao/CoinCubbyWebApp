@@ -3230,6 +3230,224 @@ dd {
   color: var(--gray);
 }
 
+/* Premium Global Reviews Summary Widget */
+.fb-summary-widget {
+  display: flex;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 20px;
+  gap: 20px;
+  align-items: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+}
+
+.fb-summary-score {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 90px;
+  text-align: center;
+  border-right: 1px solid var(--line);
+  padding-right: 20px;
+}
+
+.fb-big-score {
+  font-size: 40px;
+  font-weight: 800;
+  color: var(--dark);
+  line-height: 1;
+}
+
+.fb-summary-stars {
+  display: flex;
+  gap: 2px;
+  margin: 4px 0;
+}
+
+.fb-summary-star {
+  font-size: 14px;
+  color: #dddddd;
+}
+
+.fb-summary-star.active {
+  color: #ffb400;
+}
+
+.fb-summary-count {
+  font-size: 11px;
+  color: var(--gray);
+  font-weight: 700;
+}
+
+.fb-summary-bars {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.fb-summary-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--gray);
+}
+
+.fb-summary-bar-label {
+  min-width: 22px;
+  text-align: right;
+}
+
+.fb-summary-bar-track {
+  flex-grow: 1;
+  height: 6px;
+  background: var(--bg-app);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.fb-summary-bar-fill {
+  height: 100%;
+  background: var(--green);
+  border-radius: 3px;
+}
+
+.fb-summary-bar-count {
+  min-width: 15px;
+  text-align: left;
+  color: var(--dark);
+}
+
+/* Premium Global Review Cards */
+.fb-global-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+}
+
+.fb-global-card-userinfo {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.fb-avatar {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--white);
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  box-shadow: inset 0 -2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* User Avatars Gradients */
+.fb-avatar.grad-blue {
+  background: linear-gradient(135deg, #2196f3, #00bcd4);
+}
+.fb-avatar.grad-purple {
+  background: linear-gradient(135deg, #9c27b0, #e91e63);
+}
+.fb-avatar.grad-teal {
+  background: linear-gradient(135deg, #009688, #4caf50);
+}
+.fb-avatar.grad-orange {
+  background: linear-gradient(135deg, #ff9800, #ffc107);
+}
+.fb-avatar.grad-pink {
+  background: linear-gradient(135deg, #e91e63, #ff6090);
+}
+
+.fb-user-details {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.fb-user-name-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.fb-global-reviewer-name {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--dark);
+}
+
+.fb-verified-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  background: #e8f5e9;
+  color: #2e7d32;
+  font-size: 9px;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 4px;
+  border: 1px solid #c8e6c9;
+}
+
+.fb-verified-icon {
+  font-size: 8px;
+  font-weight: 900;
+}
+
+.fb-sub-header-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.fb-global-stars {
+  display: flex;
+  gap: 2px;
+}
+
+.fb-star-mini {
+  font-size: 11px;
+  color: #dddddd;
+}
+
+.fb-star-mini.active {
+  color: #ffb400;
+}
+
+.fb-global-date {
+  font-size: 11px;
+  color: var(--gray);
+  font-weight: 500;
+}
+
+.fb-global-comment {
+  margin: 0;
+  font-size: 13px;
+  color: var(--dark);
+  line-height: 1.5;
+  white-space: pre-wrap;
+  background: var(--bg-app);
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px dashed var(--line);
+}
+
 /* ── Kiosk Tutorial Visual Styles ─────────────────────────────────────────── */
 
 /* Step 1 — User ID input mock */
