@@ -1,9 +1,9 @@
 /* eslint-disable react-hooks/set-state-in-effect */
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { fetchProfile, logout, changePassword, verifyUserPassword } from '../lib/supabase'
 import AlertDialog from '../components/AlertDialog'
 
-export default function Profile({ session, onLogout, onNavigate, addNotification, t, lang, onLanguageChange }) {
+export default function Profile({ session, onLogout, onNavigate, addNotification, t, lang, onLanguageChange, onShowTutorial }) {
   const [profile, setProfile] = useState({
     fullName: session?.fullName || '',
     contact: session?.email || '',
@@ -21,10 +21,6 @@ export default function Profile({ session, onLogout, onNavigate, addNotification
   const [notice, setNotice] = useState('')
   const [loadingPassword, setLoadingPassword] = useState(false)
   const [loadingProfile, setLoadingProfile] = useState(true)
-
-  function updatePasswordFields(event) {
-    setPasswordForm((current) => ({ ...current, [event.target.name]: event.target.value }))
-  }
 
   async function handleChangePassword(event) {
     event.preventDefault()
@@ -236,6 +232,17 @@ export default function Profile({ session, onLogout, onNavigate, addNotification
           </div>
         </form>
       )}
+
+      {/* View Tutorial Section */}
+      <section
+        className="xml-list-row"
+        style={{ cursor: 'pointer', marginTop: '12px' }}
+        onClick={onShowTutorial}
+      >
+        <span>📖</span>
+        <p>{lang === 'tl' ? 'Tingnan ang Tutorial' : 'View App Tutorial'}</p>
+        <b>›</b>
+      </section>
 
       {/* Language Switcher Row */}
       <div className="profile-lang-row">
