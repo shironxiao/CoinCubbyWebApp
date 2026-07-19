@@ -1,13 +1,12 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 import { useEffect, useMemo, useState } from 'react'
-import { formatMoney, sizeFromType, mapHistory } from '../lib/supabase'
+import { formatMoney } from '../lib/supabase'
 import { formatDateTime, formatMinutes } from '../lib/time'
 import AlertDialog from '../components/AlertDialog'
 
 export default function History({
-  session,
   rentalHistory,
   loadingData,
-  refreshAllData,
   t,
   lang,
   onNavigate,
@@ -18,6 +17,7 @@ export default function History({
   const [timeFilter, setTimeFilter] = useState('all') // 'all', 'today', 'week', 'month'
   const [statusFilter, setStatusFilter] = useState('all') // 'all', 'active', 'completed'
   const [selectedItem, setSelectedItem] = useState(null)
+  const [showReceipt, setShowReceipt] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 8
 
@@ -168,7 +168,7 @@ export default function History({
           <article
             className="history-row"
             key={item.id}
-            onClick={() => setSelectedItem(item)}
+            onClick={() => { setSelectedItem(item); setShowReceipt(false) }}
             style={{ cursor: 'pointer' }}
           >
             <div>
@@ -178,7 +178,9 @@ export default function History({
               <strong>{item.amount > 0 ? formatMoney(item.amount) : '-'}</strong>
             </div>
             <div>
-              <strong className={`status-badge ${item.status.toLowerCase()}`}>{item.status === 'Active' ? t('filter_active') : item.status === 'Completed' ? t('completed') : item.status}</strong>
+              <strong className={`status-badge ${item.status.toLowerCase()}`}>
+                {item.status === 'Active' ? t('filter_active') : item.status === 'Completed' ? t('completed') : item.status}
+              </strong>
             </div>
             <p style={{ gridColumn: 'span 3', textAlign: 'left', paddingLeft: '12px' }}>
               {lang === 'tl' ? 'Simula: ' : 'Start: '} {formatDateTime(item.startTime)} <b>{lang === 'tl' ? 'Laki: ' : 'Size: '} {item.sizeName}</b> {item.durationMinutes ? formatMinutes(item.durationMinutes) : item.paymentMethod}
@@ -198,7 +200,9 @@ export default function History({
             {lang === 'tl' ? '← Nakaraan' : '← Prev'}
           </button>
           <span className="pagination-info">
-            {lang === 'tl' ? <>Pahina <strong>{currentPage}</strong> ng {totalPages}</> : <>Page <strong>{currentPage}</strong> of {totalPages}</>}
+            {lang === 'tl'
+              ? <><strong>{currentPage}</strong> ng {totalPages}</>
+              : <>Page <strong>{currentPage}</strong> of {totalPages}</>}
           </span>
           <button
             className="pagination-btn"
@@ -212,95 +216,210 @@ export default function History({
       )}
 
       {selectedItem && (
-        <div className="modal-backdrop" role="presentation" onClick={() => setSelectedItem(null)}>
-          <div className="rent-sheet xml-rent-sheet" onClick={(e) => e.stopPropagation()} style={{ padding: '24px', gap: '16px' }}>
-            <div className="sheet-title" style={{ borderBottom: '1px solid rgba(0, 0, 0, 0.08)', paddingBottom: '12px', marginBottom: '8px' }}>
-              <h2>{t('details')}</h2>
-              <p className="muted" style={{ fontFamily: 'monospace', wordBreak: 'break-all', marginTop: '4px' }}>ID: {selectedItem.id}</p>
-              <button className="icon-button" type="button" onClick={() => setSelectedItem(null)}>
+        <div
+          className="modal-backdrop"
+          role="presentation"
+          onClick={() => { setSelectedItem(null); setShowReceipt(false) }}
+        >
+          <div
+            className="rent-sheet xml-rent-sheet"
+            onClick={(e) => e.stopPropagation()}
+            style={{ padding: '24px', gap: '16px' }}
+          >
+            <div className="sheet-title" style={{ borderBottom: '1px solid rgba(0,0,0,0.08)', paddingBottom: '12px', marginBottom: '8px' }}>
+              <h2>{showReceipt ? (lang === 'tl' ? 'Resibo' : 'Receipt') : t('details')}</h2>
+              <p className="muted" style={{ fontFamily: 'monospace', wordBreak: 'break-all', marginTop: '4px' }}>
+                ID: {selectedItem.id}
+              </p>
+              <button
+                className="icon-button"
+                type="button"
+                onClick={() => { setSelectedItem(null); setShowReceipt(false) }}
+              >
                 X
               </button>
             </div>
 
-            <div style={{ display: 'grid', gap: '14px', color: 'var(--dark)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ color: '#888', fontSize: '13px' }}>{t('locker_label')}</span>
-                <strong style={{ fontSize: '15px' }}>{lang === 'tl' ? 'Locker' : 'Locker'} #{selectedItem.lockerNumber} ({selectedItem.sizeName})</strong>
-              </div>
+            {showReceipt ? (
+              /* ── VIRTUAL THERMAL RECEIPT VIEW ── */
+              <div className="thermal-receipt-container" style={{ width: '100%' }}>
+                <div className="thermal-receipt">
+                  <div className="thermal-receipt-header">
+                    <span className="thermal-logo">🪙</span>
+                    <h3 className="thermal-title">COIN CUBBY</h3>
+                    <p className="thermal-subtitle">Secure Storage Made Easy</p>
+                  </div>
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ color: '#888', fontSize: '13px' }}>{t('status')}</span>
-                <span className={`status-badge ${selectedItem.status.toLowerCase()}`} style={{ margin: 0, padding: '4px 10px', borderRadius: '6px', fontWeight: 'bold' }}>
-                  {selectedItem.status === 'Active' ? t('filter_active') : selectedItem.status === 'Completed' ? t('completed') : selectedItem.status}
-                </span>
-              </div>
+                  <div className="thermal-double-divider">================================</div>
+                  <div className="thermal-section-title">RENTAL CONFIRMATION</div>
+                  <div className="thermal-double-divider">================================</div>
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ color: '#888', fontSize: '13px' }}>{t('start_time')}</span>
-                <span style={{ fontSize: '13px', fontWeight: '500' }}>{formatDateTime(selectedItem.startTime)}</span>
-              </div>
-
-              {selectedItem.endTime && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ color: '#888', fontSize: '13px' }}>{t('end_time')}</span>
-                  <span style={{ fontSize: '13px', fontWeight: '500' }}>{formatDateTime(selectedItem.endTime)}</span>
-                </div>
-              )}
-
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ color: '#888', fontSize: '13px' }}>{t('duration')}</span>
-                <span style={{ fontSize: '13px', fontWeight: '500' }}>
-                  {selectedItem.durationMinutes ? formatMinutes(selectedItem.durationMinutes) : (lang === 'tl' ? 'Walang Takdang Oras' : 'Open-Ended')}
-                </span>
-              </div>
-
-              <div style={{ borderTop: '1px dashed rgba(0, 0, 0, 0.08)', marginTop: '8px', paddingTop: '12px' }} />
-
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ color: '#888', fontSize: '13px' }}>{t('payment_method')}</span>
-                <span style={{ fontSize: '13px', fontWeight: '500' }}>{selectedItem.paymentMethod === 'Wallet' ? t('wallet') : t('pay_at_device')}</span>
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ color: '#888', fontSize: '13px', fontWeight: '600' }}>{lang === 'tl' ? 'Kabuuan ng Bayad' : 'Total Amount Paid'}</span>
-                <strong style={{ fontSize: '16px', color: '#4cd964' }}>{formatMoney(selectedItem.amount)}</strong>
-              </div>
-
-              {selectedItem.paymentsList && selectedItem.paymentsList.length > 1 && (
-                <div style={{ marginTop: '4px', background: 'rgba(0, 0, 0, 0.02)', padding: '10px', borderRadius: '8px', border: '1px solid rgba(0, 0, 0, 0.05)' }}>
-                  <span style={{ fontSize: '10px', color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 'bold', display: 'block', marginBottom: '6px' }}>{lang === 'tl' ? 'Detalye ng Pagbabayad' : 'Payment Breakdown'}</span>
-                  {selectedItem.paymentsList.map((p, idx) => (
-                    <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', marginBottom: '4px', color: '#555' }}>
-                      <span>{lang === 'tl' ? 'Pagbabayad' : 'Payment'} #{idx + 1} ({p.payment_method === 'Wallet' ? t('wallet') : t('pay_at_device')})</span>
-                      <strong>{formatMoney(p.amount)}</strong>
+                  <div className="thermal-body">
+                    <div className="thermal-row">
+                      <span>Compartment:</span>
+                      <span>{selectedItem.lockerNumber}</span>
                     </div>
-                  ))}
+                    <div className="thermal-row">
+                      <span>Size:</span>
+                      <span>{selectedItem.sizeName}</span>
+                    </div>
+                    <div className="thermal-row">
+                      <span>Rental Type:</span>
+                      <span>{selectedItem.durationMinutes ? 'Fixed Duration' : 'Open Time'}</span>
+                    </div>
+                    {selectedItem.durationMinutes > 0 && (
+                      <div className="thermal-row">
+                        <span>Duration:</span>
+                        <span>{formatMinutes(selectedItem.durationMinutes)}</span>
+                      </div>
+                    )}
+                    {selectedItem.endTime && (
+                      <div className="thermal-row">
+                        <span>Expires:</span>
+                        <span>{formatDateTime(selectedItem.endTime)}</span>
+                      </div>
+                    )}
+
+                    <div className="thermal-divider">--------------------------------</div>
+
+                    <div className="thermal-row bold">
+                      <span>Total Paid:</span>
+                      <span>{formatMoney(selectedItem.amount)}</span>
+                    </div>
+                    <div className="thermal-row">
+                      <span>Payment:</span>
+                      <span>{selectedItem.paymentMethod === 'Wallet' ? t('wallet') : t('pay_at_device')}</span>
+                    </div>
+                  </div>
+
+                  <div className="thermal-double-divider">================================</div>
+                  <div className="thermal-footer">
+                    <p>Date: {formatDateTime(selectedItem.startTime)}</p>
+                    <p>Thank you for using Coin Cubby!</p>
+                    <img
+                      className="thermal-qr"
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent('https://coincubby.vercel.app/#/feedback')}`}
+                      alt="Feedback QR Code"
+                    />
+                    <span className="thermal-qr-label">Scan to tell us about your experience!</span>
+                  </div>
                 </div>
-              )}
 
-              {selectedItem.status === 'Completed' && (
                 <button
-                  className="primary-button xml-black-button"
-                  style={{ width: '100%', marginBottom: '4px' }}
+                  className="secondary-button"
                   type="button"
-                  onClick={() => {
-                    setSelectedItem(null)
-                    onNavigate('feedback')
-                  }}
+                  onClick={() => setShowReceipt(false)}
+                  style={{ width: '100%', marginTop: '16px' }}
                 >
-                  {lang === 'tl' ? 'Magbigay ng Feedback' : 'Give Feedback'}
+                  {lang === 'tl' ? '← Bumalik sa Detalye' : '← Back to Details'}
                 </button>
-              )}
+              </div>
+            ) : (
+              /* ── STANDARD DETAILS VIEW ── */
+              <div style={{ display: 'grid', gap: '14px', color: 'var(--dark)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ color: '#888', fontSize: '13px' }}>{t('locker_label')}</span>
+                  <strong style={{ fontSize: '15px' }}>Locker #{selectedItem.lockerNumber} ({selectedItem.sizeName})</strong>
+                </div>
 
-              <button
-                className="secondary-button"
-                type="button"
-                onClick={() => setSelectedItem(null)}
-                style={{ width: '100%', marginTop: '8px' }}
-              >
-                {t('close')}
-              </button>
-            </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ color: '#888', fontSize: '13px' }}>{t('status')}</span>
+                  <span
+                    className={`status-badge ${selectedItem.status.toLowerCase()}`}
+                    style={{ margin: 0, padding: '4px 10px', borderRadius: '6px', fontWeight: 'bold' }}
+                  >
+                    {selectedItem.status === 'Active' ? t('filter_active') : selectedItem.status === 'Completed' ? t('completed') : selectedItem.status}
+                  </span>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ color: '#888', fontSize: '13px' }}>{t('start_time')}</span>
+                  <span style={{ fontSize: '13px', fontWeight: '500' }}>{formatDateTime(selectedItem.startTime)}</span>
+                </div>
+
+                {selectedItem.endTime && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ color: '#888', fontSize: '13px' }}>{t('end_time')}</span>
+                    <span style={{ fontSize: '13px', fontWeight: '500' }}>{formatDateTime(selectedItem.endTime)}</span>
+                  </div>
+                )}
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ color: '#888', fontSize: '13px' }}>{t('duration')}</span>
+                  <span style={{ fontSize: '13px', fontWeight: '500' }}>
+                    {selectedItem.durationMinutes
+                      ? formatMinutes(selectedItem.durationMinutes)
+                      : (lang === 'tl' ? 'Walang Takdang Oras' : 'Open-Ended')}
+                  </span>
+                </div>
+
+                <div style={{ borderTop: '1px dashed rgba(0,0,0,0.08)', marginTop: '8px', paddingTop: '12px' }} />
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ color: '#888', fontSize: '13px' }}>{t('payment_method')}</span>
+                  <span style={{ fontSize: '13px', fontWeight: '500' }}>
+                    {selectedItem.paymentMethod === 'Wallet' ? t('wallet') : t('pay_at_device')}
+                  </span>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ color: '#888', fontSize: '13px', fontWeight: '600' }}>
+                    {lang === 'tl' ? 'Kabuuan ng Bayad' : 'Total Amount Paid'}
+                  </span>
+                  <strong style={{ fontSize: '16px', color: '#4cd964' }}>{formatMoney(selectedItem.amount)}</strong>
+                </div>
+
+                {selectedItem.paymentsList && selectedItem.paymentsList.length > 1 && (
+                  <div style={{ marginTop: '4px', background: 'rgba(0,0,0,0.02)', padding: '10px', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.05)' }}>
+                    <span style={{ fontSize: '10px', color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 'bold', display: 'block', marginBottom: '6px' }}>
+                      {lang === 'tl' ? 'Detalye ng Pagbabayad' : 'Payment Breakdown'}
+                    </span>
+                    {selectedItem.paymentsList.map((p, idx) => (
+                      <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', marginBottom: '4px', color: '#555' }}>
+                        <span>
+                          {lang === 'tl' ? 'Pagbabayad' : 'Payment'} #{idx + 1} ({p.payment_method === 'Wallet' ? t('wallet') : t('pay_at_device')})
+                        </span>
+                        <strong>{formatMoney(p.amount)}</strong>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {selectedItem.status === 'Completed' && (
+                  <>
+                    <button
+                      className="secondary-button"
+                      style={{ width: '100%', marginBottom: '8px' }}
+                      type="button"
+                      onClick={() => setShowReceipt(true)}
+                    >
+                      📄 {lang === 'tl' ? 'Tingnan ang Resibo' : 'View Receipt'}
+                    </button>
+
+                    <button
+                      className="primary-button xml-black-button"
+                      style={{ width: '100%', marginBottom: '4px' }}
+                      type="button"
+                      onClick={() => {
+                        setSelectedItem(null)
+                        onNavigate('feedback')
+                      }}
+                    >
+                      {lang === 'tl' ? 'Magbigay ng Feedback' : 'Give Feedback'}
+                    </button>
+                  </>
+                )}
+
+                <button
+                  className="secondary-button"
+                  type="button"
+                  onClick={() => setSelectedItem(null)}
+                  style={{ width: '100%', marginTop: '8px' }}
+                >
+                  {t('close')}
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
