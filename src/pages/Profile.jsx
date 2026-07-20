@@ -240,7 +240,7 @@ export default function Profile({ session, onLogout, onNavigate, addNotification
         onClick={onShowTutorial}
       >
         <span>📖</span>
-        <p>{lang === 'tl' ? 'Tingnan ang Tutorial' : 'View App Tutorial'}</p>
+        <p>{lang === 'tl' ? 'Tingnan ang Gabay' : 'View Guide'}</p>
         <b>›</b>
       </section>
 
