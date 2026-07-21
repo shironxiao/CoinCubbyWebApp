@@ -3230,6 +3230,612 @@ dd {
   color: var(--gray);
 }
 
+/* Premium Global Reviews Summary Widget */
+.fb-summary-widget {
+  display: flex;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 20px;
+  gap: 20px;
+  align-items: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+}
 
+.fb-summary-score {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 90px;
+  text-align: center;
+  border-right: 1px solid var(--line);
+  padding-right: 20px;
+}
 
+.fb-big-score {
+  font-size: 40px;
+  font-weight: 800;
+  color: var(--dark);
+  line-height: 1;
+}
 
+.fb-summary-stars {
+  display: flex;
+  gap: 2px;
+  margin: 4px 0;
+}
+
+.fb-summary-star {
+  font-size: 14px;
+  color: #dddddd;
+}
+
+.fb-summary-star.active {
+  color: #ffb400;
+}
+
+.fb-summary-count {
+  font-size: 11px;
+  color: var(--gray);
+  font-weight: 700;
+}
+
+.fb-summary-bars {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.fb-summary-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--gray);
+}
+
+.fb-summary-bar-label {
+  min-width: 22px;
+  text-align: right;
+}
+
+.fb-summary-bar-track {
+  flex-grow: 1;
+  height: 6px;
+  background: var(--bg-app);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.fb-summary-bar-fill {
+  height: 100%;
+  background: var(--green);
+  border-radius: 3px;
+}
+
+.fb-summary-bar-count {
+  min-width: 15px;
+  text-align: left;
+  color: var(--dark);
+}
+
+/* Premium Global Review Cards */
+.fb-global-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+}
+
+.fb-global-card-userinfo {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.fb-avatar {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--white);
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  box-shadow: inset 0 -2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* User Avatars Gradients */
+.fb-avatar.grad-blue {
+  background: linear-gradient(135deg, #2196f3, #00bcd4);
+}
+.fb-avatar.grad-purple {
+  background: linear-gradient(135deg, #9c27b0, #e91e63);
+}
+.fb-avatar.grad-teal {
+  background: linear-gradient(135deg, #009688, #4caf50);
+}
+.fb-avatar.grad-orange {
+  background: linear-gradient(135deg, #ff9800, #ffc107);
+}
+.fb-avatar.grad-pink {
+  background: linear-gradient(135deg, #e91e63, #ff6090);
+}
+
+.fb-user-details {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.fb-user-name-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.fb-global-reviewer-name {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--dark);
+}
+
+.fb-verified-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  background: #e8f5e9;
+  color: #2e7d32;
+  font-size: 9px;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 4px;
+  border: 1px solid #c8e6c9;
+}
+
+.fb-verified-icon {
+  font-size: 8px;
+  font-weight: 900;
+}
+
+.fb-sub-header-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.fb-global-stars {
+  display: flex;
+  gap: 2px;
+}
+
+.fb-star-mini {
+  font-size: 11px;
+  color: #dddddd;
+}
+
+.fb-star-mini.active {
+  color: #ffb400;
+}
+
+.fb-global-date {
+  font-size: 11px;
+  color: var(--gray);
+  font-weight: 500;
+}
+
+.fb-global-comment {
+  margin: 0;
+  font-size: 13px;
+  color: var(--dark);
+  line-height: 1.5;
+  white-space: pre-wrap;
+  background: var(--bg-app);
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px dashed var(--line);
+}
+
+/* ── Kiosk Tutorial Visual Styles ─────────────────────────────────────────── */
+
+/* Step 1 — User ID input mock */
+.kiosk-screen-mock {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 16px 20px;
+  text-align: center;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.04);
+  animation: cardFloat 3s infinite ease-in-out;
+}
+
+.kiosk-field-label {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--gray);
+  margin-bottom: 8px;
+}
+
+.kiosk-input-row {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+
+.kiosk-digit {
+  width: 28px;
+  height: 34px;
+  border: 2px solid var(--line);
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--dark);
+  background: var(--bg-app);
+}
+
+.kiosk-digit.filled {
+  border-color: var(--green);
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.kiosk-digit.cursor-blink {
+  border-color: var(--dark);
+  background: var(--white);
+  animation: cursorBlink 1s step-end infinite;
+}
+
+@keyframes cursorBlink {
+  0%, 100% { border-color: var(--dark); }
+  50%       { border-color: transparent; }
+}
+
+.kiosk-field-hint {
+  font-size: 10px;
+  color: var(--gray);
+}
+
+/* PIN dot empty state */
+.pin-dot-empty {
+  font-size: 16px;
+  color: var(--line);
+}
+
+/* Step 5 — Confirm card */
+.kiosk-confirm-card {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 14px 18px;
+  width: 80%;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.04);
+  animation: cardFloat 3s infinite ease-in-out;
+}
+
+.kiosk-confirm-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  padding: 4px 0;
+  color: var(--gray);
+  border-bottom: 1px dashed rgba(0,0,0,0.06);
+}
+
+.kiosk-confirm-row strong {
+  color: var(--dark);
+  font-weight: 700;
+}
+
+.kiosk-confirm-row.total-row {
+  border-bottom: none;
+  margin-top: 4px;
+  padding-top: 8px;
+}
+
+.kiosk-confirm-row.total-row strong {
+  color: var(--green);
+  font-size: 14px;
+}
+
+.kiosk-confirm-btn {
+  margin-top: 10px;
+  background: var(--dark);
+  color: var(--white);
+  border-radius: 8px;
+  padding: 7px;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+}
+
+/* Step 6 — Pay progress */
+.kiosk-pay-mock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 80%;
+}
+
+.coin-slot-icon {
+  font-size: 32px;
+  animation: coinDrop 2.5s infinite ease-in-out;
+}
+
+.pay-progress-bar {
+  width: 100%;
+  height: 12px;
+  background: var(--line);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.pay-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--green), #8bc34a);
+  border-radius: 999px;
+  animation: fillGrow 2.5s infinite ease-in-out;
+}
+
+@keyframes fillGrow {
+  0%   { width: 20%; }
+  60%  { width: 72%; }
+  100% { width: 72%; }
+}
+
+.pay-labels {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--gray);
+}
+
+/* Step 7 — Locker door mock */
+.locker-door-mock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.locker-body {
+  width: 64px;
+  height: 80px;
+  background: var(--white);
+  border: 2px solid var(--dark);
+  border-radius: 10px;
+  position: relative;
+  box-shadow: 4px 4px 0 var(--dark);
+}
+
+.locker-handle {
+  position: absolute;
+  right: -10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 8px;
+  height: 20px;
+  background: var(--dark);
+  border-radius: 4px;
+}
+
+.locker-status-light {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.locker-status-light.locked {
+  background: #4cd964;
+  box-shadow: 0 0 6px rgba(76, 217, 100, 0.6);
+  animation: statusPulse 1.5s infinite ease-in-out;
+}
+
+@keyframes statusPulse {
+  0%, 100% { box-shadow: 0 0 4px rgba(76,217,100,0.4); }
+  50%       { box-shadow: 0 0 10px rgba(76,217,100,0.8); }
+}
+
+.locker-done-label {
+  text-align: center;
+}
+
+.locker-done-label strong {
+  display: block;
+  font-size: 13px;
+  color: #2e7d32;
+  margin-top: 4px;
+}
+
+.locker-done-label small {
+  font-size: 11px;
+  color: var(--gray);
+}
+
+/* ── Digital Thermal Receipt ───────────────────────────────────────────────── */
+
+.thermal-receipt-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow-y: auto;
+  max-height: 65vh;
+  padding-bottom: 4px;
+}
+
+.thermal-receipt {
+  background: #fdfdfd;
+  color: #111;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  padding: 24px 18px 20px 18px;
+  border: 1px solid #ddd;
+  border-radius: 2px;
+  box-shadow:
+    0 2px 0 #e0e0e0,
+    0 6px 24px rgba(0, 0, 0, 0.08);
+  width: 100%;
+  max-width: 300px;
+  position: relative;
+  /* Jagged top edge simulating torn receipt paper */
+  -webkit-mask-image:
+    repeating-linear-gradient(
+      90deg,
+      transparent 0 4px,
+      #000 4px 8px
+    ) 0 0 / 8px 6px no-repeat,
+    linear-gradient(#000 0, #000 100%) 0 6px / 100% calc(100% - 6px) no-repeat;
+  mask-image:
+    repeating-linear-gradient(
+      90deg,
+      transparent 0 4px,
+      #000 4px 8px
+    ) 0 0 / 8px 6px no-repeat,
+    linear-gradient(#000 0, #000 100%) 0 6px / 100% calc(100% - 6px) no-repeat;
+}
+
+.thermal-receipt-header {
+  text-align: center;
+  margin-bottom: 8px;
+  padding-top: 4px;
+}
+
+.thermal-logo {
+  font-size: 26px;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.thermal-title {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 16px;
+  font-weight: 900;
+  margin: 0 0 2px 0;
+  letter-spacing: 2px;
+  color: #111;
+}
+
+.thermal-subtitle {
+  font-size: 10px;
+  margin: 0;
+  color: #555;
+  letter-spacing: 0.5px;
+}
+
+.thermal-double-divider {
+  font-size: 11px;
+  color: #555;
+  text-align: center;
+  margin: 4px 0;
+  letter-spacing: -0.5px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.thermal-divider {
+  font-size: 11px;
+  color: #999;
+  margin: 6px 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.thermal-section-title {
+  text-align: center;
+  font-weight: 800;
+  font-size: 12px;
+  letter-spacing: 1px;
+  margin: 4px 0;
+  color: #111;
+}
+
+.thermal-body {
+  padding: 4px 0;
+}
+
+.thermal-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 3px;
+  font-size: 11.5px;
+  color: #333;
+}
+
+.thermal-row span:first-child {
+  white-space: nowrap;
+  color: #555;
+}
+
+.thermal-row span:last-child {
+  text-align: right;
+  font-weight: 600;
+  color: #111;
+}
+
+.thermal-row.bold {
+  font-weight: 800;
+  font-size: 13px;
+  color: #111;
+  margin-top: 4px;
+}
+
+.thermal-row.bold span {
+  color: #111;
+  font-weight: 800;
+}
+
+.thermal-footer {
+  text-align: center;
+  font-size: 11px;
+  margin-top: 10px;
+  color: #444;
+  line-height: 1.6;
+}
+
+.thermal-footer p {
+  margin: 2px 0;
+}
+
+.thermal-qr {
+  display: block;
+  margin: 12px auto 6px auto;
+  width: 96px;
+  height: 96px;
+  border: 3px solid white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  image-rendering: pixelated;
+}
+
+.thermal-qr-label {
+  display: block;
+  font-size: 9px;
+  color: #777;
+  letter-spacing: 0.3px;
+  margin-top: 4px;
+}

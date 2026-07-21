@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import './App.css'
 import History from './pages/History'
 import Home from './pages/Home'
@@ -191,6 +191,43 @@ export default function App() {
     }
   }, [session])
 
+  // Detect when an active rental is terminated because a locker goes into Maintenance
+  const prevActiveRentalsRef = useRef([])
+  useEffect(() => {
+    if (!session?.userId) {
+      prevActiveRentalsRef.current = []
+      return
+    }
+
+    const prevActive = prevActiveRentalsRef.current
+
+    if (prevActive.length > 0) {
+      const currentActiveIds = new Set(activeRentals.map((r) => r.transactionId))
+
+      for (const oldRental of prevActive) {
+        if (!currentActiveIds.has(oldRental.transactionId)) {
+          // Rental disappeared. Check if the locker status is now Maintenance
+          const locker = lockers.find((l) => String(l.locker_id) === String(oldRental.lockerId))
+          if (locker && locker.status === 'Maintenance') {
+            const title = lang === 'tl' ? 'Locker nasa Maintenance' : 'Locker Under Maintenance'
+            const content = lang === 'tl'
+              ? `Ang Locker ${oldRental.lockerNumber} ay inilagay sa maintenance. Ang natitirang balanse ay ibinalik sa iyong wallet.`
+              : `Locker ${oldRental.lockerNumber} has been placed under maintenance. Your remaining balance has been refunded to your wallet.`
+
+            addNotification({
+              title,
+              content,
+              type: 'info',
+              showOnDevice: true,
+            })
+          }
+        }
+      }
+    }
+
+    prevActiveRentalsRef.current = activeRentals
+  }, [activeRentals, lockers, lang, session?.userId])
+
   const navItems = [
     ['home', t('home')],
     ['rent', t('rental')],
@@ -362,6 +399,7 @@ export default function App() {
           t={t}
           lang={lang}
           onLanguageChange={changeLanguage}
+          onShowTutorial={() => setIntroSeen(false)}
         />
       )
     }

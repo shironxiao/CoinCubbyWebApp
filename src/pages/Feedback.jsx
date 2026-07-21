@@ -99,7 +99,6 @@ export default function FeedbackPage({ session, rentalHistory, loadingData, t, l
     }
 
     loadFeedback()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, accessToken, loadingData])
 
   // Load Global Feedback
@@ -296,6 +295,42 @@ export default function FeedbackPage({ session, rentalHistory, loadingData, t, l
         <section className="fb-section">
           <p className="fb-section-label">{t('feedback_global_label')}</p>
 
+          {/* Rating Summary Widget */}
+          {!loadingGlobal && globalFeedback.length > 0 && (
+            <div className="fb-summary-widget">
+              <div className="fb-summary-score">
+                <span className="fb-big-score">
+                  {(globalFeedback.reduce((sum, f) => sum + f.rating, 0) / globalFeedback.length).toFixed(1)}
+                </span>
+                <div className="fb-summary-stars">
+                  {[1, 2, 3, 4, 5].map((n) => {
+                    const avg = globalFeedback.reduce((sum, f) => sum + f.rating, 0) / globalFeedback.length
+                    const filled = n <= Math.round(avg)
+                    return <span key={n} className={`fb-summary-star ${filled ? 'active' : ''}`}>{STAR}</span>
+                  })}
+                </div>
+                <span className="fb-summary-count">
+                  {globalFeedback.length} {lang === 'tl' ? 'mga puna' : 'reviews'}
+                </span>
+              </div>
+              <div className="fb-summary-bars">
+                {[5, 4, 3, 2, 1].map((stars) => {
+                  const count = globalFeedback.filter(f => f.rating === stars).length
+                  const percent = (count / globalFeedback.length) * 100
+                  return (
+                    <div key={stars} className="fb-summary-bar-row">
+                      <span className="fb-summary-bar-label">{stars}★</span>
+                      <div className="fb-summary-bar-track">
+                        <div className="fb-summary-bar-fill" style={{ width: `${percent}%` }} />
+                      </div>
+                      <span className="fb-summary-bar-count">{count}</span>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
           {loadingGlobal ? (
             <div className="fb-empty">{t('loading')}</div>
           ) : globalFeedback.length === 0 ? (
@@ -304,27 +339,42 @@ export default function FeedbackPage({ session, rentalHistory, loadingData, t, l
             <div className="fb-cards">
               {globalFeedback.map((fb) => {
                 const reviewerName = fb.customers?.full_name || (lang === 'tl' ? 'Gagamit' : 'Verified Customer')
+                const initials = reviewerName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() || 'U'
+                
+                // Deterministic gradient color based on name length/hash
+                const colors = ['grad-blue', 'grad-purple', 'grad-teal', 'grad-orange', 'grad-pink']
+                const colorClass = colors[reviewerName.length % colors.length]
+
                 return (
-                  <div key={fb.feedback_id} className="fb-card fb-card--done">
-                    <div className="fb-card-header">
-                      <span className="fb-reviewer-name">{reviewerName}</span>
-                      <span className="fb-done-stars">
-                        {[1, 2, 3, 4, 5].map((n) =>
-                          n <= fb.rating ? (
-                            <span key={n} className="fb-star fb-star--on">{STAR}</span>
-                          ) : (
-                            <span key={n} className="fb-star">{STAR_EMPTY}</span>
-                          ),
-                        )}
-                      </span>
+                  <div key={fb.feedback_id} className="fb-global-card">
+                    <div className="fb-global-card-userinfo">
+                      <div className={`fb-avatar ${colorClass}`}>
+                        {initials}
+                      </div>
+                      <div className="fb-user-details">
+                        <div className="fb-user-name-row">
+                          <span className="fb-global-reviewer-name">{reviewerName}</span>
+                          <span className="fb-verified-badge">
+                            <span className="fb-verified-icon">✓</span>
+                            {lang === 'tl' ? 'Beripikado' : 'Verified'}
+                          </span>
+                        </div>
+                        <div className="fb-sub-header-row">
+                          <div className="fb-global-stars">
+                            {[1, 2, 3, 4, 5].map((n) => (
+                              <span key={n} className={`fb-star-mini ${n <= fb.rating ? 'active' : ''}`}>{STAR}</span>
+                            ))}
+                          </div>
+                          <span className="fb-global-date">
+                            {new Date(fb.created_at).toLocaleDateString(
+                              lang === 'tl' ? 'fil-PH' : 'en-US',
+                              { year: 'numeric', month: 'short', day: 'numeric' },
+                            )}
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                    {fb.comment && <p className="fb-done-comment">{fb.comment}</p>}
-                    <p className="fb-done-date">
-                      {new Date(fb.created_at).toLocaleDateString(
-                        lang === 'tl' ? 'fil-PH' : 'en-US',
-                        { year: 'numeric', month: 'short', day: 'numeric' },
-                      )}
-                    </p>
+                    {fb.comment && <p className="fb-global-comment">{fb.comment}</p>}
                   </div>
                 )
               })}
