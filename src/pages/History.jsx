@@ -251,7 +251,7 @@ export default function History({
               <div className="thermal-receipt-container" style={{ width: '100%' }}>
                 <div className="thermal-receipt">
                   <div className="thermal-receipt-header">
-                    <img src={coinLogo} alt="CoinCubby" className="thermal-logo" style={{ width: '56px', height: '56px', objectFit: 'contain', borderRadius: '12px', marginBottom: '8px' }} />
+                    <img src={coinLogo} alt="CoinCubby" className="thermal-logo" style={{ width: '56px', height: '56px', objectFit: 'contain', borderRadius: '12px', marginBottom: '8px', display: 'block', margin: '0 auto 8px' }} />
                     <h3 className="thermal-title">COIN CUBBY</h3>
                     <p className="thermal-subtitle">Secure Storage Made Easy</p>
                   </div>
