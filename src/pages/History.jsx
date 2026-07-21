@@ -78,7 +78,7 @@ export default function History({
 
   function closeModal() {
     setSelectedItem(null)
-    setReceiptView(false)
+    setShowReceipt(false)
   }
 
   return (
@@ -251,7 +251,7 @@ export default function History({
               <div className="thermal-receipt-container" style={{ width: '100%' }}>
                 <div className="thermal-receipt">
                   <div className="thermal-receipt-header">
-                    <span className="thermal-logo">🪙</span>
+                    <img src={coinLogo} alt="CoinCubby" className="thermal-logo" style={{ width: '56px', height: '56px', objectFit: 'contain', borderRadius: '12px', marginBottom: '8px' }} />
                     <h3 className="thermal-title">COIN CUBBY</h3>
                     <p className="thermal-subtitle">Secure Storage Made Easy</p>
                   </div>
@@ -302,12 +302,6 @@ export default function History({
                   <div className="thermal-footer">
                     <p>Date: {formatDateTime(selectedItem.startTime)}</p>
                     <p>Thank you for using Coin Cubby!</p>
-                    <img
-                      className="thermal-qr"
-                      src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent('https://coincubby.vercel.app/#/feedback')}`}
-                      alt="Feedback QR Code"
-                    />
-                    <span className="thermal-qr-label">Scan to tell us about your experience!</span>
                   </div>
                 </div>
 
@@ -391,29 +385,28 @@ export default function History({
                   </div>
                 )}
 
-                {selectedItem.status === 'Completed' && (
-                  <>
-                    <button
-                      className="secondary-button"
-                      style={{ width: '100%', marginBottom: '8px' }}
-                      type="button"
-                      onClick={() => setShowReceipt(true)}
-                    >
-                      📄 {lang === 'tl' ? 'Tingnan ang Resibo' : 'View Receipt'}
-                    </button>
+                {/* View Receipt — available for both Active and Completed */}
+                <button
+                  className="secondary-button"
+                  style={{ width: '100%', marginBottom: '8px' }}
+                  type="button"
+                  onClick={() => setShowReceipt(true)}
+                >
+                  🧾 {lang === 'tl' ? 'Tingnan ang Resibo' : 'View Receipt'}
+                </button>
 
-                    <button
-                      className="primary-button xml-black-button"
-                      style={{ width: '100%', marginBottom: '4px' }}
-                      type="button"
-                      onClick={() => {
-                        setSelectedItem(null)
-                        onNavigate('feedback')
-                      }}
-                    >
-                      {lang === 'tl' ? 'Magbigay ng Feedback' : 'Give Feedback'}
-                    </button>
-                  </>
+                {selectedItem.status === 'Completed' && (
+                  <button
+                    className="primary-button xml-black-button"
+                    style={{ width: '100%', marginBottom: '4px' }}
+                    type="button"
+                    onClick={() => {
+                      setSelectedItem(null)
+                      onNavigate('feedback')
+                    }}
+                  >
+                    {lang === 'tl' ? 'Magbigay ng Feedback' : 'Give Feedback'}
+                  </button>
                 )}
 
                 <button
