@@ -196,9 +196,8 @@ export default function Home({
         </div>
         <div className="xml-legend-card">
           <span><i className="available"></i>{t('available')}</span>
-          <span><i className="payment-required"></i>{lang === 'tl' ? 'Kailangang Magbayad' : 'Payment Required'}</span>
           <span><i className="occupied"></i>{t('occupied')}</span>
-          <span><i className="maintenance"></i>{lang === 'tl' ? 'Kumpunihin' : 'Maintenance'}</span>
+          <span><i className="maintenance"></i>{t('maintenance')}</span>
         </div>
       </section>
 
@@ -244,6 +243,7 @@ export default function Home({
               <small>
                 {locker.status === 'Available' ? t('available')
                   : locker.status === 'Occupied' ? t('occupied')
+                  : locker.status === 'Maintenance' ? t('maintenance')
                   : locker.status === 'Unavailable' ? t('unavailable')
                   : locker.status}
               </small>
