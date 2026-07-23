@@ -292,6 +292,12 @@ export default function History({
                       <span>Total Paid:</span>
                       <span>{formatMoney(selectedItem.amount)}</span>
                     </div>
+                    {selectedItem.totalChange > 0 && (
+                      <div className="thermal-row">
+                        <span>{t('change_given')}:</span>
+                        <span>{formatMoney(selectedItem.totalChange)}</span>
+                      </div>
+                    )}
                     <div className="thermal-row">
                       <span>Payment:</span>
                       <span>{selectedItem.paymentMethod === 'Wallet' ? t('wallet') : t('pay_at_device')}</span>
@@ -369,6 +375,15 @@ export default function History({
                   <strong style={{ fontSize: '16px', color: '#4cd964' }}>{formatMoney(selectedItem.amount)}</strong>
                 </div>
 
+                {selectedItem.totalChange > 0 && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ color: '#888', fontSize: '13px' }}>
+                      {t('change_given')}
+                    </span>
+                    <strong style={{ fontSize: '14px', color: '#007aff' }}>{formatMoney(selectedItem.totalChange)}</strong>
+                  </div>
+                )}
+
                 {selectedItem.paymentsList && selectedItem.paymentsList.length > 1 && (
                   <div style={{ marginTop: '4px', background: 'rgba(0,0,0,0.02)', padding: '10px', borderRadius: '8px', border: '1px solid rgba(0,0,0,0.05)' }}>
                     <span style={{ fontSize: '10px', color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 'bold', display: 'block', marginBottom: '6px' }}>
@@ -379,7 +394,14 @@ export default function History({
                         <span>
                           {lang === 'tl' ? 'Pagbabayad' : 'Payment'} #{idx + 1} ({p.payment_method === 'Wallet' ? t('wallet') : t('pay_at_device')})
                         </span>
-                        <strong>{formatMoney(p.amount)}</strong>
+                        <strong>
+                          {formatMoney(p.amount)}
+                          {Number(p.change_amount || 0) > 0 && (
+                            <span style={{ color: '#007aff', marginLeft: '6px' }}>
+                              ({t('change_given')}: {formatMoney(p.change_amount)})
+                            </span>
+                          )}
+                        </strong>
                       </div>
                     ))}
                   </div>

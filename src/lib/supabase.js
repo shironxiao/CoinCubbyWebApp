@@ -579,7 +579,7 @@ export async function createReturnPaymentSession(item, token, amountDue) {
 }
 
 export async function fetchTransactionPayments(transactionId, token) {
-  return request(`/rest/v1/payments?transaction_id=eq.${transactionId}&select=amount,payment_method`, {
+  return request(`/rest/v1/payments?transaction_id=eq.${transactionId}&select=amount,payment_method,change_amount`, {
     headers: authHeaders(token),
   })
 }
@@ -672,7 +672,7 @@ export async function fetchActiveRentals(customerId, token) {
 
 export async function fetchRentalHistory(customerId, token) {
   return request(
-    `/rest/v1/transactions?customer_id=eq.${customerId}&select=transaction_id,locker_id,start_time,end_time,duration_minutes,qr_token,status,lockers(locker_number,size_type_id),payments(amount,payment_method)&order=start_time.desc`,
+    `/rest/v1/transactions?customer_id=eq.${customerId}&select=transaction_id,locker_id,start_time,end_time,duration_minutes,qr_token,status,lockers(locker_number,size_type_id),payments(amount,payment_method,change_amount)&order=start_time.desc`,
     { headers: authHeaders(token) },
   )
 }
@@ -984,6 +984,7 @@ export function mapRental(row) {
 export function mapHistory(row) {
   const payments = row.payments || []
   const amount = payments.reduce((sum, payment) => sum + Number(payment.amount || 0), 0)
+  const totalChange = payments.reduce((sum, payment) => sum + Number(payment.change_amount || 0), 0)
   const size = sizeFromType(row.lockers?.size_type_id)
 
   return {
@@ -991,6 +992,7 @@ export function mapHistory(row) {
     lockerNumber: row.lockers?.locker_number || '?',
     sizeName: size.label,
     amount,
+    totalChange,
     paymentMethod: payments[0]?.payment_method || 'Device',
     status: row.status || 'Active',
     startTime: row.start_time,
