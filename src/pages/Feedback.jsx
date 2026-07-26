@@ -297,12 +297,15 @@ export default function FeedbackPage({ session, rentalHistory, loadingData, t, l
               <p className="fb-section-label">{t('feedback_submitted_label')}</p>
               <div className="fb-cards">
                 {submitted.map((fb) => {
-                  const lockerNum = fb.transactions?.lockers?.locker_number || '?'
+                  const lockerNum = fb.transactions?.lockers?.locker_number
+                  const badgeLabel = lockerNum
+                    ? `${lang === 'tl' ? 'Locker' : 'Locker'} ${lockerNum}`
+                    : (lang === 'tl' ? 'Pangkalahatang Puna' : 'General Review')
                   return (
                     <div key={fb.feedback_id} className="fb-card fb-card--done">
                       <div className="fb-card-header">
                         <span className="fb-locker-badge">
-                          {lang === 'tl' ? 'Locker' : 'Locker'} {lockerNum}
+                          {badgeLabel}
                         </span>
                         <span className="fb-done-stars">
                           {[1, 2, 3, 4, 5].map((n) =>

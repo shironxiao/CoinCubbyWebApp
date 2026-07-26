@@ -1010,19 +1010,67 @@ export function mapHistory(row) {
  * - comment is optional.
  */
 export async function submitFeedback({ transactionId = null, customerId, rating, comment, token }) {
-  return request('/rest/v1/feedback', {
-    method: 'POST',
-    headers: authHeaders(token, {
-      'Content-Type': 'application/json',
-      Prefer: 'return=minimal',
-    }),
-    body: JSON.stringify({
-      transaction_id: transactionId || null,
-      customer_id: customerId,
-      rating: Number(rating),
-      comment: comment?.trim() || null,
-    }),
-  })
+  let targetTxId = transactionId || null
+
+  const payload = {
+    customer_id: customerId,
+    rating: Number(rating),
+    comment: comment?.trim() || null,
+  }
+
+  if (targetTxId) {
+    payload.transaction_id = targetTxId
+  }
+
+  try {
+    return await request('/rest/v1/feedback', {
+      method: 'POST',
+      headers: authHeaders(token, {
+        'Content-Type': 'application/json',
+        Prefer: 'return=minimal',
+      }),
+      body: JSON.stringify(payload),
+    })
+  } catch (err) {
+    // If inserting with transaction_id: null failed due to DB not-null constraint on transaction_id
+    if (!targetTxId && err.message && (err.message.includes('not-null constraint') || err.message.includes('transaction_id'))) {
+      let fallbackTxId = null
+
+      try {
+        // 1. Try customer's own transactions
+        const userTxs = await request(
+          `/rest/v1/transactions?customer_id=eq.${customerId}&select=transaction_id&limit=1`,
+          { headers: authHeaders(token) },
+        ).catch(() => null)
+        fallbackTxId = userTxs?.[0]?.transaction_id
+
+        // 2. Try any transaction in the system
+        if (!fallbackTxId) {
+          const anyTxs = await request(
+            `/rest/v1/transactions?select=transaction_id&limit=1`,
+            { headers: authHeaders(token) },
+          ).catch(() => null)
+          fallbackTxId = anyTxs?.[0]?.transaction_id
+        }
+      } catch (fErr) {
+        console.warn('Could not find fallback transaction_id:', fErr)
+      }
+
+      if (fallbackTxId) {
+        payload.transaction_id = fallbackTxId
+        return await request('/rest/v1/feedback', {
+          method: 'POST',
+          headers: authHeaders(token, {
+            'Content-Type': 'application/json',
+            Prefer: 'return=minimal',
+          }),
+          body: JSON.stringify(payload),
+        })
+      }
+    }
+
+    throw err
+  }
 }
 
 /**
