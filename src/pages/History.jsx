@@ -18,6 +18,7 @@ export default function History({
   const [statusFilter, setStatusFilter] = useState('all') // 'all', 'active', 'completed'
   const [selectedItem, setSelectedItem] = useState(null)
   const [showReceipt, setShowReceipt] = useState(false)
+  const [receiptType, setReceiptType] = useState('rental') // 'rental' or 'retrieval'
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 8
 
@@ -74,6 +75,40 @@ export default function History({
     const start = (currentPage - 1) * itemsPerPage
     return filteredItems.slice(start, start + itemsPerPage)
   }, [filteredItems, currentPage])
+
+  // Dynamic payment calculation helpers for the selected history item
+  const derivedPaymentInfo = useMemo(() => {
+    if (!selectedItem) return null
+
+    const payments = selectedItem.paymentsList || []
+
+    // 1. Rental payment calculations (first positive payment)
+    const initialPayment = payments.find((p) => Number(p.amount) > 0)
+    const rentalAmountDue = initialPayment ? Number(initialPayment.amount) : Number(selectedItem.amount || 0)
+    const rentalAmountPaid = rentalAmountDue
+    const rentalPaymentMethod = initialPayment?.payment_method || selectedItem.paymentMethod || 'Wallet'
+
+    // 2. Retrieval/overtime payment calculations (second positive payment)
+    const positivePayments = payments.filter((p) => Number(p.amount) > 0)
+    const overtimePayment = positivePayments.length > 1 ? positivePayments[1] : null
+    const retrievalAmountDue = overtimePayment ? Number(overtimePayment.amount) : 0
+    const retrievalAmountPaid = retrievalAmountDue
+    const retrievalPaymentMethod = overtimePayment ? overtimePayment.payment_method : 'None'
+
+    // 3. Early retrieval refund (negative payment)
+    const refundPayment = payments.find((p) => Number(p.amount) < 0)
+    const refundAmount = refundPayment ? Math.abs(Number(refundPayment.amount)) : 0
+
+    return {
+      rentalAmountDue,
+      rentalAmountPaid,
+      rentalPaymentMethod,
+      retrievalAmountDue,
+      retrievalAmountPaid,
+      retrievalPaymentMethod,
+      refundAmount,
+    }
+  }, [selectedItem])
 
   return (
     <main className="page xml-page xml-history">
@@ -168,7 +203,11 @@ export default function History({
           <article
             className="history-row"
             key={item.id}
-            onClick={() => { setSelectedItem(item); setShowReceipt(false) }}
+            onClick={() => {
+              setSelectedItem(item)
+              setShowReceipt(false)
+              setReceiptType('rental')
+            }}
             style={{ cursor: 'pointer' }}
           >
             <div>
@@ -219,7 +258,10 @@ export default function History({
         <div
           className="modal-backdrop"
           role="presentation"
-          onClick={() => { setSelectedItem(null); setShowReceipt(false) }}
+          onClick={() => {
+            setSelectedItem(null)
+            setShowReceipt(false)
+          }}
         >
           <div
             className="rent-sheet xml-rent-sheet"
@@ -234,7 +276,10 @@ export default function History({
               <button
                 className="icon-button"
                 type="button"
-                onClick={() => { setSelectedItem(null); setShowReceipt(false) }}
+                onClick={() => {
+                  setSelectedItem(null)
+                  setShowReceipt(false)
+                }}
               >
                 X
               </button>
@@ -243,6 +288,49 @@ export default function History({
             {showReceipt ? (
               /* ── VIRTUAL THERMAL RECEIPT VIEW ── */
               <div className="thermal-receipt-container" style={{ width: '100%' }}>
+                
+                {/* Mode Toggle Selector */}
+                {selectedItem.status === 'Completed' && (
+                  <div className="receipt-type-toggle" style={{ display: 'flex', gap: '8px', marginBottom: '16px', width: '100%', justifyContent: 'center' }}>
+                    <button
+                      type="button"
+                      className={`toggle-btn ${receiptType === 'rental' ? 'active' : ''}`}
+                      onClick={() => setReceiptType('rental')}
+                      style={{
+                        padding: '6px 16px',
+                        borderRadius: '20px',
+                        fontSize: '11px',
+                        fontWeight: 'bold',
+                        border: '1px solid var(--line)',
+                        background: receiptType === 'rental' ? 'var(--dark)' : 'var(--white)',
+                        color: receiptType === 'rental' ? 'var(--white)' : 'var(--dark)',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                      }}
+                    >
+                      {lang === 'tl' ? 'Resibo ng Renta' : 'Rental Receipt'}
+                    </button>
+                    <button
+                      type="button"
+                      className={`toggle-btn ${receiptType === 'retrieval' ? 'active' : ''}`}
+                      onClick={() => setReceiptType('retrieval')}
+                      style={{
+                        padding: '6px 16px',
+                        borderRadius: '20px',
+                        fontSize: '11px',
+                        fontWeight: 'bold',
+                        border: '1px solid var(--line)',
+                        background: receiptType === 'retrieval' ? 'var(--dark)' : 'var(--white)',
+                        color: receiptType === 'retrieval' ? 'var(--white)' : 'var(--dark)',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                      }}
+                    >
+                      {lang === 'tl' ? 'Resibo ng Pagkuha' : 'Retrieval Receipt'}
+                    </button>
+                  </div>
+                )}
+
                 <div className="thermal-receipt">
                   <div className="thermal-receipt-header">
                     <span className="thermal-logo">🪙</span>
@@ -251,57 +339,144 @@ export default function History({
                   </div>
 
                   <div className="thermal-double-divider">================================</div>
-                  <div className="thermal-section-title">RENTAL CONFIRMATION</div>
+                  <div className="thermal-section-title">
+                    {receiptType === 'rental' ? 'RENTAL CONFIRMATION' : 'RETRIEVAL RECEIPT'}
+                  </div>
                   <div className="thermal-double-divider">================================</div>
 
                   <div className="thermal-body">
-                    <div className="thermal-row">
-                      <span>Compartment:</span>
-                      <span>{selectedItem.lockerNumber}</span>
-                    </div>
-                    <div className="thermal-row">
-                      <span>Size:</span>
-                      <span>{selectedItem.sizeName}</span>
-                    </div>
-                    <div className="thermal-row">
-                      <span>Rental Type:</span>
-                      <span>{selectedItem.durationMinutes ? 'Fixed Duration' : 'Open Time'}</span>
-                    </div>
-                    {selectedItem.durationMinutes > 0 && (
-                      <div className="thermal-row">
-                        <span>Duration:</span>
-                        <span>{formatMinutes(selectedItem.durationMinutes)}</span>
-                      </div>
-                    )}
-                    {selectedItem.endTime && (
-                      <div className="thermal-row">
-                        <span>Expires:</span>
-                        <span>{formatDateTime(selectedItem.endTime)}</span>
-                      </div>
-                    )}
+                    {receiptType === 'rental' ? (
+                      /* ── Rental layout details ── */
+                      <>
+                        <div className="thermal-row">
+                          <span>Compartment:</span>
+                          <span>{selectedItem.lockerNumber}</span>
+                        </div>
+                        <div className="thermal-row">
+                          <span>Size:</span>
+                          <span>{selectedItem.sizeName}</span>
+                        </div>
+                        <div className="thermal-row">
+                          <span>Rental Type:</span>
+                          <span>
+                            {selectedItem.durationMinutes
+                              ? (lang === 'tl' ? 'Fixed Duration' : 'Fixed Duration')
+                              : (lang === 'tl' ? 'Open Time' : 'Open Time')}
+                          </span>
+                        </div>
+                        {selectedItem.durationMinutes > 0 && (
+                          <div className="thermal-row">
+                            <span>Duration:</span>
+                            <span>{formatMinutes(selectedItem.durationMinutes)}</span>
+                          </div>
+                        )}
+                        {selectedItem.endTime && (
+                          <div className="thermal-row">
+                            <span>Expires:</span>
+                            <span>{formatDateTime(selectedItem.endTime)}</span>
+                          </div>
+                        )}
+                        
+                        <div className="thermal-divider">--------------------------------</div>
+                        <div className="thermal-section-title">PAYMENT DETAILS</div>
+                        <div className="thermal-divider">--------------------------------</div>
 
-                    <div className="thermal-divider">--------------------------------</div>
+                        <div className="thermal-row">
+                          <span>Amount Due:</span>
+                          <span>₱{Number(derivedPaymentInfo?.rentalAmountDue || 0).toFixed(2)}</span>
+                        </div>
+                        <div className="thermal-row">
+                          <span>Amount Paid:</span>
+                          <span>₱{Number(derivedPaymentInfo?.rentalAmountPaid || 0).toFixed(2)}</span>
+                        </div>
+                        <div className="thermal-row">
+                          <span>Method:</span>
+                          <span>{String(derivedPaymentInfo?.rentalPaymentMethod || 'Wallet').toUpperCase()}</span>
+                        </div>
+                      </>
+                    ) : (
+                      /* ── Retrieval layout details ── */
+                      <>
+                        <div className="thermal-row">
+                          <span>Compartment:</span>
+                          <span>{selectedItem.lockerNumber}</span>
+                        </div>
+                        <div className="thermal-row">
+                          <span>Size:</span>
+                          <span>{selectedItem.sizeName}</span>
+                        </div>
+                        <div className="thermal-row">
+                          <span>Rental Type:</span>
+                          <span>
+                            {selectedItem.durationMinutes
+                              ? (lang === 'tl' ? 'Fixed Duration' : 'Fixed Duration')
+                              : (lang === 'tl' ? 'Open Time' : 'Open Time')}
+                          </span>
+                        </div>
+                        <div className="thermal-row">
+                          <span>Started:</span>
+                          <span>{formatDateTime(selectedItem.startTime)}</span>
+                        </div>
+                        <div className="thermal-row">
+                          <span>Retrieved:</span>
+                          <span>{selectedItem.endTime ? formatDateTime(selectedItem.endTime) : '-'}</span>
+                        </div>
 
-                    <div className="thermal-row bold">
-                      <span>Total Paid:</span>
-                      <span>{formatMoney(selectedItem.amount)}</span>
-                    </div>
-                    <div className="thermal-row">
-                      <span>Payment:</span>
-                      <span>{selectedItem.paymentMethod === 'Wallet' ? t('wallet') : t('pay_at_device')}</span>
-                    </div>
+                        <div className="thermal-divider">--------------------------------</div>
+                        <div className="thermal-section-title">PAYMENT DETAILS</div>
+                        <div className="thermal-divider">--------------------------------</div>
+
+                        {Number(derivedPaymentInfo?.retrievalAmountDue || 0) > 0 || Number(derivedPaymentInfo?.refundAmount || 0) > 0 ? (
+                          <>
+                            <div className="thermal-row">
+                              <span>Amount Due:</span>
+                              <span>₱{Number(derivedPaymentInfo?.retrievalAmountDue || 0).toFixed(2)}</span>
+                            </div>
+                            <div className="thermal-row">
+                              <span>Amount Paid:</span>
+                              <span>₱{Number(derivedPaymentInfo?.retrievalAmountPaid || 0).toFixed(2)}</span>
+                            </div>
+                            <div className="thermal-row">
+                              <span>Method:</span>
+                              <span>{String(derivedPaymentInfo?.retrievalPaymentMethod || 'None').toUpperCase()}</span>
+                            </div>
+
+                            {Number(derivedPaymentInfo?.refundAmount || 0) > 0 && (
+                              <>
+                                <div className="thermal-divider">--------------------------------</div>
+                                <div className="thermal-section-title">** EARLY RETRIEVAL REFUND **</div>
+                                <div className="thermal-row">
+                                  <span>Refunded -&gt; Wallet:</span>
+                                  <span>₱{Number(derivedPaymentInfo?.refundAmount || 0).toFixed(2)}</span>
+                                </div>
+                              </>
+                            )}
+                          </>
+                        ) : (
+                          <>
+                            <div className="thermal-row">
+                              <span>Amount Due:</span>
+                              <span>₱0.00</span>
+                            </div>
+                            <div className="thermal-row">
+                              <span>Status:</span>
+                              <span>NO CHARGE</span>
+                            </div>
+                          </>
+                        )}
+                      </>
+                    )}
                   </div>
 
                   <div className="thermal-double-divider">================================</div>
                   <div className="thermal-footer">
-                    <p>Date: {formatDateTime(selectedItem.startTime)}</p>
+                    <p>
+                      Date: {formatDateTime(receiptType === 'rental' ? selectedItem.startTime : (selectedItem.endTime || selectedItem.startTime))}
+                    </p>
                     <p>Thank you for using Coin Cubby!</p>
-                    <img
-                      className="thermal-qr"
-                      src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent('https://coincubby.vercel.app/#/feedback')}`}
-                      alt="Feedback QR Code"
-                    />
-                    <span className="thermal-qr-label">Scan to tell us about your experience!</span>
+                    <span className="thermal-qr-label" style={{ marginTop: '10px', display: 'block', fontWeight: 'bold' }}>
+                      Please tell us about your experience!
+                    </span>
                   </div>
                 </div>
 
