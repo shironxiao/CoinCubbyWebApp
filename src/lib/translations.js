@@ -68,6 +68,7 @@ export const translations = {
     loading_lockers: "Loading lockers...",
     available: "Available",
     occupied: "Occupied",
+    maintenance: "Maintenance",
     unavailable: "Unavailable",
     rates_per_hour: "Rates per Hour",
     coin_slot: "Coin Slot",
@@ -138,6 +139,7 @@ export const translations = {
     start_time: "Start Time",
     end_time: "End Time",
     payments_log: "Payments Log",
+    change_given: "Change Given",
     confirm_clear_title: "Confirm Clear All",
     confirm_clear_msg: "Are you sure you want to clear your rental history? This cannot be undone.",
     clear_btn: "Clear All",
@@ -168,7 +170,11 @@ export const translations = {
     feedback_tab_my: "Rate My Rentals",
     feedback_tab_global: "Global Reviews",
     feedback_global_label: "REVIEWS FROM ALL USERS",
-    feedback_no_global: "No global reviews available yet."
+    feedback_no_global: "No global reviews available yet.",
+    general_review_title: "Write a General Review",
+    general_review_sub: "Share your experience even if you haven't rented a locker yet",
+    submit_general_review: "Submit General Review",
+    general_review_success: "Thank you for your general review!",
   },
   tl: {
     // Welcome Onboarding
@@ -239,6 +245,7 @@ export const translations = {
     loading_lockers: "Naglo-load ng mga locker...",
     available: "Bakante",
     occupied: "May Laman",
+    maintenance: "Kumpunihin",
     unavailable: "Hindi Pwede",
     rates_per_hour: "Halaga Bawat Oras",
     coin_slot: "Hulugan ng Barya",
@@ -309,6 +316,7 @@ export const translations = {
     start_time: "Oras ng Pagsimula",
     end_time: "Oras ng Pagtatapos",
     payments_log: "Log ng mga Bayad",
+    change_given: "Sukli",
     confirm_clear_title: "Kumpirmahin ang Pagbura",
     confirm_clear_msg: "Sigurado ka bang gusto mong burahin ang iyong kasaysayan ng renta? Hindi na ito mababawi.",
     clear_btn: "Burahin Lahat",
@@ -339,6 +347,10 @@ export const translations = {
     feedback_tab_my: "Reytingan ang Aking Renta",
     feedback_tab_global: "Pangkalahatang Feedback",
     feedback_global_label: "MGA PUNA MULA SA LAHAT NG GUMAGAMIT",
-    feedback_no_global: "Wala pang pangkalahatang puna sa kasalukuyan."
+    feedback_no_global: "Wala pang pangkalahatang puna sa kasalukuyan.",
+    general_review_title: "Magsulat ng Pangkalahatang Puna",
+    general_review_sub: "Ibahagi ang iyong karanasan kahit wala ka pang narentahang locker",
+    submit_general_review: "Isumite ang Pangkalahatang Puna",
+    general_review_success: "Salamat sa iyong pangkalahatang puna!",
   }
 }

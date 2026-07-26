@@ -43,6 +43,9 @@ export default function FeedbackPage({ session, rentalHistory, loadingData, t, l
   const [loadingGlobal, setLoadingGlobal] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+  const [genRating, setGenRating] = useState(5)
+  const [genComment, setGenComment] = useState('')
+  const [submittingGen, setSubmittingGen] = useState(false)
 
   // Per-row state: { [transactionId]: { rating, comment, saving, done } }
   const [rowState, setRowState] = useState({})
@@ -168,6 +171,41 @@ export default function FeedbackPage({ session, rentalHistory, loadingData, t, l
     }
   }
 
+  async function handleGeneralSubmit(e) {
+    if (e) e.preventDefault()
+    if (!genRating || genRating < 1) {
+      setError(lang === 'tl' ? 'Mangyaring pumili ng rating.' : 'Please select a rating.')
+      return
+    }
+
+    setSubmittingGen(true)
+    setError('')
+    try {
+      await submitFeedback({
+        transactionId: null,
+        customerId: session.userId,
+        rating: genRating,
+        comment: genComment || '',
+        token: session.accessToken,
+      })
+
+      setMessage(
+        t('general_review_success') ||
+          (lang === 'tl' ? 'Salamat sa iyong pangkalahatang puna!' : 'Thank you for your general review!'),
+      )
+      setGenComment('')
+      setGenRating(5)
+
+      // Refresh global feedback list
+      const rows = await fetchGlobalFeedback(session.accessToken)
+      setGlobalFeedback(rows || [])
+    } catch (err) {
+      setError(err.message || (lang === 'tl' ? 'Nabigo ang pagsumite.' : 'Submission failed.'))
+    } finally {
+      setSubmittingGen(false)
+    }
+  }
+
   const isLoadingUser = loadingData || loadingFb
 
   return (
@@ -259,12 +297,15 @@ export default function FeedbackPage({ session, rentalHistory, loadingData, t, l
               <p className="fb-section-label">{t('feedback_submitted_label')}</p>
               <div className="fb-cards">
                 {submitted.map((fb) => {
-                  const lockerNum = fb.transactions?.lockers?.locker_number || '?'
+                  const lockerNum = fb.transactions?.lockers?.locker_number
+                  const badgeLabel = lockerNum
+                    ? `${lang === 'tl' ? 'Locker' : 'Locker'} ${lockerNum}`
+                    : (lang === 'tl' ? 'Pangkalahatang Puna' : 'General Review')
                   return (
                     <div key={fb.feedback_id} className="fb-card fb-card--done">
                       <div className="fb-card-header">
                         <span className="fb-locker-badge">
-                          {lang === 'tl' ? 'Locker' : 'Locker'} {lockerNum}
+                          {badgeLabel}
                         </span>
                         <span className="fb-done-stars">
                           {[1, 2, 3, 4, 5].map((n) =>
@@ -293,6 +334,44 @@ export default function FeedbackPage({ session, rentalHistory, loadingData, t, l
       ) : (
         /* ── GLOBAL FEEDBACK ─────────────────────────────────── */
         <section className="fb-section">
+          {/* General Review Form for any user */}
+          <div className="fb-card" style={{ marginBottom: '20px', border: '1px solid var(--line)', background: 'var(--white)' }}>
+            <div className="fb-card-header">
+              <span className="fb-locker-badge" style={{ fontSize: '15px' }}>
+                ✏️ {t('general_review_title')}
+              </span>
+            </div>
+            <p style={{ fontSize: '12px', color: 'var(--gray)', margin: '-4px 0 4px 0' }}>
+              {t('general_review_sub')}
+            </p>
+
+            <StarPicker
+              value={genRating}
+              onChange={(v) => setGenRating(v)}
+            />
+            {genRating > 0 && (
+              <p className="fb-rating-label">{ratingLabel(genRating, lang)}</p>
+            )}
+
+            <textarea
+              className="fb-textarea"
+              rows={3}
+              maxLength={500}
+              placeholder={t('feedback_comment_placeholder')}
+              value={genComment}
+              onChange={(e) => setGenComment(e.target.value)}
+            />
+
+            <button
+              type="button"
+              className="primary-button xml-black-button fb-submit-btn"
+              disabled={submittingGen}
+              onClick={handleGeneralSubmit}
+            >
+              {submittingGen ? t('processing') : t('submit_general_review')}
+            </button>
+          </div>
+
           <p className="fb-section-label">{t('feedback_global_label')}</p>
 
           {/* Rating Summary Widget */}

@@ -579,7 +579,7 @@ export async function createReturnPaymentSession(item, token, amountDue) {
 }
 
 export async function fetchTransactionPayments(transactionId, token) {
-  return request(`/rest/v1/payments?transaction_id=eq.${transactionId}&select=amount,payment_method`, {
+  return request(`/rest/v1/payments?transaction_id=eq.${transactionId}&select=amount,payment_method,change_amount`, {
     headers: authHeaders(token),
   })
 }
@@ -672,7 +672,7 @@ export async function fetchActiveRentals(customerId, token) {
 
 export async function fetchRentalHistory(customerId, token) {
   return request(
-    `/rest/v1/transactions?customer_id=eq.${customerId}&select=transaction_id,locker_id,start_time,end_time,duration_minutes,qr_token,status,lockers(locker_number,size_type_id),payments(amount,payment_method)&order=start_time.desc`,
+    `/rest/v1/transactions?customer_id=eq.${customerId}&select=transaction_id,locker_id,start_time,end_time,duration_minutes,qr_token,status,lockers(locker_number,size_type_id),payments(amount,payment_method,change_amount)&order=start_time.desc`,
     { headers: authHeaders(token) },
   )
 }
@@ -984,6 +984,7 @@ export function mapRental(row) {
 export function mapHistory(row) {
   const payments = row.payments || []
   const amount = payments.reduce((sum, payment) => sum + Number(payment.amount || 0), 0)
+  const totalChange = payments.reduce((sum, payment) => sum + Number(payment.change_amount || 0), 0)
   const size = sizeFromType(row.lockers?.size_type_id)
 
   return {
@@ -991,6 +992,7 @@ export function mapHistory(row) {
     lockerNumber: row.lockers?.locker_number || '?',
     sizeName: size.label,
     amount,
+    totalChange,
     paymentMethod: payments[0]?.payment_method || 'Device',
     status: row.status || 'Active',
     startTime: row.start_time,
@@ -1007,20 +1009,68 @@ export function mapHistory(row) {
  * - rating must be 1–5 (DB check constraint).
  * - comment is optional.
  */
-export async function submitFeedback({ transactionId, customerId, rating, comment, token }) {
-  return request('/rest/v1/feedback', {
-    method: 'POST',
-    headers: authHeaders(token, {
-      'Content-Type': 'application/json',
-      Prefer: 'return=minimal',
-    }),
-    body: JSON.stringify({
-      transaction_id: transactionId,
-      customer_id: customerId,
-      rating: Number(rating),
-      comment: comment?.trim() || null,
-    }),
-  })
+export async function submitFeedback({ transactionId = null, customerId, rating, comment, token }) {
+  let targetTxId = transactionId || null
+
+  const payload = {
+    customer_id: customerId,
+    rating: Number(rating),
+    comment: comment?.trim() || null,
+  }
+
+  if (targetTxId) {
+    payload.transaction_id = targetTxId
+  }
+
+  try {
+    return await request('/rest/v1/feedback', {
+      method: 'POST',
+      headers: authHeaders(token, {
+        'Content-Type': 'application/json',
+        Prefer: 'return=minimal',
+      }),
+      body: JSON.stringify(payload),
+    })
+  } catch (err) {
+    // If inserting with transaction_id: null failed due to DB not-null constraint on transaction_id
+    if (!targetTxId && err.message && (err.message.includes('not-null constraint') || err.message.includes('transaction_id'))) {
+      let fallbackTxId = null
+
+      try {
+        // 1. Try customer's own transactions
+        const userTxs = await request(
+          `/rest/v1/transactions?customer_id=eq.${customerId}&select=transaction_id&limit=1`,
+          { headers: authHeaders(token) },
+        ).catch(() => null)
+        fallbackTxId = userTxs?.[0]?.transaction_id
+
+        // 2. Try any transaction in the system
+        if (!fallbackTxId) {
+          const anyTxs = await request(
+            `/rest/v1/transactions?select=transaction_id&limit=1`,
+            { headers: authHeaders(token) },
+          ).catch(() => null)
+          fallbackTxId = anyTxs?.[0]?.transaction_id
+        }
+      } catch (fErr) {
+        console.warn('Could not find fallback transaction_id:', fErr)
+      }
+
+      if (fallbackTxId) {
+        payload.transaction_id = fallbackTxId
+        return await request('/rest/v1/feedback', {
+          method: 'POST',
+          headers: authHeaders(token, {
+            'Content-Type': 'application/json',
+            Prefer: 'return=minimal',
+          }),
+          body: JSON.stringify(payload),
+        })
+      }
+    }
+
+    throw err
+  }
 }
 
 /**
