@@ -170,7 +170,11 @@ export const translations = {
     feedback_tab_my: "Rate My Rentals",
     feedback_tab_global: "Global Reviews",
     feedback_global_label: "REVIEWS FROM ALL USERS",
-    feedback_no_global: "No global reviews available yet."
+    feedback_no_global: "No global reviews available yet.",
+    general_review_title: "Write a General Review",
+    general_review_sub: "Share your experience even if you haven't rented a locker yet",
+    submit_general_review: "Submit General Review",
+    general_review_success: "Thank you for your general review!",
   },
   tl: {
     // Welcome Onboarding
@@ -343,6 +347,10 @@ export const translations = {
     feedback_tab_my: "Reytingan ang Aking Renta",
     feedback_tab_global: "Pangkalahatang Feedback",
     feedback_global_label: "MGA PUNA MULA SA LAHAT NG GUMAGAMIT",
-    feedback_no_global: "Wala pang pangkalahatang puna sa kasalukuyan."
+    feedback_no_global: "Wala pang pangkalahatang puna sa kasalukuyan.",
+    general_review_title: "Magsulat ng Pangkalahatang Puna",
+    general_review_sub: "Ibahagi ang iyong karanasan kahit wala ka pang narentahang locker",
+    submit_general_review: "Isumite ang Pangkalahatang Puna",
+    general_review_success: "Salamat sa iyong pangkalahatang puna!",
   }
 }

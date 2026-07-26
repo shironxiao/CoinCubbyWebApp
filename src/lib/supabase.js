@@ -1009,7 +1009,7 @@ export function mapHistory(row) {
  * - rating must be 1–5 (DB check constraint).
  * - comment is optional.
  */
-export async function submitFeedback({ transactionId, customerId, rating, comment, token }) {
+export async function submitFeedback({ transactionId = null, customerId, rating, comment, token }) {
   return request('/rest/v1/feedback', {
     method: 'POST',
     headers: authHeaders(token, {
@@ -1017,7 +1017,7 @@ export async function submitFeedback({ transactionId, customerId, rating, commen
       Prefer: 'return=minimal',
     }),
     body: JSON.stringify({
-      transaction_id: transactionId,
+      transaction_id: transactionId || null,
       customer_id: customerId,
       rating: Number(rating),
       comment: comment?.trim() || null,
