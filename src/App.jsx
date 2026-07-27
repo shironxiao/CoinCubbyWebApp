@@ -110,23 +110,8 @@ export default function App() {
     })
   }, [])
 
-  // Fetch static data (modules and rates) on mount or session change
-  useEffect(() => {
-    async function initStatic() {
-      try {
-        const mods = await fetchModules()
-        setModules(mods || [])
-        if (mods?.length) {
-          setSelectedModuleId(String(mods[0].module_id))
-        }
-        const rates = await fetchRatesMap()
-        setRatesMap(rates)
-      } catch (err) {
-        console.error('Failed to load static modules/rates:', err)
-      }
-    }
-    initStatic()
-  }, [])
+
+
 
   // Sync wallet balance to states when session is loaded initially
   useEffect(() => {
@@ -144,6 +129,9 @@ export default function App() {
 
     try {
       const lockersPromise = fetchLockers()
+      const modulesPromise = fetchModules()
+      const ratesPromise = fetchRatesMap()
+
       const userPromises = session?.userId
         ? Promise.all([
             getOrCreateWallet(session),
@@ -152,12 +140,28 @@ export default function App() {
           ])
         : Promise.resolve([null, [], []])
 
-      const [allLockers, [bal, activeRows, historyRows]] = await Promise.all([
+      const [allLockers, allModules, rates, [bal, activeRows, historyRows]] = await Promise.all([
         lockersPromise,
+        modulesPromise,
+        ratesPromise,
         userPromises,
       ])
 
       setLockers(allLockers || [])
+
+      if (allModules?.length) {
+        setModules(allModules)
+        setSelectedModuleId((prev) => {
+          if (!prev || !allModules.some((m) => String(m.module_id) === String(prev))) {
+            return String(allModules[0].module_id)
+          }
+          return prev
+        })
+      }
+
+      if (rates) {
+        setRatesMap(rates)
+      }
 
       if (session?.userId) {
         if (bal !== null) {
