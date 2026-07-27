@@ -11,7 +11,6 @@ export default function NotificationsDrawer({
   onEnableBrowserNotifications,
   onNavigate,
   lang,
-  t,
 }) {
   // Prevent body scroll when drawer is open
   useEffect(() => {
@@ -111,7 +110,14 @@ export default function NotificationsDrawer({
     if (!notif.isRead) {
       onMarkAsRead(notif.id)
     }
+    if (onClose) {
+      onClose()
+    }
     if (onNavigate) {
+      if (notif.url?.includes('history') || notif.id === 'receipt-info') {
+        onNavigate('history')
+        return
+      }
       switch (notif.type) {
         case 'rental_start':
           onNavigate('rent')

@@ -264,6 +264,7 @@ export default function App() {
             ? 'Sa Kasaysayan, pindutin ang isang kumpleto na renta at piliin ang "Tingnan ang Resibo". Maaari kang lumipat sa pagitan ng Resibo ng Renta at Pagkuha — kasama ang detalye ng cash, wallet, at refund.'
             : 'In History, tap any completed rental and select "View Receipt". You can switch between the Rental and Retrieval receipts — including cash/wallet payment details and any refunds.',
           type: 'info',
+          url: '#/history',
           timestamp: new Date().toISOString(),
           isRead: false,
         }
