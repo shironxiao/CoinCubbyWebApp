@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 import { useCallback, useEffect, useRef, useState } from 'react'
 import './App.css'
 import History from './pages/History'
@@ -107,7 +108,6 @@ export default function App() {
       }
       setValidating(false)
     })
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Fetch static data (modules and rates) on mount or session change
@@ -220,6 +220,22 @@ export default function App() {
               type: 'info',
               showOnDevice: true,
             })
+          } else {
+            // Normal retrieval/completion — notify the user about their digital receipt
+            const title = lang === 'tl'
+              ? `📄 Resibo handa para sa Locker ${oldRental.lockerNumber}`
+              : `📄 Receipt ready for Locker ${oldRental.lockerNumber}`
+            const content = lang === 'tl'
+              ? 'Pumunta sa Kasaysayan at piliin ang natapos na renta upang tingnan ang iyong Resibo ng Renta o Pagkuha — kasama ang detalye ng bayad at refund.'
+              : 'Go to History and tap the completed rental to view your Rental or Retrieval Receipt — including payment details and any refunds.'
+
+            addNotification({
+              title,
+              content,
+              type: 'success',
+              showOnDevice: true,
+              url: '#/history',
+            })
           }
         }
       }
@@ -241,22 +257,36 @@ export default function App() {
     if (session?.userId) {
       try {
         const stored = localStorage.getItem(`coincubby.notifications.${session.userId}`)
-        setNotifications(
-          stored
-            ? JSON.parse(stored)
-            : [
-                {
-                  id: 'welcome',
-                  title: lang === 'tl' ? 'Maligayang Pagdating sa CoinCubby!' : 'Welcome to CoinCubby!',
-                  content: lang === 'tl'
-                    ? 'Maaari ka nang mag-rent ng locker, tingnan ang iyong balanse, at suriin ang kasaysayan ng transaksyon.'
-                    : 'You can now rent lockers, check your balance, and view transaction history.',
-                  type: 'info',
-                  timestamp: new Date().toISOString(),
-                  isRead: false,
-                },
-              ]
-        )
+        const receiptNotif = {
+          id: 'receipt-info',
+          title: lang === 'tl' ? '📄 Makita ang iyong Resibo' : '📄 View Your Digital Receipt',
+          content: lang === 'tl'
+            ? 'Sa Kasaysayan, pindutin ang isang kumpleto na renta at piliin ang "Tingnan ang Resibo". Maaari kang lumipat sa pagitan ng Resibo ng Renta at Pagkuha — kasama ang detalye ng cash, wallet, at refund.'
+            : 'In History, tap any completed rental and select "View Receipt". You can switch between the Rental and Retrieval receipts — including cash/wallet payment details and any refunds.',
+          type: 'info',
+          timestamp: new Date().toISOString(),
+          isRead: false,
+        }
+        if (stored) {
+          const parsed = JSON.parse(stored)
+          // Inject the receipt-info notification if it doesn't already exist
+          const hasReceiptNotif = parsed.some((n) => n.id === 'receipt-info')
+          setNotifications(hasReceiptNotif ? parsed : [receiptNotif, ...parsed])
+        } else {
+          setNotifications([
+            {
+              id: 'welcome',
+              title: lang === 'tl' ? 'Maligayang Pagdating sa CoinCubby!' : 'Welcome to CoinCubby!',
+              content: lang === 'tl'
+                ? 'Maaari ka nang mag-rent ng locker, tingnan ang iyong balanse, at suriin ang kasaysayan ng transaksyon.'
+                : 'You can now rent lockers, check your balance, and view transaction history.',
+              type: 'info',
+              timestamp: new Date().toISOString(),
+              isRead: false,
+            },
+            receiptNotif,
+          ])
+        }
       } catch {
         setNotifications([])
       }
@@ -264,6 +294,7 @@ export default function App() {
       setNotifications([])
     }
   }, [session?.userId])
+
 
   // Save notifications to localStorage
   useEffect(() => {
