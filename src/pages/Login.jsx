@@ -4,7 +4,11 @@ import logo from '../assets/coin_logo.png'
 import AlertDialog from '../components/AlertDialog'
 
 export default function Login({ onNavigate, onLogin, t, lang }) {
-  const [form, setForm] = useState({ email: '', password: '' })
+  const [form, setForm] = useState(() => ({
+    email: localStorage.getItem('coincubby.rememberedEmail') || '',
+    password: '',
+  }))
+  const [rememberMe, setRememberMe] = useState(() => localStorage.getItem('coincubby.remember_me') !== 'false')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -28,7 +32,8 @@ export default function Login({ onNavigate, onLogin, t, lang }) {
 
     setLoading(true)
     try {
-      const session = await loginWithPassword(form.email.trim(), form.password)
+      localStorage.setItem('coincubby.remember_me', rememberMe ? 'true' : 'false')
+      const session = await loginWithPassword(form.email.trim(), form.password, rememberMe)
       onLogin(session)
       onNavigate('home')
     } catch (err) {
@@ -54,7 +59,7 @@ export default function Login({ onNavigate, onLogin, t, lang }) {
       await sendPasswordResetEmail(resetEmail.trim())
       setResetNotice(lang === 'tl' ? 'Naipadala na ang link para sa pag-reset ng password! Pakisuri ang iyong inbox.' : 'Password reset link sent! Please check your inbox.')
       setResetEmail('')
-    } catch (err) {
+    } catch {
       setResetError(lang === 'tl' ? 'Bigo sa pagpapadala ng recovery email. Pakisubukan muli.' : 'Failed to send recovery email. Please try again.')
     } finally {
       setResetLoading(false)
@@ -102,26 +107,35 @@ export default function Login({ onNavigate, onLogin, t, lang }) {
                 />
               </label>
 
+              <div className="login-options-row">
+                <label className="remember-me-label">
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                  />
+                  <span>{t('remember_me')}</span>
+                </label>
+                <button
+                  type="button"
+                  className="forgot-pin-link"
+                  onClick={() => {
+                    setView('forgot')
+                    setResetEmail(form.email)
+                    setResetError('')
+                    setResetNotice('')
+                  }}
+                >
+                  {t('forgot_pin')}
+                </button>
+              </div>
+
               {error && <AlertDialog type="error" message={error} onClose={() => setError('')} />}
 
               <button className="primary-button xml-black-button" type="submit" disabled={loading}>
                 {loading ? t('logging_in') : t('continue_payment')}
               </button>
             </form>
-
-            <p className="auth-switch">
-              <button
-                type="button"
-                onClick={() => {
-                  setView('forgot')
-                  setResetEmail(form.email)
-                  setResetError('')
-                  setResetNotice('')
-                }}
-              >
-                {t('forgot_pin')}
-              </button>
-            </p>
 
             <p className="auth-switch">
               {t('no_account')}{' '}

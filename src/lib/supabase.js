@@ -31,6 +31,7 @@ export function saveSession(session) {
 
 export function clearSession() {
   localStorage.removeItem(storageKey)
+  sessionStorage.removeItem(storageKey)
 }
 
 function authHeaders(token, extra = {}) {
@@ -80,7 +81,7 @@ function customerNameFromSession(session) {
   return String(session?.fullName || fallbackName).trim().slice(0, 50)
 }
 
-export async function loginWithPassword(email, password) {
+export async function loginWithPassword(email, password, remember = true) {
   const body = await request('/auth/v1/token?grant_type=password', {
     method: 'POST',
     headers: authHeaders(null, { 'Content-Type': 'application/json' }),
@@ -94,6 +95,13 @@ export async function loginWithPassword(email, password) {
     userId: user.id || '',
     fullName,
     email: user.email || email,
+    remember,
+  }
+
+  if (remember) {
+    localStorage.setItem('coincubby.rememberedEmail', user.email || email)
+  } else {
+    localStorage.removeItem('coincubby.rememberedEmail')
   }
 
   saveSession(session)

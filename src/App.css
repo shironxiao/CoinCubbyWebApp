@@ -1565,6 +1565,51 @@ dd {
   margin-top: 18px;
 }
 
+.login-options-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: -4px 0 2px 0;
+  position: relative;
+  z-index: 1;
+}
+
+.remember-me-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+  font-size: 13px;
+  color: #3d7156;
+  font-weight: 600;
+}
+
+.remember-me-label input[type="checkbox"] {
+  width: 18px !important;
+  height: 18px !important;
+  accent-color: #378650;
+  cursor: pointer;
+  margin: 0;
+  padding: 0;
+}
+
+.forgot-pin-link {
+  background: none;
+  border: none;
+  color: #378650;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.15s ease;
+}
+
+.forgot-pin-link:hover {
+  color: #276239;
+  text-decoration: underline;
+}
+
 .login-page .xml-black-button {
   background: linear-gradient(135deg, #4db66f 0%, #378650 100%);
   color: var(--white);
