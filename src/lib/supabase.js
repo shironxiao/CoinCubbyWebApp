@@ -38,6 +38,8 @@ function authHeaders(token, extra = {}) {
   return {
     apikey: SUPABASE_ANON,
     Authorization: `Bearer ${token || SUPABASE_ANON}`,
+    'Cache-Control': 'no-cache, no-store',
+    Pragma: 'no-cache',
     ...extra,
   }
 }

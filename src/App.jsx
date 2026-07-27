@@ -138,26 +138,34 @@ export default function App() {
   }, [session])
 
   const refreshAllData = useCallback(async (showLoading = false) => {
-    if (!session?.userId) return
-
     if (showLoading) {
       setLoadingData(true)
     }
 
     try {
-      const [bal, activeRows, allLockers, historyRows] = await Promise.all([
-        getOrCreateWallet(session),
-        fetchActiveRentals(session.userId, session.accessToken),
-        fetchLockers(),
-        fetchRentalHistory(session.userId, session.accessToken),
+      const lockersPromise = fetchLockers()
+      const userPromises = session?.userId
+        ? Promise.all([
+            getOrCreateWallet(session),
+            fetchActiveRentals(session.userId, session.accessToken),
+            fetchRentalHistory(session.userId, session.accessToken),
+          ])
+        : Promise.resolve([null, [], []])
+
+      const [allLockers, [bal, activeRows, historyRows]] = await Promise.all([
+        lockersPromise,
+        userPromises,
       ])
 
-      if (bal !== null) {
-        setWalletBalance(bal)
-      }
-      setActiveRentals((activeRows || []).map(mapRental))
       setLockers(allLockers || [])
-      setRentalHistory((historyRows || []).map(mapHistory))
+
+      if (session?.userId) {
+        if (bal !== null) {
+          setWalletBalance(bal)
+        }
+        setActiveRentals((activeRows || []).map(mapRental))
+        setRentalHistory((historyRows || []).map(mapHistory))
+      }
     } catch (err) {
       console.error('Error syncing app data:', err)
     } finally {
@@ -167,19 +175,32 @@ export default function App() {
     }
   }, [session])
 
-  // Setup periodic polling interval
+  // Setup periodic AJAX background sync (every 2.5s) & instant tab focus listener
   useEffect(() => {
-    if (!session?.userId) return
-
-    // Run initial full fetch with loading indicator
+    // Run initial fetch
     refreshAllData(true)
 
+    // Poll silently every 2.5 seconds across all sections
     const interval = setInterval(() => {
       refreshAllData(false)
-    }, 4000)
+    }, 2500)
 
-    return () => clearInterval(interval)
-  }, [session?.userId, refreshAllData])
+    // Trigger immediate sync when browser tab/window gains focus or becomes visible
+    function handleVisibilityOrFocus() {
+      if (document.visibilityState === 'visible') {
+        refreshAllData(false)
+      }
+    }
+
+    window.addEventListener('focus', handleVisibilityOrFocus)
+    document.addEventListener('visibilitychange', handleVisibilityOrFocus)
+
+    return () => {
+      clearInterval(interval)
+      window.removeEventListener('focus', handleVisibilityOrFocus)
+      document.removeEventListener('visibilitychange', handleVisibilityOrFocus)
+    }
+  }, [refreshAllData])
 
   // Clear states when user logs out
   useEffect(() => {
