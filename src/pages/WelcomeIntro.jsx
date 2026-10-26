@@ -158,8 +158,8 @@ export default function WelcomeIntro({ onLanguageSelect }) {
             </div>
             <div className="locker-done-label">
               <span className="success-icon">✓</span>
-              <strong>Locker Locked!</strong>
-              <small>Your items are safe</small>
+              <strong>{selectedLang === 'tl' ? 'Naka-lock ang Locker!' : 'Locker Locked!'}</strong>
+              <small>{selectedLang === 'tl' ? 'Ligtas ang iyong mga gamit' : 'Your items are safe'}</small>
             </div>
           </div>
         </div>

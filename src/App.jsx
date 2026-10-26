@@ -496,7 +496,7 @@ export default function App() {
 
   return (
     <div className="app-shell">
-      {session && !recoveryToken && (
+      {session && !recoveryToken && introSeen && (
         <aside className={`sidebar ${menuOpen ? 'menu-open' : ''}`}>
           <div className="brand">
             <span>CC</span>

@@ -3884,3 +3884,24 @@ dd {
   letter-spacing: 0.3px;
   margin-top: 4px;
 }
+
+/* ── Tutorial UI fixes ─────────────────────────────────────────────────────── */
+
+/* Push Skip button row down from mobile browser chrome / status bar */
+.tutorial-panel > .tutorial-header-bar {
+  padding-top: 10px;
+}
+
+/* Step 7 store-visual: allow extra height so "Locker Locked!" label isn't clipped */
+.store-visual {
+  height: 195px !important;
+}
+
+.store-visual .locker-done-label strong {
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+.store-visual .locker-done-label small {
+  font-size: 10px;
+}
