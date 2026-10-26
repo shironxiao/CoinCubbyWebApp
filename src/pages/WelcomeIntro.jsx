@@ -1,6 +1,89 @@
 import { useState } from 'react'
 import logo from '../assets/coin_logo.png'
 
+function FlagUS() {
+  return (
+    <svg className="lang-flag-svg" viewBox="0 0 32 24" width="28" height="21" style={{ borderRadius: '4px', overflow: 'hidden', display: 'block', boxShadow: '0 1px 3px rgba(0,0,0,0.18)' }}>
+      {/* Stripes: Red background with 6 white stripes */}
+      <rect width="32" height="24" fill="#b22234" />
+      <rect y="1.85" width="32" height="1.85" fill="#ffffff" />
+      <rect y="5.54" width="32" height="1.85" fill="#ffffff" />
+      <rect y="9.23" width="32" height="1.85" fill="#ffffff" />
+      <rect y="12.92" width="32" height="1.85" fill="#ffffff" />
+      <rect y="16.61" width="32" height="1.85" fill="#ffffff" />
+      <rect y="20.3" width="32" height="1.85" fill="#ffffff" />
+      {/* Blue Canton */}
+      <rect width="14" height="13" fill="#3c3b6e" />
+      {/* Stars representation */}
+      <g fill="#ffffff">
+        <circle cx="2.5" cy="2.5" r="0.7" /><circle cx="5" cy="2.5" r="0.7" /><circle cx="7.5" cy="2.5" r="0.7" /><circle cx="10" cy="2.5" r="0.7" /><circle cx="12" cy="2.5" r="0.7" />
+        <circle cx="3.75" cy="4.5" r="0.7" /><circle cx="6.25" cy="4.5" r="0.7" /><circle cx="8.75" cy="4.5" r="0.7" /><circle cx="11.25" cy="4.5" r="0.7" />
+        <circle cx="2.5" cy="6.5" r="0.7" /><circle cx="5" cy="6.5" r="0.7" /><circle cx="7.5" cy="6.5" r="0.7" /><circle cx="10" cy="6.5" r="0.7" /><circle cx="12" cy="6.5" r="0.7" />
+        <circle cx="3.75" cy="8.5" r="0.7" /><circle cx="6.25" cy="8.5" r="0.7" /><circle cx="8.75" cy="8.5" r="0.7" /><circle cx="11.25" cy="8.5" r="0.7" />
+        <circle cx="2.5" cy="10.5" r="0.7" /><circle cx="5" cy="10.5" r="0.7" /><circle cx="7.5" cy="10.5" r="0.7" /><circle cx="10" cy="10.5" r="0.7" /><circle cx="12" cy="10.5" r="0.7" />
+      </g>
+    </svg>
+  )
+}
+
+function FlagPH() {
+  return (
+    <svg className="lang-flag-svg" viewBox="0 0 32 24" width="28" height="21" style={{ borderRadius: '4px', overflow: 'hidden', display: 'block', boxShadow: '0 1px 3px rgba(0,0,0,0.18)' }}>
+      {/* Top Blue */}
+      <rect width="32" height="12" fill="#0038a8" />
+      {/* Bottom Red */}
+      <rect y="12" width="32" height="12" fill="#ce1126" />
+      {/* White Equilateral Triangle */}
+      <polygon points="0,0 16,12 0,24" fill="#ffffff" />
+      {/* Golden Sun */}
+      <circle cx="5.5" cy="12" r="2.5" fill="#fcd116" />
+      <g stroke="#fcd116" strokeWidth="0.9" strokeLinecap="round">
+        <line x1="5.5" y1="8.5" x2="5.5" y2="7.5" />
+        <line x1="5.5" y1="15.5" x2="5.5" y2="16.5" />
+        <line x1="2" y1="12" x2="1" y2="12" />
+        <line x1="9" y1="12" x2="10" y2="12" />
+        <line x1="3" y1="9.5" x2="2.3" y2="8.8" />
+        <line x1="8" y1="14.5" x2="8.7" y2="15.2" />
+        <line x1="3" y1="14.5" x2="2.3" y2="15.2" />
+        <line x1="8" y1="9.5" x2="8.7" y2="8.8" />
+      </g>
+      {/* 3 Stars */}
+      <circle cx="2.2" cy="3.5" r="0.9" fill="#fcd116" />
+      <circle cx="2.2" cy="20.5" r="0.9" fill="#fcd116" />
+      <circle cx="13" cy="12" r="0.9" fill="#fcd116" />
+    </svg>
+  )
+}
+
+function ShieldLockIcon() {
+  return (
+    <svg className="shield-lock-icon" viewBox="0 0 100 100" width="80" height="80">
+      {/* Shield Outline matching user mockup */}
+      <path
+        d="M50 14 C65 14, 84 20, 87 31 C89 54, 82 76, 50 91 C18 76, 11 54, 13 31 C16 20, 35 14, 50 14 Z"
+        fill="rgba(46, 204, 113, 0.08)"
+        stroke="#2ecc71"
+        strokeWidth="4.5"
+        strokeLinejoin="round"
+        strokeLinecap="round"
+      />
+      {/* Padlock Shackle */}
+      <path
+        d="M39 46 V37 C39 30.5 44 25.5 50 25.5 C56 25.5 61 30.5 61 37 V46"
+        fill="none"
+        stroke="#2ecc71"
+        strokeWidth="5"
+        strokeLinecap="round"
+      />
+      {/* Padlock Body */}
+      <rect x="32" y="44" width="36" height="28" rx="6" fill="#2ecc71" />
+      {/* Keyhole */}
+      <circle cx="50" cy="54" r="3.2" fill="#ffffff" />
+      <path d="M48.2 54 L47.4 63 A 1 1 0 0 0 48.4 64 H51.6 A 1 1 0 0 0 52.6 63 L51.8 54 Z" fill="#ffffff" />
+    </svg>
+  )
+}
+
 export default function WelcomeIntro({ onLanguageSelect }) {
   const [step, setStep] = useState('language') // 'language' | 'tutorial'
   const [selectedLang, setSelectedLang] = useState('en')
@@ -151,13 +234,9 @@ export default function WelcomeIntro({ onLanguageSelect }) {
       descTl:  "Awtomatikong magbubukas ang pinto ng locker. Ilagay ang iyong mga gamit, pagkatapos ay isara nang mahigpit ang pinto. Naka-lock na ito — tapos ka na!",
       visual: (
         <div className="tutorial-visual store-visual">
-          <div className="locker-door-mock">
-            <div className="locker-body">
-              <div className="locker-handle" />
-              <div className="locker-status-light locked" />
-            </div>
+          <div className="shield-lock-container">
+            <ShieldLockIcon />
             <div className="locker-done-label">
-              <span className="success-icon">✓</span>
               <strong>{selectedLang === 'tl' ? 'Naka-lock ang Locker!' : 'Locker Locked!'}</strong>
               <small>{selectedLang === 'tl' ? 'Ligtas ang iyong mga gamit' : 'Your items are safe'}</small>
             </div>
@@ -226,7 +305,9 @@ export default function WelcomeIntro({ onLanguageSelect }) {
                 className={`lang-select-btn ${selectedLang === 'en' ? 'active' : ''}`}
                 onClick={() => setSelectedLang('en')}
               >
-                <span className="lang-flag">🇺🇸</span>
+                <span className="lang-flag">
+                  <FlagUS />
+                </span>
                 <span className="lang-name">English</span>
               </button>
 
@@ -235,7 +316,9 @@ export default function WelcomeIntro({ onLanguageSelect }) {
                 className={`lang-select-btn ${selectedLang === 'tl' ? 'active' : ''}`}
                 onClick={() => setSelectedLang('tl')}
               >
-                <span className="lang-flag">🇵🇭</span>
+                <span className="lang-flag">
+                  <FlagPH />
+                </span>
                 <span className="lang-name">Tagalog</span>
               </button>
             </div>

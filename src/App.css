@@ -3905,3 +3905,46 @@ dd {
 .store-visual .locker-done-label small {
   font-size: 10px;
 }
+
+/* Step 7 shield lock icon visual */
+.shield-lock-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.shield-lock-icon {
+  width: 78px;
+  height: 78px;
+  filter: drop-shadow(0 6px 16px rgba(46, 204, 113, 0.28));
+  animation: shieldPulse 2.4s infinite ease-in-out;
+}
+
+@keyframes shieldPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.store-visual .locker-done-label {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.store-visual .locker-done-label strong {
+  font-size: 14px !important;
+  color: #27ae60 !important;
+  font-weight: 800;
+  margin: 0 !important;
+}
+
+.store-visual .locker-done-label small {
+  font-size: 11px !important;
+  color: var(--gray) !important;
+  margin: 0 !important;
+}
