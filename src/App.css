@@ -3978,3 +3978,8 @@ dd {
     margin-top: 0 !important;
   }
 }
+
+/* ── Header consistency fix: xml-app-title matches xml-screen-header h1 ── */
+.xml-app-title {
+  font-size: 20px !important;
+}

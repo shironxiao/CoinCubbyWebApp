@@ -210,9 +210,9 @@ export default function FeedbackPage({ session, rentalHistory, loadingData, t, l
 
   return (
     <main className="page xml-page feedback-page">
-      <header className="xml-topbar">
-        <strong>{t('feedback_title')}</strong>
-      </header>
+      <section className="xml-screen-header">
+        <h1>{t('feedback_title')}</h1>
+      </section>
 
       {error && <AlertDialog type="error" message={error} onClose={() => setError('')} />}
       {message && <AlertDialog type="success" message={message} onClose={() => setMessage('')} />}
