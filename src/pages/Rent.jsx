@@ -2,6 +2,28 @@ import { useEffect, useState } from 'react'
 import { formatMoney } from '../lib/supabase'
 import { formatDateTime, formatDuration } from '../lib/time'
 
+function LockerIcon({ size = 24, color = 'currentColor' }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke={color}
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      style={{ display: 'block' }}
+    >
+      <rect x="4" y="10" width="16" height="12" rx="2.5" ry="2.5" />
+      <path d="M7 10V6.5a5 5 0 0 1 10 0V10" />
+      <circle cx="12" cy="15" r="1.2" fill={color} />
+      <path d="M12 16.2v2" strokeWidth="2" />
+    </svg>
+  )
+}
+
 function calculateOvertimeFee(item, currentTick) {
   let mins = 0
   if (item.isOpenTime) {
@@ -79,7 +101,9 @@ export default function Rent({
           <small>{t('active_rentals_label')}</small>
           <strong>{rentals.length} {lang === 'tl' ? 'locker ang narentahan' : 'locker(s) rented'}</strong>
         </div>
-        <span className="locker-glyph banner-locker" aria-hidden="true"></span>
+        <span className="banner-locker-wrap" aria-hidden="true">
+          <LockerIcon size={24} color="#3B9EE8" />
+        </span>
       </section>
 
       {loading && <div className="xml-loading"><span></span><p>{lang === 'tl' ? 'Naglo-load ng mga renta...' : 'Loading rentals...'}</p></div>}

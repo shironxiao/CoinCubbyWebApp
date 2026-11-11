@@ -7,6 +7,28 @@ function statusClass(status) {
   return String(status || 'Available').toLowerCase().replaceAll(' ', '-')
 }
 
+function LockerIcon({ size = 18, color = 'currentColor' }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke={color}
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      style={{ display: 'block' }}
+    >
+      <rect x="4" y="10" width="16" height="12" rx="2.5" ry="2.5" />
+      <path d="M7 10V6.5a5 5 0 0 1 10 0V10" />
+      <circle cx="12" cy="15" r="1.2" fill={color} />
+      <path d="M12 16.2v2" strokeWidth="2" />
+    </svg>
+  )
+}
+
 export default function Home({
   modules,
   selectedModuleId,
@@ -190,7 +212,9 @@ export default function Home({
 
       <section className="xml-stats-row">
         <div className="xml-stat-card">
-          <span className="xml-icon-circle locker-glyph" aria-hidden="true"></span>
+          <span className="xml-icon-circle" aria-hidden="true">
+            <LockerIcon size={20} color="#3B9EE8" />
+          </span>
           <div>
             <strong>{filteredLockers.length}</strong>
             <small>{lang === 'tl' ? 'Kabuuan ng Locker' : 'Total Locker'}</small>
@@ -246,7 +270,7 @@ export default function Home({
                 className={`locker-tile ${statusClass(locker.status)}`}
               >
                 <span className="locker-icon" aria-hidden="true">
-                  <span className="locker-glyph" />
+                  <LockerIcon size={18} color="#3B9EE8" />
                 </span>
                 <div>
                   <strong>{locker.lockerNumber || locker.locker_number}</strong>

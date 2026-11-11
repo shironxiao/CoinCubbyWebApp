@@ -4271,3 +4271,84 @@ dd {
 .auth-logo {
   animation: logoSparkle 3s ease-in-out infinite !important;
 }
+
+
+/* ── Locker Icon & Badge Backgrounds to White + Real Locker Icon ── */
+.xml-active-banner > span,
+.xml-active-banner .banner-locker-wrap {
+  display: grid !important;
+  place-items: center !important;
+  width: 48px !important;
+  height: 48px !important;
+  border-radius: 50% !important;
+  background: #ffffff !important;
+  color: #3B9EE8 !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12) !important;
+  flex-shrink: 0 !important;
+}
+
+.xml-icon-circle {
+  display: grid !important;
+  place-items: center !important;
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 50% !important;
+  background: #ffffff !important;
+  color: #3B9EE8 !important;
+  border: 1px solid #dbeafe !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06) !important;
+}
+
+.locker-icon {
+  display: grid !important;
+  place-items: center !important;
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 10px !important;
+  background: #ffffff !important;
+  color: #3B9EE8 !important;
+  border: 1px solid #dbeafe !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05) !important;
+  flex-shrink: 0 !important;
+}
+
+.locker-tile {
+  grid-template-columns: 36px 1fr auto !important;
+  gap: 12px !important;
+}
+
+/* Fallback padlock CSS if raw locker-glyph is rendered */
+.locker-glyph {
+  position: relative !important;
+  display: inline-block !important;
+  width: 16px !important;
+  height: 18px !important;
+  color: #3B9EE8 !important;
+}
+
+.locker-glyph::before {
+  content: '' !important;
+  display: block !important;
+  position: absolute !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  width: 16px !important;
+  height: 11px !important;
+  border: 2px solid currentColor !important;
+  border-radius: 3px !important;
+  box-sizing: border-box !important;
+}
+
+.locker-glyph::after {
+  content: '' !important;
+  display: block !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 3px !important;
+  width: 10px !important;
+  height: 8px !important;
+  border: 2px solid currentColor !important;
+  border-bottom: 0 !important;
+  border-radius: 5px 5px 0 0 !important;
+  box-sizing: border-box !important;
+}
