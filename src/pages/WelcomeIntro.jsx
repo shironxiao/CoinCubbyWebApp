@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import logo from '../assets/coin_logo.png'
+import logo from '../assets/CoinCubby.png'
 
 function FlagUS() {
   return (
@@ -58,11 +58,11 @@ function FlagPH() {
 function ShieldLockIcon() {
   return (
     <svg className="shield-lock-icon" viewBox="0 0 100 100" width="80" height="80">
-      {/* Shield Outline matching user mockup */}
+      {/* Shield Outline — blue theme */}
       <path
         d="M50 14 C65 14, 84 20, 87 31 C89 54, 82 76, 50 91 C18 76, 11 54, 13 31 C16 20, 35 14, 50 14 Z"
-        fill="rgba(46, 204, 113, 0.08)"
-        stroke="#2ecc71"
+        fill="rgba(59,158,232,0.10)"
+        stroke="#3B9EE8"
         strokeWidth="4.5"
         strokeLinejoin="round"
         strokeLinecap="round"
@@ -71,12 +71,12 @@ function ShieldLockIcon() {
       <path
         d="M39 46 V37 C39 30.5 44 25.5 50 25.5 C56 25.5 61 30.5 61 37 V46"
         fill="none"
-        stroke="#2ecc71"
+        stroke="#3B9EE8"
         strokeWidth="5"
         strokeLinecap="round"
       />
       {/* Padlock Body */}
-      <rect x="32" y="44" width="36" height="28" rx="6" fill="#2ecc71" />
+      <rect x="32" y="44" width="36" height="28" rx="6" fill="#3B9EE8" />
       {/* Keyhole */}
       <circle cx="50" cy="54" r="3.2" fill="#ffffff" />
       <path d="M48.2 54 L47.4 63 A 1 1 0 0 0 48.4 64 H51.6 A 1 1 0 0 0 52.6 63 L51.8 54 Z" fill="#ffffff" />
@@ -150,8 +150,8 @@ export default function WelcomeIntro({ onLanguageSelect }) {
     {
       titleEn: "Step 3 — Select a Locker",
       titleTl: "Hakbang 3 — Pumili ng Locker",
-      descEn:  "The kiosk shows all available lockers. Tap a green locker to select it. Green means it is empty and ready.",
-      descTl:  "Ipinapakita ng kiosk ang lahat ng bakanteng locker. I-tap ang berdeng locker para piliin ito. Berde ang bakante.",
+      descEn:  "The kiosk shows all available lockers. Tap a blue locker to select it. Blue means it is empty and ready.",
+      descTl:  "Ipinapakita ng kiosk ang lahat ng bakanteng locker. I-tap ang asul na locker para piliin ito. Asul ang bakante.",
       visual: (
         <div className="tutorial-visual grid-visual">
           <div className="mini-grid">
@@ -280,10 +280,10 @@ export default function WelcomeIntro({ onLanguageSelect }) {
       <main className="auth-page android-auth intro-page">
         <section className="auth-panel xml-register-panel intro-panel-card">
           <div className="intro-header">
-            <img className="intro-logo" src={logo} alt="CoinCubby Logo" />
+            <img className="intro-logo coin-logo-animated" src={logo} alt="CoinCubby Logo" />
             <h1 className="intro-title">CoinCubby</h1>
             <p className="intro-tagline">
-              Smart & Secure Public Lockers
+              Smart &amp; Secure Public Lockers
               <br />
               <span style={{ fontSize: '14px', opacity: 0.8, display: 'block', marginTop: '6px' }}>
                 Mabilis at Ligtas na Locker para sa Lahat

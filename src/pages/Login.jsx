@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { loginWithPassword, sendPasswordResetEmail } from '../lib/supabase'
-import logo from '../assets/coin_logo.png'
+import logo from '../assets/CoinCubby.png'
 import AlertDialog from '../components/AlertDialog'
 
 export default function Login({ onNavigate, onLogin, t, lang }) {
@@ -69,7 +69,7 @@ export default function Login({ onNavigate, onLogin, t, lang }) {
   return (
     <main className="auth-page android-auth login-page">
       <section className="auth-panel xml-login-panel">
-        <img className="auth-logo" src={logo} alt="CoinCubby logo" />
+        <img className="auth-logo coin-logo-animated" src={logo} alt="CoinCubby logo" />
 
         {view === 'login' ? (
           <>
@@ -190,4 +190,3 @@ export default function Login({ onNavigate, onLogin, t, lang }) {
     </main>
   )
 }
-

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { formatMoney } from '../lib/supabase'
 import { formatDuration } from '../lib/time'
+import logo from '../assets/CoinCubby.png'
 
 function statusClass(status) {
   return String(status || 'Available').toLowerCase().replaceAll(' ', '-')
@@ -46,7 +47,8 @@ export default function Home({
   return (
     <main className={`page xml-page xml-home ${activeRentals.length === 0 ? 'no-active-rental' : ''}`}>
       <section className="page-header">
-        <div>
+        <div className="home-logo-wrap">
+          <img className="home-logo-img" src={logo} alt="CoinCubby" />
           <h1 className="xml-app-title">CoinCubby</h1>
         </div>
       </section>
@@ -56,8 +58,8 @@ export default function Home({
         <h2>{lang === 'tl' ? 'Piliin ang iyong locker' : 'Pick your locker'}</h2>
         <span>
           {lang === 'tl'
-            ? 'Ang berde ay nangangahulugang maaari itong gamitin. Tingnan ang indikasyon sa ibaba.'
-            : "Green means you're good to go. Check status indicator below."}
+            ? 'Ang asul ay nangangahulugang maaari itong gamitin. Tingnan ang indikasyon sa ibaba.'
+            : "Blue means you're good to go. Check status indicator below."}
         </span>
 
         {/* Rate chips — from database */}
@@ -201,57 +203,61 @@ export default function Home({
         </div>
       </section>
 
-      <section className="xml-locker-panel" ref={lockerPanelRef}>
-        <div className="xml-locker-panel-head">
-          <span className="xml-dark-circle locker-glyph light" aria-hidden="true"></span>
-          <div>
-            <strong>CoinCubby</strong>
-            <small>{selectedModule?.name || (lang === 'tl' ? 'Pumili ng module' : 'Select a module')} · {availableCount} {lang === 'tl' ? 'bakante' : 'available'}</small>
-          </div>
-          <div className="xml-location">
-            <small>{t('location')}</small>
-            <strong>{t('location_name')}</strong>
-          </div>
-        </div>
-
-        <div className="module-selector" aria-label="Module selector">
-          {modules.map((moduleItem) => (
+      {/* Module Selector */}
+      {modules.length > 1 && (
+        <div className="module-selector">
+          {modules.map((mod) => (
             <button
-              key={moduleItem.module_id}
-              className={String(moduleItem.module_id) === String(selectedModuleId) ? 'active' : ''}
-              type="button"
-              onClick={() => setSelectedModuleId(String(moduleItem.module_id))}
+              key={mod.module_id}
+              className={String(mod.module_id) === String(selectedModuleId) ? 'active' : ''}
+              onClick={() => setSelectedModuleId(mod.module_id)}
             >
-              {moduleItem.name || `Module ${moduleItem.module_id}`}
+              {mod.module_name || `Module ${mod.module_id}`}
             </button>
           ))}
         </div>
-
-      {loading ? (
-        <p className="muted">{t('loading_lockers')}</p>
-      ) : (
-        <div className="locker-grid">
-          {filteredLockers.map((locker) => (
-            <div
-              key={locker.dbId}
-              className={`locker-tile ${statusClass(locker.status)}`}
-              style={{ cursor: 'default' }}
-            >
-              <span className="locker-icon locker-glyph" aria-hidden="true"></span>
-              <strong>{locker.id}</strong>
-              <span className="locker-dot"></span>
-              <small>
-                {locker.status === 'Available' ? t('available')
-                  : locker.status === 'Occupied' ? t('occupied')
-                  : locker.status === 'Maintenance' ? t('maintenance')
-                  : locker.status === 'Unavailable' ? t('unavailable')
-                  : locker.status}
-              </small>
-              <b>{locker.size} S</b>
-            </div>
-          ))}
-        </div>
       )}
+
+      {/* Locker Panel */}
+      <section className="xml-locker-panel" ref={lockerPanelRef}>
+        <div className="xml-locker-panel-head">
+          <div>
+            <strong style={{ fontSize: '14px', fontWeight: 800 }}>
+              {selectedModule?.module_name || (lang === 'tl' ? 'Mga Locker' : 'Lockers')}
+            </strong>
+            <div className="xml-location">
+              <strong>{availableCount} {lang === 'tl' ? 'Bakante' : 'Available'}</strong>
+              <small>{selectedModule?.location || ''}</small>
+            </div>
+          </div>
+        </div>
+
+        {loading ? (
+          <div className="xml-loading">
+            <span />
+          </div>
+        ) : filteredLockers.length === 0 ? (
+          <div className="empty-state">{t('no_lockers')}</div>
+        ) : (
+          <div className="locker-grid">
+            {filteredLockers.map((locker) => (
+              <div
+                key={locker.id}
+                className={`locker-tile ${statusClass(locker.status)}`}
+              >
+                <span className="locker-icon" aria-hidden="true">
+                  <span className="locker-glyph" />
+                </span>
+                <div>
+                  <strong>{locker.lockerNumber || locker.locker_number}</strong>
+                  <small>{locker.sizeName || locker.size_name}</small>
+                </div>
+                <span className={`locker-dot ${statusClass(locker.status)}`} />
+                <b>{locker.status}</b>
+              </div>
+            ))}
+          </div>
+        )}
       </section>
     </main>
   )
