@@ -99,7 +99,10 @@ export default function Profile({ session, onLogout, onNavigate, addNotification
   return (
     <main className="page xml-page profile-page">
       <section className="xml-screen-header">
-        <h1>{t('profile_title')}</h1>
+        <div className="home-logo-wrap">
+          <img className="home-logo-img coin-logo-animated" src={logo} alt="CoinCubby" />
+          <h1>{t('profile_title')}</h1>
+        </div>
       </section>
 
       <section className="profile-hero">

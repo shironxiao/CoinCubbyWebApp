@@ -4017,15 +4017,24 @@ dd {
 .home-logo-wrap {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
 .home-logo-img {
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   object-fit: contain;
   animation: logoSparkle 3s ease-in-out infinite;
   transform-origin: center center;
+  flex-shrink: 0;
+}
+
+.xml-screen-header h1,
+.xml-app-title {
+  font-size: 20px !important;
+  font-weight: 800 !important;
+  line-height: 1.2 !important;
+  margin: 0 !important;
 }
 
 /* ── Login page — blue overrides ────────────────────────────────── */

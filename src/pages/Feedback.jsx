@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { submitFeedback, fetchUserFeedback, fetchGlobalFeedback, hasFeedbackForTransaction } from '../lib/supabase'
 import AlertDialog from '../components/AlertDialog'
+import logo from '../assets/CoinCubby.png'
 
 const STAR = '★'
 const STAR_EMPTY = '☆'
@@ -211,7 +212,10 @@ export default function FeedbackPage({ session, rentalHistory, loadingData, t, l
   return (
     <main className="page xml-page feedback-page">
       <section className="xml-screen-header">
-        <h1>{t('feedback_title')}</h1>
+        <div className="home-logo-wrap">
+          <img className="home-logo-img coin-logo-animated" src={logo} alt="CoinCubby" />
+          <h1>{t('feedback_title')}</h1>
+        </div>
       </section>
 
       {error && <AlertDialog type="error" message={error} onClose={() => setError('')} />}

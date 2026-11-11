@@ -70,7 +70,7 @@ export default function Home({
     <main className={`page xml-page xml-home ${activeRentals.length === 0 ? 'no-active-rental' : ''}`}>
       <section className="page-header">
         <div className="home-logo-wrap">
-          <img className="home-logo-img" src={logo} alt="CoinCubby" />
+          <img className="home-logo-img coin-logo-animated" src={logo} alt="CoinCubby" />
           <h1 className="xml-app-title">CoinCubby</h1>
         </div>
       </section>

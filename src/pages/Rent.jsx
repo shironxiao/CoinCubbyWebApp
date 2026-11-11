@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { formatMoney } from '../lib/supabase'
 import { formatDateTime, formatDuration } from '../lib/time'
+import logo from '../assets/CoinCubby.png'
 
 function LockerIcon({ size = 24, color = 'currentColor' }) {
   return (
@@ -93,7 +94,10 @@ export default function Rent({
   return (
     <main className="page xml-page xml-rentals">
       <section className="xml-screen-header">
-        <h1>{t('my_rentals')}</h1>
+        <div className="home-logo-wrap">
+          <img className="home-logo-img coin-logo-animated" src={logo} alt="CoinCubby" />
+          <h1>{t('my_rentals')}</h1>
+        </div>
       </section>
 
       <section className="xml-active-banner">
