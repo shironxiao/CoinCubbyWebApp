@@ -4352,3 +4352,12 @@ dd {
   border-radius: 5px 5px 0 0 !important;
   box-sizing: border-box !important;
 }
+
+
+/* ── Profile Hero Logo ────────────────────────────────────────── */
+.profile-hero-logo {
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+  margin-bottom: 12px;
+}

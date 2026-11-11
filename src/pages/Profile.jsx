@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { fetchProfile, logout, changePassword, verifyUserPassword } from '../lib/supabase'
 import AlertDialog from '../components/AlertDialog'
+import logo from '../assets/CoinCubby.png'
 
 export default function Profile({ session, onLogout, onNavigate, addNotification, t, lang, onLanguageChange, onShowTutorial }) {
   const [profile, setProfile] = useState({
@@ -61,8 +62,6 @@ export default function Profile({ session, onLogout, onNavigate, addNotification
     }
   }
 
-
-
   const loadProfile = useCallback(async () => {
     if (!session?.accessToken) return
 
@@ -104,6 +103,11 @@ export default function Profile({ session, onLogout, onNavigate, addNotification
       </section>
 
       <section className="profile-hero">
+        <img
+          src={logo}
+          alt="CoinCubby Logo"
+          className="profile-hero-logo coin-logo-animated"
+        />
         <div className="profile-brand-logo">CoinCubby</div>
         <h1>{profile.fullName || 'Loading...'}</h1>
         <p>{profile.contact}</p>
