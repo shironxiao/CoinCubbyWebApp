@@ -106,7 +106,7 @@ export default function Home({
 
         {/* View Lockers button */}
         <button
-          className="rent-now-button neo-action-button"
+          className="rent-now-button neo-view-lockers-btn"
           type="button"
           onClick={() => lockerPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
         >
