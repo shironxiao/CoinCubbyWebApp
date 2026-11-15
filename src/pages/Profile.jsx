@@ -259,7 +259,7 @@ export default function Profile({ session, onLogout, onNavigate, addNotification
       {/* View Tutorial Section */}
       <section
         className="xml-list-row neo-action-row"
-        style={{ cursor: 'pointer' }}
+        style={{ cursor: 'pointer', marginTop: '12px' }}
         onClick={onShowTutorial}
       >
         <span className="neo-row-icon">📖</span>
