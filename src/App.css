@@ -5603,13 +5603,17 @@ dd {
    ══════════════════════════════════════════════════════════════════ */
 
 .neo-brutalist-profile {
-  background-color: #F8F9FA !important;
-  background-image: 
-    radial-gradient(#d1d5db 1.4px, transparent 1.4px),
-    linear-gradient(180deg, #F0F8FF 0%, #FAF9F6 40%, #FFFFFF 100%) !important;
-  background-size: 20px 20px, 100% 100% !important;
   min-height: 100svh !important;
-  padding-bottom: 40px !important;
+  padding: 18px 16px 56px 16px !important;
+  box-sizing: border-box !important;
+}
+
+.neo-brutalist-profile .xml-screen-header {
+  margin-bottom: 24px !important;
+  min-height: 44px !important;
+  display: flex !important;
+  align-items: center !important;
+  padding-right: 96px !important; /* Safe clearance for fixed top-right bell & hamburger */
 }
 
 /* Profile Hero Card */
@@ -5619,7 +5623,8 @@ dd {
   border-radius: 20px !important;
   box-shadow: 6px 6px 0px #18181B !important;
   padding: 28px 20px !important;
-  margin-bottom: 16px !important;
+  margin-top: 8px !important;
+  margin-bottom: 20px !important;
   display: flex !important;
   flex-direction: column !important;
   align-items: center !important;
@@ -5678,8 +5683,8 @@ dd {
   border: 2.5px solid #18181B !important;
   border-radius: 14px !important;
   box-shadow: 3.5px 3.5px 0px #18181B !important;
-  padding: 14px 18px !important;
-  margin-top: 12px !important;
+  padding: 16px 18px !important;
+  margin-top: 18px !important;
   display: flex !important;
   align-items: center !important;
   justify-content: space-between !important;
@@ -5719,8 +5724,9 @@ dd {
   border: 2.5px solid #18181B !important;
   border-radius: 18px !important;
   box-shadow: 5px 5px 0px #18181B !important;
-  padding: 20px 18px !important;
-  margin-top: 14px !important;
+  padding: 22px 18px !important;
+  margin-top: 18px !important;
+  margin-bottom: 18px !important;
 }
 
 .neo-brutalist-profile .neo-pin-form .xml-field > span {
@@ -5773,7 +5779,7 @@ dd {
   border-radius: 14px !important;
   box-shadow: 3.5px 3.5px 0px #18181B !important;
   padding: 14px 18px !important;
-  margin-top: 14px !important;
+  margin-top: 18px !important;
   display: flex !important;
   align-items: center !important;
   justify-content: space-between !important;
@@ -5817,7 +5823,7 @@ dd {
   text-transform: uppercase !important;
   letter-spacing: 0.05em !important;
   padding: 13px !important;
-  margin-top: 20px !important;
+  margin-top: 28px !important;
   width: 100% !important;
   cursor: pointer !important;
   transition: transform 0.12s ease, box-shadow 0.12s ease !important;
@@ -5832,6 +5838,41 @@ dd {
 .neo-brutalist-profile .neo-danger-button:active {
   transform: translate(2px, 2px) !important;
   box-shadow: 1.5px 1.5px 0px #18181B !important;
+}
+
+/* ── Mobile-only: Extra spacing so panels don't crowd under fixed buttons ── */
+@media (max-width: 899px) {
+  .neo-brutalist-profile {
+    padding-top: 70px !important; /* Enough clearance below the fixed bell+hamburger (top: 14px + 42px height + ~14px gap) */
+  }
+
+  .neo-brutalist-profile .xml-screen-header {
+    margin-top: 0 !important;
+    margin-bottom: 20px !important;
+  }
+
+  .neo-brutalist-profile .neo-profile-hero {
+    margin-top: 4px !important;
+    margin-bottom: 20px !important;
+  }
+
+  .neo-brutalist-profile .neo-action-row {
+    margin-top: 16px !important;
+  }
+
+  .neo-brutalist-profile .neo-pin-form {
+    margin-top: 16px !important;
+    margin-bottom: 16px !important;
+  }
+
+  .neo-brutalist-profile .neo-lang-row {
+    margin-top: 16px !important;
+  }
+
+  .neo-brutalist-profile .neo-danger-button {
+    margin-top: 24px !important;
+    margin-bottom: 12px !important;
+  }
 }
 
 /* ══════════════════════════════════════════════════════════════════
