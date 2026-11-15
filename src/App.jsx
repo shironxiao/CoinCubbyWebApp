@@ -11,6 +11,7 @@ import ResetPassword from './pages/ResetPassword'
 import WelcomeIntro from './pages/WelcomeIntro'
 import Feedback from './pages/Feedback'
 import NotificationsDrawer from './components/NotificationsDrawer'
+import LoadingScreen from './components/LoadingScreen'
 import { translations } from './lib/translations'
 import {
   getBrowserNotificationStatus,
@@ -85,6 +86,15 @@ export default function App() {
   const [loadingData, setLoadingData] = useState(true)
   // True while we're verifying the stored session token on first load
   const [validating, setValidating] = useState(() => Boolean(getSession()))
+  // Initial branded splash when opening the app
+  const [isInitialLoading, setIsInitialLoading] = useState(true)
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsInitialLoading(false)
+    }, 900)
+    return () => clearTimeout(timer)
+  }, [])
 
   // On mount: verify the stored session token is still valid with Supabase.
   // If expired or invalid, clear it and force the login page.
@@ -561,10 +571,8 @@ export default function App() {
       )}
 
       <div className="content-shell">
-        {validating ? (
-          <div className="session-loading">
-            <div className="session-loading-spinner" />
-          </div>
+        {validating || isInitialLoading ? (
+          <LoadingScreen message={lang === 'tl' ? 'Inihahanda ang CoinCubby...' : 'Loading CoinCubby...'} />
         ) : renderPage()}
       </div>
 

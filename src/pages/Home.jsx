@@ -67,7 +67,7 @@ export default function Home({
   }, [])
 
   return (
-    <main className={`page xml-page xml-home ${activeRentals.length === 0 ? 'no-active-rental' : ''}`}>
+    <main className={`page xml-page xml-home neo-brutalist-home ${activeRentals.length === 0 ? 'no-active-rental' : ''}`}>
       <section className="page-header">
         <div className="home-logo-wrap">
           <img className="home-logo-img coin-logo-animated" src={logo} alt="CoinCubby" />
@@ -75,8 +75,11 @@ export default function Home({
         </div>
       </section>
 
-      <section className="xml-welcome-card">
-        <p>{lang === 'tl' ? 'MALIGAYANG PAGDATING!' : 'WELCOME!'}</p>
+      <section className="xml-welcome-card neo-card neo-welcome-card">
+        <div className="neo-kiosk-tagline" style={{ margin: '0 0 10px 0', alignSelf: 'flex-start', background: '#FEF08A' }}>
+          SMART LOCKER SYSTEM • SECURE STORAGE
+        </div>
+        <p className="neo-welcome-subtitle">{lang === 'tl' ? 'MALIGAYANG PAGDATING!' : 'WELCOME!'}</p>
         <h2>{lang === 'tl' ? 'Piliin ang iyong locker' : 'Pick your locker'}</h2>
         <span>
           {lang === 'tl'
@@ -88,22 +91,22 @@ export default function Home({
         <div className="welcome-rates">
           {ratesMap ? (
             <>
-              <span className="rate-chip"><b>S</b> {formatMoney(ratesMap[1] ?? 10, false)}/hr</span>
-              <span className="rate-chip"><b>M</b> {formatMoney(ratesMap[2] ?? 20, false)}/hr</span>
-              <span className="rate-chip"><b>L</b> {formatMoney(ratesMap[3] ?? 30, false)}/hr</span>
+              <span className="rate-chip neo-rate-chip"><b>S</b> <strong>{formatMoney(ratesMap[1] ?? 10, false)}/hr</strong></span>
+              <span className="rate-chip neo-rate-chip"><b>M</b> <strong>{formatMoney(ratesMap[2] ?? 20, false)}/hr</strong></span>
+              <span className="rate-chip neo-rate-chip"><b>L</b> <strong>{formatMoney(ratesMap[3] ?? 30, false)}/hr</strong></span>
             </>
           ) : (
             <>
-              <span className="rate-chip" style={{ opacity: 0.5 }}><b>S</b> ...</span>
-              <span className="rate-chip" style={{ opacity: 0.5 }}><b>M</b> ...</span>
-              <span className="rate-chip" style={{ opacity: 0.5 }}><b>L</b> ...</span>
+              <span className="rate-chip neo-rate-chip" style={{ opacity: 0.5 }}><b>S</b> <strong>...</strong></span>
+              <span className="rate-chip neo-rate-chip" style={{ opacity: 0.5 }}><b>M</b> <strong>...</strong></span>
+              <span className="rate-chip neo-rate-chip" style={{ opacity: 0.5 }}><b>L</b> <strong>...</strong></span>
             </>
           )}
         </div>
 
         {/* View Lockers button */}
         <button
-          className="rent-now-button"
+          className="rent-now-button neo-action-button"
           type="button"
           onClick={() => lockerPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
         >
@@ -166,13 +169,27 @@ export default function Home({
                 ? `${lang === 'tl' ? 'May Labis na Oras' : 'Overtime Due'}: ${formatMoney(overtimeCost, false)}`
                 : `${lang === 'tl' ? 'Bayad' : 'Paid'}: ${formatMoney(prepaidCost, false)}`
 
-            const lockerLabel = rental.lockerNumber
+            const rawLocker = rental.lockerNumber || ''
+            const lockerLabel = String(rawLocker).toLowerCase().startsWith('locker') ? rawLocker : `Locker ${rawLocker}`
             const sizeLabel   = rental.sizeName
             return (
               <div
-                className={`home-rental-bar-card${isOverdue ? ' home-rental-bar-card--overdue' : ''}`}
+                className={`home-rental-bar-card neo-card${isOverdue ? ' home-rental-bar-card--overdue' : ''}`}
                 key={rental.transactionId}
               >
+                <div
+                  className="neo-kiosk-tagline"
+                  style={{
+                    margin: '0 0 12px 0',
+                    alignSelf: 'flex-start',
+                    background: isOverdue ? '#FECACA' : '#BBF7D0',
+                  }}
+                >
+                  {isOverdue
+                    ? (lang === 'tl' ? 'MAY LABIS NA ORAS' : 'OVERDUE RENTAL')
+                    : (lang === 'tl' ? 'KASALUKUYANG RENTA • AKTIBO' : 'CURRENT RENTAL • ACTIVE')}
+                </div>
+
                 {/* top row */}
                 <div className="hbar-top">
                   <div className="hbar-info">
@@ -216,7 +233,7 @@ export default function Home({
             <LockerIcon size={20} color="#3B9EE8" />
           </span>
           <div>
-            <strong>{filteredLockers.length}</strong>
+            <strong>{lockers.length}</strong>
             <small>{lang === 'tl' ? 'Kabuuan ng Locker' : 'Total Locker'}</small>
           </div>
         </div>
@@ -236,7 +253,7 @@ export default function Home({
               className={String(mod.module_id) === String(selectedModuleId) ? 'active' : ''}
               onClick={() => setSelectedModuleId(mod.module_id)}
             >
-              {mod.module_name || `Module ${mod.module_id}`}
+              {mod.name || mod.module_name || `Module ${mod.module_id}`}
             </button>
           ))}
         </div>
@@ -247,7 +264,7 @@ export default function Home({
         <div className="xml-locker-panel-head">
           <div>
             <strong style={{ fontSize: '14px', fontWeight: 800 }}>
-              {selectedModule?.module_name || (lang === 'tl' ? 'Mga Locker' : 'Lockers')}
+              {lang === 'tl' ? 'Mga Locker' : 'Lockers'}
             </strong>
             <div className="xml-location">
               <strong>{availableCount} {lang === 'tl' ? 'Bakante' : 'Available'}</strong>
@@ -264,22 +281,30 @@ export default function Home({
           <div className="empty-state">{t('no_lockers')}</div>
         ) : (
           <div className="locker-grid">
-            {filteredLockers.map((locker) => (
-              <div
-                key={locker.id}
-                className={`locker-tile ${statusClass(locker.status)}`}
-              >
-                <span className="locker-icon" aria-hidden="true">
-                  <LockerIcon size={18} color="#3B9EE8" />
-                </span>
-                <div>
-                  <strong>{locker.lockerNumber || locker.locker_number}</strong>
-                  <small>{locker.sizeName || locker.size_name}</small>
+            {filteredLockers.map((locker) => {
+              const rawNum = locker.id || locker.lockerNumber || locker.locker_number || ''
+              const lockerName = String(rawNum).toLowerCase().startsWith('locker') ? rawNum : `Locker ${rawNum}`
+              const sizeName = locker.size || locker.sizeName || locker.size_name || ''
+              const pricePerHr = locker.rate ?? (ratesMap && locker.sizeTypeId ? ratesMap[locker.sizeTypeId] : null)
+              const priceLabel = pricePerHr != null ? `₱${pricePerHr}/hr` : ''
+              const subLabel = [sizeName, priceLabel].filter(Boolean).join(' · ')
+              return (
+                <div
+                  key={locker.id}
+                  className={`locker-tile ${statusClass(locker.status)}`}
+                >
+                  <span className="locker-icon" aria-hidden="true">
+                    <LockerIcon size={18} color="#3B9EE8" />
+                  </span>
+                  <div>
+                    <strong>{lockerName}</strong>
+                    <small>{subLabel}</small>
+                  </div>
+                  <span className={`locker-dot ${statusClass(locker.status)}`} />
+                  <b>{locker.status}</b>
                 </div>
-                <span className={`locker-dot ${statusClass(locker.status)}`} />
-                <b>{locker.status}</b>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </section>

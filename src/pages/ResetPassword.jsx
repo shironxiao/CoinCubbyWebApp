@@ -73,8 +73,24 @@ export default function ResetPassword({ accessToken, onNavigate, t, lang }) {
             />
           </label>
 
-          {error && <AlertDialog type="error" message={error} onClose={() => setError('')} />}
-          {notice && <AlertDialog type="success" message={notice} onClose={() => setNotice('')} />}
+          {error && (
+            <AlertDialog
+              type="error"
+              title={lang === 'tl' ? 'Hindi Na-reset ang PIN' : 'Reset Failed'}
+              message={error}
+              confirmText="OK"
+              onClose={() => setError('')}
+            />
+          )}
+          {notice && (
+            <AlertDialog
+              type="success"
+              title={lang === 'tl' ? 'PIN Na-update!' : 'PIN Updated!'}
+              message={notice}
+              confirmText={lang === 'tl' ? 'OK, Salamat' : 'OK, Thanks'}
+              onClose={() => setNotice('')}
+            />
+          )}
 
           <button className="primary-button xml-black-button" type="submit" disabled={loading}>
             {loading ? t('updating') : t('set_new_pin')}

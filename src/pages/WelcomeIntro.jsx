@@ -277,8 +277,8 @@ export default function WelcomeIntro({ onLanguageSelect }) {
 
   if (step === 'language') {
     return (
-      <main className="auth-page android-auth intro-page">
-        <section className="auth-panel xml-register-panel intro-panel-card">
+      <main className="auth-page android-auth intro-page neo-brutalist-intro">
+        <section className="auth-panel xml-register-panel intro-panel-card neo-intro-card">
           <div className="intro-header">
             <img className="intro-logo coin-logo-animated" src={logo} alt="CoinCubby Logo" />
             <h1 className="intro-title">CoinCubby</h1>
@@ -337,8 +337,8 @@ export default function WelcomeIntro({ onLanguageSelect }) {
   }
 
   return (
-    <main className="auth-page android-auth intro-page">
-      <section className="auth-panel xml-register-panel intro-panel-card tutorial-panel">
+    <main className="auth-page android-auth intro-page neo-brutalist-intro">
+      <section className="auth-panel xml-register-panel intro-panel-card tutorial-panel neo-intro-card">
         <div className="tutorial-header-bar">
           <button className="tutorial-back-btn" onClick={handleBack} aria-label="Back">
             ←

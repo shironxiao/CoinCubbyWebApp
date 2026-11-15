@@ -112,7 +112,7 @@ export default function History({
   }, [selectedItem])
 
   return (
-    <main className="page xml-page xml-history">
+    <main className="page xml-page xml-history neo-brutalist-history">
       <section className="xml-screen-header" style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: '16px', width: '100%', flexWrap: 'wrap' }}>
         <div className="home-logo-wrap">
           <img className="home-logo-img coin-logo-animated" src={logo} alt="CoinCubby" />
@@ -274,9 +274,6 @@ export default function History({
           >
             <div className="sheet-title" style={{ borderBottom: '1px solid rgba(0,0,0,0.08)', paddingBottom: '12px', marginBottom: '8px' }}>
               <h2>{showReceipt ? (lang === 'tl' ? 'Resibo' : 'Receipt') : t('details')}</h2>
-              <p className="muted" style={{ fontFamily: 'monospace', wordBreak: 'break-all', marginTop: '4px' }}>
-                ID: {selectedItem.id}
-              </p>
               <button
                 className="icon-button"
                 type="button"

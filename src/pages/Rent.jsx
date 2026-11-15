@@ -92,7 +92,7 @@ export default function Rent({
   }
 
   return (
-    <main className="page xml-page xml-rentals">
+    <main className="page xml-page xml-rentals neo-brutalist-rent">
       <section className="xml-screen-header">
         <div className="home-logo-wrap">
           <img className="home-logo-img coin-logo-animated" src={logo} alt="CoinCubby" />

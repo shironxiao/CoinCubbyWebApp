@@ -48,6 +48,12 @@ export default function FeedbackPage({ session, rentalHistory, loadingData, t, l
   const [genComment, setGenComment] = useState('')
   const [submittingGen, setSubmittingGen] = useState(false)
 
+  // Pagination states
+  const [pendingPage, setPendingPage] = useState(1)
+  const pendingPerPage = 3
+  const [globalPage, setGlobalPage] = useState(1)
+  const globalPerPage = 4
+
   // Per-row state: { [transactionId]: { rating, comment, saving, done } }
   const [rowState, setRowState] = useState({})
 
@@ -209,8 +215,14 @@ export default function FeedbackPage({ session, rentalHistory, loadingData, t, l
 
   const isLoadingUser = loadingData || loadingFb
 
+  const totalPendingPages = Math.max(1, Math.ceil(pending.length / pendingPerPage))
+  const paginatedPending = pending.slice((pendingPage - 1) * pendingPerPage, pendingPage * pendingPerPage)
+
+  const totalGlobalPages = Math.max(1, Math.ceil(globalFeedback.length / globalPerPage))
+  const paginatedGlobal = globalFeedback.slice((globalPage - 1) * globalPerPage, globalPage * globalPerPage)
+
   return (
-    <main className="page xml-page feedback-page">
+    <main className="page xml-page feedback-page neo-brutalist-feedback">
       <section className="xml-screen-header">
         <div className="home-logo-wrap">
           <img className="home-logo-img coin-logo-animated" src={logo} alt="CoinCubby" />
@@ -241,7 +253,7 @@ export default function FeedbackPage({ session, rentalHistory, loadingData, t, l
 
       {activeTab === 'my-feedback' ? (
         <>
-          {/* ── PENDING FEEDBACK ────────────────────────────────── */}
+          {/* ── PENDING FEEDBACK (RATE RENTALS) ───────────────────── */}
           <section className="fb-section">
             <p className="fb-section-label">{t('feedback_pending_label')}</p>
 
@@ -250,48 +262,80 @@ export default function FeedbackPage({ session, rentalHistory, loadingData, t, l
             ) : pending.length === 0 ? (
               <div className="fb-empty">{t('feedback_no_pending')}</div>
             ) : (
-              <div className="fb-cards">
-                {pending.map((item) => {
-                  const rs = rowState[item.id] || { rating: 5, comment: '', saving: false, done: false }
-                  if (rs.done) return null
-                  return (
-                    <div key={item.id} className="fb-card">
-                      <div className="fb-card-header">
-                        <span className="fb-locker-badge">
-                          {lang === 'tl' ? 'Locker' : 'Locker'} {item.lockerNumber}
-                        </span>
-                        <span className="fb-status-badge">{item.sizeName}</span>
+              <>
+                <div className="fb-cards">
+                  {paginatedPending.map((item, idx) => {
+                    const rs = rowState[item.id] || { rating: 5, comment: '', saving: false, done: false }
+                    if (rs.done) return null
+                    const themes = ['fb-card--pink', 'fb-card--cyan', 'fb-card--green']
+                    const shapeThemes = ['fb-shape--tr', 'fb-shape--bl']
+                    const cardTheme = themes[idx % themes.length]
+                    const shapeTheme = shapeThemes[idx % shapeThemes.length]
+                    return (
+                      <div key={item.id} className={`fb-card neo-feedback-card ${cardTheme} ${shapeTheme}`}>
+                        <div className="fb-card-header">
+                          <span className="fb-locker-badge">
+                            {lang === 'tl' ? 'Locker' : 'Locker'} {item.lockerNumber}
+                          </span>
+                          <span className="fb-status-badge">{item.sizeName}</span>
+                        </div>
+
+                        <StarPicker
+                          value={rs.rating}
+                          onChange={(v) => setRow(item.id, { rating: v })}
+                        />
+                        {rs.rating > 0 && (
+                          <p className="fb-rating-label">{ratingLabel(rs.rating, lang)}</p>
+                        )}
+
+                        <textarea
+                          className="fb-textarea"
+                          rows={3}
+                          maxLength={500}
+                          placeholder={t('feedback_comment_placeholder')}
+                          value={rs.comment}
+                          onChange={(e) => setRow(item.id, { comment: e.target.value })}
+                        />
+
+                        <button
+                          type="button"
+                          className="primary-button xml-black-button fb-submit-btn neo-action-button"
+                          disabled={rs.saving}
+                          onClick={() => handleSubmit(item)}
+                        >
+                          {rs.saving ? t('processing') : t('feedback_submit')}
+                        </button>
                       </div>
+                    )
+                  })}
+                </div>
 
-                      <StarPicker
-                        value={rs.rating}
-                        onChange={(v) => setRow(item.id, { rating: v })}
-                      />
-                      {rs.rating > 0 && (
-                        <p className="fb-rating-label">{ratingLabel(rs.rating, lang)}</p>
-                      )}
-
-                      <textarea
-                        className="fb-textarea"
-                        rows={3}
-                        maxLength={500}
-                        placeholder={t('feedback_comment_placeholder')}
-                        value={rs.comment}
-                        onChange={(e) => setRow(item.id, { comment: e.target.value })}
-                      />
-
-                      <button
-                        type="button"
-                        className="primary-button xml-black-button fb-submit-btn"
-                        disabled={rs.saving}
-                        onClick={() => handleSubmit(item)}
-                      >
-                        {rs.saving ? t('processing') : t('feedback_submit')}
-                      </button>
-                    </div>
-                  )
-                })}
-              </div>
+                {totalPendingPages > 1 && (
+                  <div className="pagination-controls" style={{ marginTop: '16px' }}>
+                    <button
+                      className="pagination-btn"
+                      disabled={pendingPage === 1}
+                      onClick={() => setPendingPage((prev) => Math.max(prev - 1, 1))}
+                      aria-label="Previous page"
+                    >
+                      {lang === 'tl' ? '← Nakaraan' : '← Prev'}
+                    </button>
+                    <span className="pagination-info">
+                      {lang === 'tl'
+                        ? <><strong>{pendingPage}</strong> ng {totalPendingPages}</>
+                        : <>Page <strong>{pendingPage}</strong> of {totalPendingPages}</>}
+                    </span>
+                    <button
+                      className="pagination-btn"
+                      disabled={pendingPage === totalPendingPages}
+                      onClick={() => setPendingPage((prev) => Math.min(prev + 1, totalPendingPages))}
+                      aria-label="Next page"
+                    >
+                      {lang === 'tl' ? 'Susunod →' : 'Next →'}
+                    </button>
+                  </div>
+                )}
+              </>
             )}
           </section>
 
@@ -419,49 +463,79 @@ export default function FeedbackPage({ session, rentalHistory, loadingData, t, l
           ) : globalFeedback.length === 0 ? (
             <div className="fb-empty">{t('feedback_no_global')}</div>
           ) : (
-            <div className="fb-cards">
-              {globalFeedback.map((fb) => {
-                const reviewerName = fb.customers?.full_name || (lang === 'tl' ? 'Gagamit' : 'Verified Customer')
-                const initials = reviewerName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() || 'U'
-                
-                // Deterministic gradient color based on name length/hash
-                const colors = ['grad-blue', 'grad-purple', 'grad-teal', 'grad-orange', 'grad-pink']
-                const colorClass = colors[reviewerName.length % colors.length]
+            <>
+              <div className="fb-cards">
+                {paginatedGlobal.map((fb, idx) => {
+                  const reviewerName = fb.customers?.full_name || (lang === 'tl' ? 'Gagamit' : 'Verified Customer')
+                  const initials = reviewerName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() || 'U'
+                  
+                  // Deterministic pastel color & asymmetrical neo-brutalist curved corners matching screenshot
+                  const themes = ['fb-card--pink', 'fb-card--cyan', 'fb-card--green', 'fb-card--lavender']
+                  const shapeThemes = ['fb-shape--tr', 'fb-shape--bl']
+                  const cardTheme = themes[idx % themes.length]
+                  const shapeTheme = shapeThemes[idx % shapeThemes.length]
 
-                return (
-                  <div key={fb.feedback_id} className="fb-global-card">
-                    <div className="fb-global-card-userinfo">
-                      <div className={`fb-avatar ${colorClass}`}>
-                        {initials}
-                      </div>
-                      <div className="fb-user-details">
-                        <div className="fb-user-name-row">
-                          <span className="fb-global-reviewer-name">{reviewerName}</span>
-                          <span className="fb-verified-badge">
-                            <span className="fb-verified-icon">✓</span>
-                            {lang === 'tl' ? 'Beripikado' : 'Verified'}
-                          </span>
+                  return (
+                    <div key={fb.feedback_id} className={`fb-global-card neo-feedback-card ${cardTheme} ${shapeTheme}`}>
+                      <div className="fb-global-card-userinfo">
+                        <div className="fb-avatar neo-avatar">
+                          {initials}
                         </div>
-                        <div className="fb-sub-header-row">
-                          <div className="fb-global-stars">
-                            {[1, 2, 3, 4, 5].map((n) => (
-                              <span key={n} className={`fb-star-mini ${n <= fb.rating ? 'active' : ''}`}>{STAR}</span>
-                            ))}
+                        <div className="fb-user-details">
+                          <div className="fb-user-name-row">
+                            <span className="fb-global-reviewer-name">{reviewerName}</span>
+                            <span className="fb-verified-badge">
+                              <span className="fb-verified-icon">✓</span>
+                              {lang === 'tl' ? 'Beripikado' : 'Verified'}
+                            </span>
                           </div>
-                          <span className="fb-global-date">
-                            {new Date(fb.created_at).toLocaleDateString(
-                              lang === 'tl' ? 'fil-PH' : 'en-US',
-                              { year: 'numeric', month: 'short', day: 'numeric' },
-                            )}
-                          </span>
+                          <div className="fb-sub-header-row">
+                            <div className="fb-global-stars">
+                              {[1, 2, 3, 4, 5].map((n) => (
+                                <span key={n} className={`fb-star-mini ${n <= fb.rating ? 'active' : ''}`}>{STAR}</span>
+                              ))}
+                            </div>
+                            <span className="fb-global-date">
+                              {new Date(fb.created_at).toLocaleDateString(
+                                lang === 'tl' ? 'fil-PH' : 'en-US',
+                                { year: 'numeric', month: 'short', day: 'numeric' },
+                              )}
+                            </span>
+                          </div>
                         </div>
                       </div>
+                      {fb.comment && <p className="fb-global-comment">{fb.comment}</p>}
                     </div>
-                    {fb.comment && <p className="fb-global-comment">{fb.comment}</p>}
-                  </div>
-                )
-              })}
-            </div>
+                  )
+                })}
+              </div>
+
+              {totalGlobalPages > 1 && (
+                <div className="pagination-controls" style={{ marginTop: '20px' }}>
+                  <button
+                    className="pagination-btn"
+                    disabled={globalPage === 1}
+                    onClick={() => setGlobalPage((prev) => Math.max(prev - 1, 1))}
+                    aria-label="Previous page"
+                  >
+                    {lang === 'tl' ? '← Nakaraan' : '← Prev'}
+                  </button>
+                  <span className="pagination-info">
+                    {lang === 'tl'
+                      ? <><strong>{globalPage}</strong> ng {totalGlobalPages}</>
+                      : <>Page <strong>{globalPage}</strong> of {totalGlobalPages}</>}
+                  </span>
+                  <button
+                    className="pagination-btn"
+                    disabled={globalPage === totalGlobalPages}
+                    onClick={() => setGlobalPage((prev) => Math.min(prev + 1, totalGlobalPages))}
+                    aria-label="Next page"
+                  >
+                    {lang === 'tl' ? 'Susunod →' : 'Next →'}
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </section>
       )}

@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { fetchProfile, logout, changePassword, verifyUserPassword } from '../lib/supabase'
 import AlertDialog from '../components/AlertDialog'
+import LoadingScreen from '../components/LoadingScreen'
 import logo from '../assets/CoinCubby.png'
 
 export default function Profile({ session, onLogout, onNavigate, addNotification, t, lang, onLanguageChange, onShowTutorial }) {
@@ -22,6 +23,8 @@ export default function Profile({ session, onLogout, onNavigate, addNotification
   const [notice, setNotice] = useState('')
   const [loadingPassword, setLoadingPassword] = useState(false)
   const [loadingProfile, setLoadingProfile] = useState(true)
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
 
   async function handleChangePassword(event) {
     event.preventDefault()
@@ -88,8 +91,11 @@ export default function Profile({ session, onLogout, onNavigate, addNotification
   }, [loadProfile])
 
   async function handleSignOut() {
+    setShowLogoutConfirm(false)
+    setIsLoggingOut(true)
     try {
       await logout(session?.accessToken)
+      await new Promise((resolve) => setTimeout(resolve, 800))
     } finally {
       onLogout()
       onNavigate('login')
@@ -97,7 +103,12 @@ export default function Profile({ session, onLogout, onNavigate, addNotification
   }
 
   return (
-    <main className="page xml-page profile-page">
+    <main className="page xml-page profile-page neo-brutalist-profile">
+      {isLoggingOut && (
+        <LoadingScreen
+          message={lang === 'tl' ? 'Nag-sa-sign out...' : 'Signing out of CoinCubby...'}
+        />
+      )}
       <section className="xml-screen-header">
         <div className="home-logo-wrap">
           <img className="home-logo-img coin-logo-animated" src={logo} alt="CoinCubby" />
@@ -105,13 +116,15 @@ export default function Profile({ session, onLogout, onNavigate, addNotification
         </div>
       </section>
 
-      <section className="profile-hero">
+      <section className="profile-hero neo-card neo-profile-hero">
         <img
           src={logo}
           alt="CoinCubby Logo"
           className="profile-hero-logo coin-logo-animated"
         />
-        <div className="profile-brand-logo">CoinCubby</div>
+        <div className="neo-kiosk-tagline" style={{ margin: '0 auto 12px auto', background: '#FEF08A' }}>
+          SMART LOCKER SYSTEM • SECURE STORAGE
+        </div>
         <h1>{profile.fullName || 'Loading...'}</h1>
         <p>{profile.contact}</p>
 
@@ -120,24 +133,11 @@ export default function Profile({ session, onLogout, onNavigate, addNotification
           <div style={{ marginTop: '10px', fontSize: '12px', color: '#888' }}>{lang === 'tl' ? 'Naglo-load ng User ID...' : 'Loading User ID...'}</div>
         ) : profile.coinUserId ? (
           <>
-            <div style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              marginTop: '10px',
-              padding: '6px 14px',
-              background: 'var(--dark)',
-              borderRadius: '999px',
-              fontSize: '13px',
-              fontWeight: '700',
-              color: 'var(--label-green)',
-              letterSpacing: '0.15em',
-              fontFamily: 'monospace',
-            }}>
-              <span style={{ opacity: 0.6, fontSize: '11px', fontWeight: 400, letterSpacing: 0 }}>{t('user_id_badge')}</span>
-              {profile.coinUserId}
+            <div className="neo-user-id-badge">
+              <span>{t('user_id_badge')}</span>
+              <strong>{profile.coinUserId}</strong>
             </div>
-            <p style={{ fontSize: '12px', color: '#888', margin: '8px auto 0 auto', maxWidth: '300px', lineHeight: '1.4' }}>
+            <p style={{ fontSize: '12px', color: '#71717A', margin: '8px auto 0 auto', maxWidth: '320px', lineHeight: '1.4', fontWeight: '500' }}>
               {t('user_id_description')}
             </p>
           </>
@@ -151,18 +151,18 @@ export default function Profile({ session, onLogout, onNavigate, addNotification
       {/* Change PIN Section */}
       {!isChangingPassword ? (
         <section
-          className="xml-list-row"
+          className="xml-list-row neo-action-row"
           style={{ cursor: 'pointer' }}
           onClick={() => setIsChangingPassword(true)}
         >
-          <span>🔑</span>
+          <span className="neo-row-icon">🔑</span>
           <p>{t('change_pin')}</p>
           <b>›</b>
         </section>
       ) : (
-        <form className="form-stack" onSubmit={handleChangePassword} style={{ marginTop: '16px' }}>
-          <h2 style={{ fontSize: '16px', fontWeight: '700', margin: '0 0 4px 0' }}>{t('change_pin')}</h2>
-          <p style={{ fontSize: '12px', color: '#888', margin: '0 0 16px 0' }}>
+        <form className="form-stack neo-pin-form" onSubmit={handleChangePassword} style={{ marginTop: '16px' }}>
+          <h2 style={{ fontSize: '18px', fontWeight: '900', margin: '0 0 4px 0', color: '#18181B' }}>{t('change_pin')}</h2>
+          <p style={{ fontSize: '12px', color: '#71717A', margin: '0 0 16px 0', fontWeight: '500' }}>
             {lang === 'tl' ? 'Ang iyong 6-digit na PIN ay ginagamit para mag-log in at i-verify ang pagbabalik ng locker.' : 'Your 6-digit PIN is used to log in and verify locker returns.'}
           </p>
 
@@ -217,12 +217,28 @@ export default function Profile({ session, onLogout, onNavigate, addNotification
             />
           </label>
 
-          {error && <AlertDialog type="error" message={error} onClose={() => setError('')} />}
-          {notice && <AlertDialog type="success" message={notice} onClose={() => setNotice('')} />}
+          {error && (
+            <AlertDialog
+              type="error"
+              title={lang === 'tl' ? 'Hindi Na-update ang PIN' : 'PIN Update Failed'}
+              message={error}
+              confirmText="OK"
+              onClose={() => setError('')}
+            />
+          )}
+          {notice && (
+            <AlertDialog
+              type="success"
+              title={lang === 'tl' ? 'PIN Na-update!' : 'PIN Updated!'}
+              message={notice}
+              confirmText={lang === 'tl' ? 'Salamat' : 'Got it'}
+              onClose={() => setNotice('')}
+            />
+          )}
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '8px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginTop: '12px' }}>
             <button
-              className="secondary-button"
+              className="secondary-button neo-secondary-button"
               type="button"
               onClick={() => {
                 setIsChangingPassword(false)
@@ -233,7 +249,7 @@ export default function Profile({ session, onLogout, onNavigate, addNotification
             >
               {t('cancel')}
             </button>
-            <button className="primary-button xml-black-button" type="submit" disabled={loadingPassword}>
+            <button className="primary-button neo-action-button" type="submit" disabled={loadingPassword}>
               {loadingPassword ? t('saving_pin') : t('save_pin')}
             </button>
           </div>
@@ -242,34 +258,62 @@ export default function Profile({ session, onLogout, onNavigate, addNotification
 
       {/* View Tutorial Section */}
       <section
-        className="xml-list-row"
+        className="xml-list-row neo-action-row"
         style={{ cursor: 'pointer', marginTop: '12px' }}
         onClick={onShowTutorial}
       >
-        <span>📖</span>
+        <span className="neo-row-icon">📖</span>
         <p>{lang === 'tl' ? 'Tingnan ang Gabay' : 'View Guide'}</p>
         <b>›</b>
       </section>
 
       {/* Language Switcher Row */}
-      <div className="profile-lang-row">
+      <div className="profile-lang-row neo-lang-row">
         <div>
           <h4>{t('language_label')}</h4>
           <p>{t('language_description')}</p>
         </div>
-        <select
-          className="profile-lang-select"
-          value={lang}
-          onChange={(e) => onLanguageChange(e.target.value)}
-        >
-          <option value="en">🇺🇸 English</option>
-          <option value="tl">🇵🇭 Tagalog</option>
-        </select>
+        <div className="neo-lang-toggle-group" role="group" aria-label={t('language_label')}>
+          <button
+            type="button"
+            className={`neo-lang-toggle-btn ${lang === 'en' ? 'active' : ''}`}
+            onClick={() => onLanguageChange('en')}
+          >
+            🇺🇸 English
+          </button>
+          <button
+            type="button"
+            className={`neo-lang-toggle-btn ${lang === 'tl' ? 'active' : ''}`}
+            onClick={() => onLanguageChange('tl')}
+          >
+            🇵🇭 Tagalog
+          </button>
+        </div>
       </div>
 
-      <button className="danger-button xml-black-button" type="button" onClick={handleSignOut}>
+      <button
+        className="danger-button neo-action-button neo-danger-button"
+        type="button"
+        onClick={() => setShowLogoutConfirm(true)}
+      >
         {t('sign_out')}
       </button>
+
+      {showLogoutConfirm && (
+        <AlertDialog
+          type="confirm"
+          title={lang === 'tl' ? 'Mag-sign out?' : 'Sign Out?'}
+          message={
+            lang === 'tl'
+              ? 'Sigurado ka bang nais mong mag-sign out sa iyong CoinCubby account?'
+              : 'Are you sure you want to sign out of your CoinCubby account?'
+          }
+          confirmText={t('sign_out')}
+          cancelText={t('cancel')}
+          onConfirm={handleSignOut}
+          onClose={() => setShowLogoutConfirm(false)}
+        />
+      )}
     </main>
   )
 }

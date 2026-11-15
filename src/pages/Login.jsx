@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { loginWithPassword, sendPasswordResetEmail } from '../lib/supabase'
 import logo from '../assets/CoinCubby.png'
 import AlertDialog from '../components/AlertDialog'
+import LoadingScreen from '../components/LoadingScreen'
 
 export default function Login({ onNavigate, onLogin, t, lang }) {
   const [form, setForm] = useState(() => ({
@@ -34,6 +35,7 @@ export default function Login({ onNavigate, onLogin, t, lang }) {
     try {
       localStorage.setItem('coincubby.remember_me', rememberMe ? 'true' : 'false')
       const session = await loginWithPassword(form.email.trim(), form.password, rememberMe)
+      await new Promise((resolve) => setTimeout(resolve, 600))
       onLogin(session)
       onNavigate('home')
     } catch (err) {
@@ -67,14 +69,40 @@ export default function Login({ onNavigate, onLogin, t, lang }) {
   }
 
   return (
-    <main className="auth-page android-auth login-page">
-      <section className="auth-panel xml-login-panel">
-        <img className="auth-logo coin-logo-animated" src={logo} alt="CoinCubby logo" />
+    <main className="auth-page android-auth login-page neo-brutalist-login">
+      {loading && (
+        <LoadingScreen
+          message={lang === 'tl' ? 'Pumapasok sa CoinCubby...' : 'Signing in to CoinCubby...'}
+        />
+      )}
+      {/* Neo-brutalist decorative badges matching the kiosk screen */}
+      <div className="neo-sticker sticker-top-left" aria-hidden="true">
+        <span>↓</span>
+      </div>
+      <div className="neo-sticker sticker-top-right" aria-hidden="true">
+        <span>⊞</span>
+      </div>
+      <div className="neo-sticker sticker-bottom-left" aria-hidden="true">
+        <span>✓</span>
+      </div>
+      <div className="neo-sticker sticker-bottom-right" aria-hidden="true">
+        <span>!</span>
+      </div>
+      <div className="neo-dot dot-top-center" aria-hidden="true"></div>
+      <div className="neo-dot dot-bottom-center" aria-hidden="true"></div>
+
+      <section className="auth-panel xml-login-panel neo-login-card">
+        <div className="neo-logo-wrapper">
+          <img className="auth-logo coin-logo-animated" src={logo} alt="CoinCubby logo" />
+        </div>
 
         {view === 'login' ? (
           <>
-            <div>
+            <div className="neo-header-block">
               <h1>CoinCubby</h1>
+              <div className="neo-kiosk-tagline">
+                Smart Locker System • Secure Storage
+              </div>
               <p className="muted">{t('login_sub')}</p>
             </div>
 
@@ -130,9 +158,17 @@ export default function Login({ onNavigate, onLogin, t, lang }) {
                 </button>
               </div>
 
-              {error && <AlertDialog type="error" message={error} onClose={() => setError('')} />}
+              {error && (
+                <AlertDialog
+                  type="error"
+                  title={lang === 'tl' ? 'Maling Kredensyal' : 'Invalid Credentials'}
+                  message={error}
+                  confirmText="Try Again"
+                  onClose={() => setError('')}
+                />
+              )}
 
-              <button className="primary-button xml-black-button" type="submit" disabled={loading}>
+              <button className="primary-button xml-black-button neo-action-button" type="submit" disabled={loading}>
                 {loading ? t('logging_in') : t('continue_payment')}
               </button>
             </form>
@@ -164,10 +200,26 @@ export default function Login({ onNavigate, onLogin, t, lang }) {
                 />
               </label>
 
-              {resetError && <AlertDialog type="error" message={resetError} onClose={() => setResetError('')} />}
-              {resetNotice && <AlertDialog type="success" message={resetNotice} onClose={() => setResetNotice('')} />}
+              {resetError && (
+                <AlertDialog
+                  type="error"
+                  title={lang === 'tl' ? 'Hindi Maipadala' : 'Failed to Send'}
+                  message={resetError}
+                  confirmText="OK"
+                  onClose={() => setResetError('')}
+                />
+              )}
+              {resetNotice && (
+                <AlertDialog
+                  type="success"
+                  title={lang === 'tl' ? 'Email Naipadala!' : 'Email Sent!'}
+                  message={resetNotice}
+                  confirmText={lang === 'tl' ? 'Salamat' : 'Got it'}
+                  onClose={() => setResetNotice('')}
+                />
+              )}
 
-              <button className="primary-button xml-black-button" type="submit" disabled={resetLoading}>
+              <button className="primary-button xml-black-button neo-action-button" type="submit" disabled={resetLoading}>
                 {resetLoading ? t('sending') : t('send_reset_link')}
               </button>
             </form>

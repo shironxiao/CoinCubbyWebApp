@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { registerAccount, isUserIdTaken, generateUniqueUserId } from '../lib/supabase'
 import AlertDialog from '../components/AlertDialog'
+import logo from '../assets/CoinCubby.png'
 
 export default function Register({ onNavigate, t, lang }) {
   const [form, setForm] = useState({
@@ -81,10 +82,33 @@ export default function Register({ onNavigate, t, lang }) {
   }
 
   return (
-    <main className="auth-page android-auth">
-      <section className="auth-panel xml-register-panel">
-        <div>
-          <h1>{t('register_title')}</h1>
+    <main className="auth-page android-auth login-page neo-brutalist-login register-page">
+      {/* Neo-brutalist decorative badges matching kiosk */}
+      <div className="neo-sticker sticker-top-left" aria-hidden="true">
+        <span>↓</span>
+      </div>
+      <div className="neo-sticker sticker-top-right" aria-hidden="true">
+        <span>⊞</span>
+      </div>
+      <div className="neo-sticker sticker-bottom-left" aria-hidden="true">
+        <span>✓</span>
+      </div>
+      <div className="neo-sticker sticker-bottom-right" aria-hidden="true">
+        <span>!</span>
+      </div>
+      <div className="neo-dot dot-top-center" aria-hidden="true"></div>
+      <div className="neo-dot dot-bottom-center" aria-hidden="true"></div>
+
+      <section className="auth-panel xml-register-panel neo-login-card">
+        <div className="neo-logo-wrapper">
+          <img className="auth-logo coin-logo-animated" src={logo} alt="CoinCubby logo" />
+        </div>
+
+        <div className="neo-header-block">
+          <h1>CoinCubby</h1>
+          <div className="neo-kiosk-tagline">
+            Smart Locker System • Secure Storage
+          </div>
           <p className="muted">{t('register_sub')}</p>
         </div>
 
@@ -114,18 +138,17 @@ export default function Register({ onNavigate, t, lang }) {
 
           {/* User ID — read-only, auto-generated */}
           <div className="xml-field">
-            <span>{t('user_id_label')} <em style={{ fontSize: '11px', fontWeight: 400, color: '#888' }}>{t('user_id_note')}</em></span>
+            <span>{t('user_id_label')} <em style={{ fontSize: '11px', fontWeight: 400, opacity: 0.85 }}>{t('user_id_note')}</em></span>
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
               <input
                 type="text"
                 value={generatingId ? (lang === 'tl' ? 'Gumagawa...' : 'Generating...') : userId}
                 readOnly
-                style={{ fontFamily: 'monospace', letterSpacing: '0.2em', fontWeight: '700', flex: 1 }}
+                style={{ fontFamily: 'monospace', letterSpacing: '0.2em', fontWeight: '800', flex: 1, background: '#F8FAFC' }}
               />
               <button
                 type="button"
-                className="secondary-button"
-                style={{ padding: '10px 14px', whiteSpace: 'nowrap', fontSize: '12px' }}
+                className="secondary-button neo-regen-button"
                 onClick={handleRegenerate}
                 disabled={generatingId || loading}
               >
@@ -168,10 +191,26 @@ export default function Register({ onNavigate, t, lang }) {
             />
           </label>
 
-          {error && <AlertDialog type="error" message={error} onClose={() => setError('')} />}
-          {notice && <AlertDialog type="success" message={notice} onClose={() => setNotice('')} />}
+          {error && (
+            <AlertDialog
+              type="error"
+              title={lang === 'tl' ? 'Hindi Makapag-register' : 'Registration Failed'}
+              message={error}
+              confirmText="OK"
+              onClose={() => setError('')}
+            />
+          )}
+          {notice && (
+            <AlertDialog
+              type="success"
+              title={lang === 'tl' ? 'Account Nagawa!' : 'Account Created!'}
+              message={notice}
+              confirmText={lang === 'tl' ? 'Magpatuloy' : 'Continue'}
+              onClose={() => setNotice('')}
+            />
+          )}
 
-          <button className="primary-button xml-black-button" type="submit" disabled={loading || generatingId}>
+          <button className="primary-button xml-black-button neo-action-button" type="submit" disabled={loading || generatingId}>
             {loading ? t('creating_account') : t('register_title')}
           </button>
         </form>

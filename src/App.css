@@ -4037,91 +4037,364 @@ dd {
   margin: 0 !important;
 }
 
-/* ── Login page — blue overrides ────────────────────────────────── */
-.login-page {
-  background: radial-gradient(circle at top left,  rgba(59,158,232,0.22), transparent 28%),
-              radial-gradient(circle at bottom right, rgba(100,181,246,0.16), transparent 26%),
-              #F0F8FF !important;
+/* ── Neo-Brutalism Login Page (Kiosk Hardware Inspired) ────────── */
+.login-page.neo-brutalist-login {
+  position: relative;
+  background-color: #F8F9FA !important;
+  background-image: 
+    radial-gradient(#d1d5db 1.6px, transparent 1.6px),
+    linear-gradient(135deg, #FEF9C3 0%, #EFF6FF 50%, #FDF2F8 100%) !important;
+  background-size: 20px 20px, 100% 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 24px 16px !important;
+  min-height: 100svh !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
 }
 
-.login-page .auth-panel::before {
-  background: rgba(59,158,232,0.14) !important;
-}
-.login-page .auth-panel::after {
-  background: rgba(100,181,246,0.10) !important;
-}
-
-.login-page .auth-panel h1 {
-  color: #0D47A1 !important;
-}
-
-.login-page .muted {
-  color: #2c6896 !important;
-}
-
-.login-page .xml-field > span {
-  color: #1a5f9e !important;
-}
-
-.login-page input {
-  border-color: #c5dff4 !important;
-  color: #0d2b4a !important;
+/* Floating Neo-Brutalist Sticker Badges */
+.neo-sticker {
+  position: absolute;
+  width: 44px;
+  height: 44px;
+  border: 2.5px solid #18181B;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 20px;
+  color: #18181B;
+  box-shadow: 4px 4px 0px #18181B;
+  z-index: 1;
+  pointer-events: none;
+  user-select: none;
+  transition: transform 0.2s ease;
 }
 
-.login-page input:focus {
-  border-color: #3B9EE8 !important;
-  box-shadow: 0 0 0 4px rgba(59,158,232,0.18) !important;
+/* Yellow Down Arrow sticker (Top Left like kiosk) */
+.sticker-top-left {
+  top: 18px;
+  left: 18px;
+  background: #FDE047;
+  transform: rotate(-8deg);
 }
 
-.login-page input::placeholder {
-  color: #90b4cc !important;
+/* Lavender Quad/Grid sticker (Top Right like kiosk) */
+.sticker-top-right {
+  top: 20px;
+  right: 18px;
+  background: #C4B5FD;
+  transform: rotate(7deg);
 }
 
-.login-page .remember-me-label {
-  color: #1a5f9e !important;
+/* Mint Checkmark sticker (Bottom Left like kiosk) */
+.sticker-bottom-left {
+  bottom: 22px;
+  left: 20px;
+  background: #86EFAC;
+  transform: rotate(6deg);
 }
 
-.login-page .remember-me-label input[type="checkbox"] {
-  accent-color: #3B9EE8 !important;
+/* Pink Exclamation sticker (Bottom Right like kiosk) */
+.sticker-bottom-right {
+  bottom: 22px;
+  right: 20px;
+  background: #F472B6;
+  transform: rotate(-10deg);
 }
 
-.login-page .forgot-pin-link {
-  color: #3B9EE8 !important;
+/* Floating circles */
+.neo-dot {
+  position: absolute;
+  border: 2px solid #18181B;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 1;
 }
 
-.login-page .forgot-pin-link:hover {
-  color: #1565C0 !important;
+.dot-top-center {
+  width: 22px;
+  height: 22px;
+  background: #FB7185;
+  top: 60px;
+  right: 70px;
+  box-shadow: 2px 2px 0px #18181B;
 }
 
-.login-page .xml-black-button {
-  background: linear-gradient(135deg, #3B9EE8 0%, #1A6BB5 100%) !important;
-  box-shadow: 0 16px 28px rgba(26,107,181,0.22) !important;
+.dot-bottom-center {
+  width: 18px;
+  height: 18px;
+  background: #38BDF8;
+  bottom: 75px;
+  left: 75px;
+  box-shadow: 2px 2px 0px #18181B;
 }
 
-.login-page .xml-black-button:hover:not(:disabled) {
-  background: linear-gradient(135deg, #2d8fd6 0%, #155ba0 100%) !important;
-  box-shadow: 0 18px 34px rgba(26,107,181,0.30) !important;
+/* Main Neo-Brutalist Login Card */
+.neo-login-card {
+  position: relative !important;
+  z-index: 2 !important;
+  width: 100% !important;
+  max-width: 390px !important;
+  min-height: auto !important;
+  background: #FFFFFF !important;
+  border: 3px solid #18181B !important;
+  border-radius: 20px !important;
+  box-shadow: 7px 7px 0px #18181B !important;
+  padding: 24px 22px !important;
+  margin: auto !important;
+  display: flex !important;
+  flex-direction: column !important;
 }
 
-.login-page .auth-switch {
-  color: #3a6a8a !important;
+/* Logo container in card */
+.neo-logo-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 10px;
 }
 
-.login-page .auth-switch button {
-  color: #3B9EE8 !important;
+.neo-login-card .auth-logo {
+  width: 130px !important;
+  height: 130px !important;
+  margin: 0 !important;
+  filter: drop-shadow(4px 4px 0px #18181B);
 }
 
-.login-page .auth-switch button:hover {
-  color: #1565C0 !important;
+.neo-header-block {
+  text-align: center;
+  margin-bottom: 12px;
 }
 
-.login-page .success {
-  background: #E3F2FD !important;
-  color: #0D47A1 !important;
+.neo-login-card h1 {
+  font-size: 28px !important;
+  font-weight: 900 !important;
+  color: #18181B !important;
+  letter-spacing: -0.02em !important;
+  margin: 0 0 4px 0 !important;
+  text-transform: uppercase;
 }
 
-.login-page .auth-panel {
-  box-shadow: 0 32px 90px rgba(26,107,181,0.12) !important;
+/* Tagline right under COINCUBBY */
+.neo-kiosk-tagline {
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.05em !important;
+  text-align: center !important;
+  color: #18181B !important;
+  padding: 4px 12px !important;
+  background: #E0F2FE !important; /* Soft blue tint */
+  border: 1.5px solid #18181B !important;
+  border-radius: 999px !important;
+  margin: 0 auto 8px auto !important;
+  width: fit-content !important;
+  box-shadow: 2px 2px 0px #18181B !important;
+}
+
+/* Subtitle "Access your smart public locker account" made smaller & lighter */
+.neo-login-card .muted {
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  color: #71717A !important; /* softer lighter gray so it contrasts distinctly with the tagline */
+  margin: 0 !important;
+  line-height: 1.4 !important;
+}
+
+/* Form stack */
+.neo-login-card .form-stack {
+  gap: 14px !important;
+  margin-top: 14px !important;
+}
+
+/* Field styling */
+.neo-login-card .xml-field {
+  gap: 6px !important;
+}
+
+.neo-login-card .xml-field > span {
+  font-size: 12px !important;
+  font-weight: 800 !important;
+  color: #FFFFFF !important;
+  background: #3B9EE8 !important;
+  border: 2px solid #18181B !important;
+  border-radius: 6px !important;
+  padding: 3px 10px !important;
+  box-shadow: 2.5px 2.5px 0px #18181B !important;
+  width: fit-content !important;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.neo-login-card input {
+  height: 46px !important;
+  background: #FFFFFF !important;
+  border: 2.5px solid #18181B !important;
+  border-radius: 12px !important;
+  padding: 0 14px !important;
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  color: #18181B !important;
+  box-shadow: 3px 3px 0px #18181B !important;
+  transition: all 0.15s ease !important;
+}
+
+.neo-login-card input:focus {
+  outline: none !important;
+  border-color: #18181B !important;
+  box-shadow: 4px 4px 0px #3B9EE8 !important;
+  transform: translate(-1px, -1px);
+}
+
+.neo-login-card input::placeholder {
+  color: #9CA3AF !important;
+  font-weight: 500 !important;
+}
+
+/* Remember me row */
+.neo-login-card .login-options-row {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  margin-top: 2px !important;
+}
+
+.neo-login-card .remember-me-label {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  font-size: 12.5px !important;
+  font-weight: 700 !important;
+  color: #18181B !important;
+  cursor: pointer;
+}
+
+.neo-login-card .remember-me-label input[type="checkbox"] {
+  width: 16px !important;
+  height: 16px !important;
+  accent-color: #18181B !important;
+  border: 2px solid #18181B !important;
+  border-radius: 4px !important;
+  box-shadow: none !important;
+  margin: 0 !important;
+}
+
+.neo-login-card .forgot-pin-link {
+  font-size: 12.5px !important;
+  font-weight: 800 !important;
+  color: #0284C7 !important;
+  text-decoration: underline !important;
+  text-underline-offset: 3px !important;
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  cursor: pointer;
+}
+
+/* Big Kiosk Neo-Brutalist Push Button */
+.neo-action-button {
+  width: 100% !important;
+  min-height: 50px !important;
+  margin-top: 8px !important;
+  background: #3B9EE8 !important; /* CoinCubby signature blue */
+  color: #FFFFFF !important;
+  border: 3px solid #18181B !important;
+  border-radius: 14px !important;
+  font-size: 16px !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.05em !important;
+  text-transform: uppercase !important;
+  box-shadow: 5px 5px 0px #18181B !important;
+  cursor: pointer !important;
+  transition: transform 0.1s ease, box-shadow 0.1s ease, background 0.1s ease !important;
+}
+
+.neo-action-button:hover:not(:disabled) {
+  background: #258ad4 !important;
+  transform: translate(-2px, -2px) !important;
+  box-shadow: 7px 7px 0px #18181B !important;
+}
+
+.neo-action-button:active:not(:disabled) {
+  background: #1d78bd !important;
+  transform: translate(3px, 3px) !important;
+  box-shadow: 2px 2px 0px #18181B !important;
+}
+
+.neo-action-button:disabled {
+  opacity: 0.65 !important;
+  cursor: not-allowed !important;
+}
+
+/* Neo-Brutalist Regenerate User ID Button */
+.neo-regen-button {
+  border: 2px solid #18181B !important;
+  border-radius: 10px !important;
+  background: #FEF08A !important;
+  color: #18181B !important;
+  font-weight: 800 !important;
+  font-size: 12px !important;
+  padding: 10px 14px !important;
+  box-shadow: 2.5px 2.5px 0px #18181B !important;
+  white-space: nowrap !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+}
+
+.neo-regen-button:hover:not(:disabled) {
+  background: #FDE047 !important;
+  transform: translate(-1px, -1px) !important;
+  box-shadow: 3.5px 3.5px 0px #18181B !important;
+}
+
+.neo-regen-button:active:not(:disabled) {
+  transform: translate(2px, 2px) !important;
+  box-shadow: 1px 1px 0px #18181B !important;
+}
+
+.neo-regen-button:disabled {
+  opacity: 0.6 !important;
+  cursor: not-allowed !important;
+}
+
+/* Register Page Neo-Card sizing */
+.register-page .neo-login-card {
+  max-width: 440px !important;
+  padding: 24px 22px !important;
+}
+
+.register-page .neo-login-card .form-stack {
+  gap: 12px !important;
+}
+
+/* Auth switch footer */
+.neo-login-card .auth-switch {
+  margin-top: 18px !important;
+  margin-bottom: 0 !important;
+  text-align: center !important;
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  color: #3F3F46 !important;
+}
+
+.neo-login-card .auth-switch button {
+  color: #0284C7 !important;
+  font-weight: 900 !important;
+  text-decoration: underline !important;
+  text-underline-offset: 3px !important;
+  border: none !important;
+  background: none !important;
+  cursor: pointer !important;
+}
+
+/* Tablet / Desktop responsiveness */
+@media (max-width: 480px) {
+  .sticker-top-left { top: 10px; left: 10px; width: 36px; height: 36px; font-size: 16px; }
+  .sticker-top-right { top: 10px; right: 10px; width: 36px; height: 36px; font-size: 16px; }
+  .sticker-bottom-left { bottom: 10px; left: 10px; width: 36px; height: 36px; font-size: 16px; }
+  .sticker-bottom-right { bottom: 10px; right: 10px; width: 36px; height: 36px; font-size: 16px; }
 }
 
 /* ── Sidebar nav active/hover → blue ────────────────────────────── */
@@ -4369,4 +4642,2512 @@ dd {
   height: 72px;
   object-fit: contain;
   margin-bottom: 12px;
+}
+
+/* ── Neo-Brutalism Home Page Styles ────────────────────────────── */
+.neo-brutalist-home {
+  background-color: #F8F9FA !important;
+  background-image: 
+    radial-gradient(#d1d5db 1.4px, transparent 1.4px),
+    linear-gradient(180deg, #F0F8FF 0%, #FAF9F6 40%, #FFFFFF 100%) !important;
+  background-size: 20px 20px, 100% 100% !important;
+  padding: 18px 16px 36px 16px !important;
+}
+
+/* Home Header (Clean Heading Left Aligned) */
+.neo-brutalist-home .page-header {
+  margin-bottom: 14px !important;
+}
+
+.neo-brutalist-home .home-logo-wrap {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+.neo-brutalist-home .home-logo-img {
+  width: 34px !important;
+  height: 34px !important;
+  filter: drop-shadow(2px 2px 0px #18181B);
+}
+
+.neo-brutalist-home .xml-app-title {
+  font-size: 24px !important;
+  font-weight: 900 !important;
+  color: #18181B !important;
+  letter-spacing: -0.02em !important;
+}
+
+/* Neo-Brutalist Welcome Hero Card */
+.neo-welcome-card {
+  background: #3B9EE8 !important;
+  border: 3px solid #18181B !important;
+  border-radius: 20px !important;
+  box-shadow: 6px 6px 0px #18181B !important;
+  padding: 22px 20px !important;
+  color: #FFFFFF !important;
+  position: relative !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important; /* Prevents children like button from stretching full width */
+}
+
+.neo-welcome-card h2 {
+  font-size: 24px !important;
+  font-weight: 900 !important;
+  color: #FFFFFF !important;
+  letter-spacing: -0.01em !important;
+  margin: 0 0 8px 0 !important;
+  text-shadow: 2px 2px 0px #18181B !important;
+}
+
+.neo-welcome-subtitle {
+  font-size: 11px !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.08em !important;
+  color: #FEF08A !important;
+  text-transform: uppercase !important;
+  margin: 0 0 4px 0 !important;
+}
+
+.neo-welcome-card span {
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  color: #F0F9FF !important;
+  line-height: 1.4 !important;
+}
+
+/* Rate chips with neo-brutalist styling — high contrast black text on white pill */
+.welcome-rates {
+  display: flex !important;
+  gap: 10px !important;
+  margin-top: 14px !important;
+  flex-wrap: wrap !important;
+}
+
+.neo-welcome-card .rate-chip,
+.neo-rate-chip {
+  background: #FFFFFF !important;
+  color: #18181B !important; /* Bold solid dark text */
+  border: 2px solid #18181B !important;
+  border-radius: 999px !important;
+  padding: 6px 14px !important;
+  font-size: 13px !important;
+  font-weight: 800 !important;
+  box-shadow: 3px 3px 0px #18181B !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  opacity: 1 !important;
+}
+
+.neo-welcome-card .rate-chip *,
+.neo-rate-chip * {
+  color: #18181B !important;
+}
+
+.neo-rate-chip strong {
+  color: #18181B !important;
+  font-weight: 900 !important;
+  font-size: 13px !important;
+}
+
+.neo-rate-chip b {
+  background: #FDE047 !important;
+  color: #18181B !important;
+  border: 1.5px solid #18181B !important;
+  border-radius: 50% !important;
+  width: 20px !important;
+  height: 20px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 11px !important;
+  font-weight: 900 !important;
+}
+
+/* Hero View Lockers button — compact, fit-content, never stretch */
+.neo-welcome-card .rent-now-button {
+  background: #FDE047 !important;
+  color: #18181B !important;
+  border: 2.5px solid #18181B !important;
+  border-radius: 12px !important;
+  font-weight: 900 !important;
+  font-size: 14px !important;
+  box-shadow: 4px 4px 0px #18181B !important;
+  padding: 10px 22px !important;
+  margin-top: 18px !important;
+  width: auto !important;
+  max-width: fit-content !important;
+  align-self: flex-start !important; /* Prevents stretch */
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  transition: transform 0.1s ease, box-shadow 0.1s ease !important;
+}
+
+.neo-welcome-card .rent-now-button:hover {
+  transform: translate(-1.5px, -1.5px) !important;
+  box-shadow: 5.5px 5.5px 0px #18181B !important;
+}
+
+.neo-welcome-card .rent-now-button:active {
+  transform: translate(2px, 2px) !important;
+  box-shadow: 2px 2px 0px #18181B !important;
+}
+
+/* Balance Card Neo-Brutalist — Crisp Warm White Card with Dark Outline & Hard Shadow */
+.neo-brutalist-home .xml-balance-card {
+  background: #FFFFFF !important;
+  border: 2.5px solid #18181B !important;
+  border-radius: 18px !important;
+  box-shadow: 5px 5px 0px #18181B !important;
+  padding: 18px 20px !important;
+  margin-top: 14px !important;
+}
+
+.neo-brutalist-home .xml-balance-card span {
+  font-size: 12px !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.08em !important;
+  text-transform: uppercase !important;
+  color: #4B5563 !important;
+}
+
+.neo-brutalist-home .xml-balance-card strong {
+  font-size: 34px !important;
+  font-weight: 900 !important;
+  color: #18181B !important;
+  letter-spacing: -0.01em !important;
+  margin-top: 4px !important;
+}
+
+/* Stats and Legend Cards Neo-Brutalist */
+.neo-brutalist-home .xml-stats-row {
+  margin-top: 14px !important;
+  margin-bottom: 14px !important;
+}
+
+.neo-brutalist-home .xml-stat-card {
+  background: #FFFFFF !important;
+  border: 2.5px solid #18181B !important;
+  border-radius: 16px !important;
+  box-shadow: 4px 4px 0px #18181B !important;
+  padding: 14px !important;
+}
+
+.neo-brutalist-home .xml-stat-card strong {
+  font-size: 22px !important;
+  font-weight: 900 !important;
+  color: #18181B !important;
+}
+
+.neo-brutalist-home .xml-stat-card small {
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  color: #52525B !important;
+}
+
+.neo-brutalist-home .xml-icon-circle {
+  border: 2px solid #18181B !important;
+  box-shadow: 2px 2px 0px #18181B !important;
+}
+
+.neo-brutalist-home .xml-legend-card {
+  background: #FFFFFF !important;
+  border: 2.5px solid #18181B !important;
+  border-radius: 16px !important;
+  box-shadow: 4px 4px 0px #18181B !important;
+  padding: 12px 14px !important;
+}
+
+.neo-brutalist-home .xml-legend-card span {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  color: #18181B !important;
+}
+
+.neo-brutalist-home .xml-legend-card i,
+.xml-legend-card i {
+  width: 9px !important;
+  height: 9px !important;
+  border-radius: 50% !important;
+  display: inline-block !important;
+  flex-shrink: 0 !important;
+}
+
+.neo-brutalist-home .xml-legend-card i.available {
+  background: #22C55E !important;
+}
+
+.neo-brutalist-home .xml-legend-card i.occupied {
+  background: #EF4444 !important;
+}
+
+.neo-brutalist-home .xml-legend-card i.maintenance {
+  background: #9CA3AF !important;
+}
+
+/* Module selector pills — Horizontal swipe/scroll on mobile, Blue default, Yellow on hover/active */
+.neo-brutalist-home .module-selector {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  -webkit-overflow-scrolling: touch !important;
+  gap: 12px !important;
+  margin-top: 8px !important;
+  margin-bottom: 20px !important;
+  padding: 4px 6px 12px 2px !important; /* Space for the 3D hard shadow */
+  width: 100% !important;
+  box-sizing: border-box !important;
+  scrollbar-width: none !important;
+}
+
+.neo-brutalist-home .module-selector::-webkit-scrollbar {
+  display: none !important;
+}
+
+.neo-brutalist-home .module-selector button {
+  flex-shrink: 0 !important;
+  border: 2.5px solid #18181B !important;
+  border-radius: 999px !important;
+  font-weight: 800 !important;
+  font-size: 13px !important;
+  padding: 8px 18px !important;
+  box-shadow: 3.5px 3.5px 0px #18181B !important;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.15s ease, color 0.15s ease !important;
+  cursor: pointer !important;
+  white-space: nowrap !important;
+}
+
+/* Default state: CoinCubby Blue with white text */
+.neo-brutalist-home .module-selector button {
+  background: #3B9EE8 !important;
+  color: #FFFFFF !important;
+}
+
+/* Hover state: Kiosk Sunshine Yellow with dark text */
+.neo-brutalist-home .module-selector button:hover {
+  background: #FDE047 !important;
+  color: #18181B !important;
+  transform: translate(-1.5px, -1.5px) !important;
+  box-shadow: 5px 5px 0px #18181B !important;
+}
+
+/* Active / Selected state: Keep Sunshine Yellow with dark text */
+.neo-brutalist-home .module-selector button.active {
+  background: #FDE047 !important;
+  color: #18181B !important;
+  box-shadow: 3.5px 3.5px 0px #18181B !important;
+}
+
+.neo-brutalist-home .module-selector button.active:hover {
+  background: #FACC15 !important;
+  color: #18181B !important;
+  transform: translate(-1.5px, -1.5px) !important;
+  box-shadow: 5px 5px 0px #18181B !important;
+}
+
+.neo-brutalist-home .module-selector button:active {
+  transform: translate(2px, 2px) !important;
+  box-shadow: 1.5px 1.5px 0px #18181B !important;
+}
+
+/* Locker Panel Neo-Brutalist */
+.neo-brutalist-home .xml-locker-panel {
+  background: #FFFFFF !important;
+  border: 3px solid #18181B !important;
+  border-radius: 20px !important;
+  box-shadow: 6px 6px 0px #18181B !important;
+  padding: 18px !important;
+}
+
+.neo-brutalist-home .xml-locker-panel-head {
+  border-bottom: 2px solid #18181B !important;
+  padding-bottom: 12px !important;
+  margin-bottom: 14px !important;
+}
+
+/* Locker Tile Grid — 1 column on mobile, strictly 2x2 grid on desktop/tablet */
+.neo-brutalist-home .locker-grid,
+.locker-grid {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  gap: 12px !important;
+}
+
+@media (min-width: 520px) {
+  .neo-brutalist-home .locker-grid,
+  .locker-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+.neo-brutalist-home .locker-tile {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 12px !important;
+  padding: 10px 14px !important;
+  min-height: 56px !important;
+  background: #FFFFFF !important;
+  border: 2.5px solid #18181B !important;
+  border-radius: 14px !important;
+  box-shadow: 3.5px 3.5px 0px #18181B !important;
+  transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+  position: relative !important;
+  cursor: pointer !important;
+  box-sizing: border-box !important;
+}
+
+.neo-brutalist-home .locker-tile:hover {
+  transform: translate(-1.5px, -1.5px) !important;
+  box-shadow: 5px 5px 0px #18181B !important;
+}
+
+.neo-brutalist-home .locker-tile .locker-icon {
+  width: 34px !important;
+  height: 34px !important;
+  border-radius: 9px !important;
+  border: 2px solid #18181B !important;
+  box-shadow: 2px 2px 0px #18181B !important;
+  background: #FFFFFF !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+}
+
+.neo-brutalist-home .locker-tile > div {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: flex-start !important;
+  flex: 1 !important;
+  min-width: 0 !important;
+  gap: 2px !important;
+}
+
+.neo-brutalist-home .locker-tile strong {
+  display: block !important;
+  font-size: 14px !important;
+  font-weight: 900 !important;
+  color: #18181B !important;
+  line-height: 1.2 !important;
+  margin: 0 !important;
+}
+
+.neo-brutalist-home .locker-tile small {
+  display: block !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  color: #52525B !important;
+  line-height: 1.2 !important;
+  margin: 0 !important;
+}
+
+.neo-brutalist-home .locker-tile .locker-dot {
+  width: 10px !important;
+  height: 10px !important;
+  border-radius: 50% !important;
+  margin-left: auto !important;
+  align-self: center !important;
+  flex-shrink: 0 !important;
+  border: 1px solid #18181B !important;
+}
+
+.neo-brutalist-home .locker-tile.available .locker-dot {
+  background: #22C55E !important;
+}
+
+.neo-brutalist-home .locker-tile.occupied .locker-dot {
+  background: #EF4444 !important;
+}
+
+.neo-brutalist-home .locker-tile.maintenance .locker-dot {
+  background: #9CA3AF !important;
+}
+
+/* Hide status text b to match screenshot layout */
+.neo-brutalist-home .locker-tile b {
+  display: none !important;
+}
+
+.neo-brutalist-home .locker-tile.available {
+  border-color: #18181B !important;
+  background: #F0FDF4 !important;
+}
+
+.neo-brutalist-home .locker-tile.occupied {
+  background: #F4F4F5 !important;
+  opacity: 0.85 !important;
+}
+
+.neo-brutalist-home .locker-tile.maintenance {
+  background: #FEF2F2 !important;
+}
+
+/* ── Neo-Brutalism Active Rental Panel on Home ── */
+.neo-brutalist-home .home-rentals-container {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 14px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  margin: 0 !important;
+}
+
+.neo-brutalist-home .home-rental-bar-card {
+  background: #FFFFFF !important;
+  border: 3px solid #18181B !important;
+  border-radius: 20px !important;
+  box-shadow: 6px 6px 0px #18181B !important;
+  padding: 22px 20px !important;
+  box-sizing: border-box !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  min-height: 100% !important;
+  transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+  position: relative !important;
+}
+
+.neo-brutalist-home .home-rental-bar-card:hover {
+  transform: translate(-1.5px, -1.5px) !important;
+  box-shadow: 7.5px 7.5px 0px #18181B !important;
+}
+
+.neo-brutalist-home .home-rental-bar-card--overdue {
+  border-color: #DC2626 !important;
+  background: #FEF2F2 !important;
+  box-shadow: 6px 6px 0px #DC2626 !important;
+}
+
+/* Top Row: Locker Info + Active Badge */
+.neo-brutalist-home .hbar-top {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  margin-bottom: 12px !important;
+  gap: 10px !important;
+}
+
+.neo-brutalist-home .hbar-info {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+
+.neo-brutalist-home .hbar-locker {
+  font-size: 24px !important;
+  font-weight: 900 !important;
+  color: #18181B !important;
+  letter-spacing: -0.02em !important;
+  line-height: 1 !important;
+}
+
+.neo-brutalist-home .hbar-size {
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  color: #18181B !important;
+  background: #FDE047 !important;
+  border: 1.5px solid #18181B !important;
+  border-radius: 6px !important;
+  padding: 3px 8px !important;
+  box-shadow: 1.5px 1.5px 0px #18181B !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+}
+
+.neo-brutalist-home .hbar-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 5px 12px !important;
+  border-radius: 999px !important;
+  background: #86EFAC !important;
+  border: 2px solid #18181B !important;
+  box-shadow: 2.5px 2.5px 0px #18181B !important;
+  font-size: 11.5px !important;
+  font-weight: 900 !important;
+  color: #18181B !important;
+  letter-spacing: 0.03em !important;
+  text-transform: uppercase !important;
+}
+
+.neo-brutalist-home .hbar-badge .hbar-dot {
+  width: 8px !important;
+  height: 8px !important;
+  border-radius: 50% !important;
+  background: #16A34A !important;
+  border: 1px solid #18181B !important;
+}
+
+.neo-brutalist-home .hbar-badge--overdue {
+  background: #FCA5A5 !important;
+  color: #18181B !important;
+  border-color: #18181B !important;
+  box-shadow: 2.5px 2.5px 0px #18181B !important;
+}
+
+.neo-brutalist-home .hbar-badge--overdue .hbar-dot {
+  background: #DC2626 !important;
+}
+
+/* Chunky Progress Track */
+.neo-brutalist-home .hbar-track {
+  width: 100% !important;
+  height: 14px !important;
+  border-radius: 999px !important;
+  background: #F4F4F5 !important;
+  border: 2.5px solid #18181B !important;
+  box-shadow: 2.5px 2.5px 0px #18181B !important;
+  overflow: hidden !important;
+  margin: 16px 0 !important;
+  box-sizing: border-box !important;
+}
+
+.neo-brutalist-home .hbar-fill {
+  height: 100% !important;
+  background: #22C55E !important;
+  border-right: 2px solid #18181B !important;
+  transition: width 1s linear !important;
+}
+
+.neo-brutalist-home .hbar-fill--open {
+  width: 100% !important;
+  background: repeating-linear-gradient(
+    45deg,
+    #22C55E,
+    #22C55E 10px,
+    #16A34A 10px,
+    #16A34A 20px
+  ) !important;
+  background-size: 200% 100% !important;
+  animation: hbar-shimmer 2.5s linear infinite !important;
+  border-right: none !important;
+}
+
+.neo-brutalist-home .hbar-fill--overdue {
+  width: 100% !important;
+  background: repeating-linear-gradient(
+    45deg,
+    #EF4444,
+    #EF4444 10px,
+    #DC2626 10px,
+    #DC2626 20px
+  ) !important;
+  border-right: none !important;
+}
+
+/* Bottom Row: Label, Timer, Bill */
+.neo-brutalist-home .hbar-bottom {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  padding-top: 14px !important;
+  border-top: 2px dashed #E4E4E7 !important;
+  margin-top: auto !important;
+}
+
+.neo-brutalist-home .hbar-label {
+  font-size: 11px !important;
+  font-weight: 900 !important;
+  color: #71717A !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+}
+
+.neo-brutalist-home .hbar-timer {
+  font-size: 22px !important;
+  font-weight: 900 !important;
+  color: #18181B !important;
+  letter-spacing: 0.03em !important;
+  font-variant-numeric: tabular-nums !important;
+}
+
+.neo-brutalist-home .hbar-bill {
+  font-size: 13px !important;
+  font-weight: 900 !important;
+  color: #18181B !important;
+  background: #FEF08A !important;
+  border: 2px solid #18181B !important;
+  border-radius: 8px !important;
+  padding: 4px 10px !important;
+  box-shadow: 2px 2px 0px #18181B !important;
+}
+
+.neo-brutalist-home .hbar-bill--overdue {
+  background: #FCA5A5 !important;
+  color: #7F1D1D !important;
+}
+
+/* ── Precise Desktop Sizing & Alignment (Welcome Card + Active Rental Panel) ── */
+@media (min-width: 900px) {
+  .neo-brutalist-home.xml-home {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 20px !important;
+    align-items: stretch !important;
+  }
+
+  .neo-brutalist-home .page-header,
+  .neo-brutalist-home .xml-balance-card,
+  .neo-brutalist-home .xml-stats-row,
+  .neo-brutalist-home .module-selector,
+  .neo-brutalist-home .xml-locker-panel {
+    grid-column: 1 / -1 !important;
+  }
+
+  .neo-brutalist-home .xml-welcome-card {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    height: 100% !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+  }
+
+  .neo-brutalist-home .home-rentals-container {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: stretch !important;
+  }
+
+  .neo-brutalist-home .home-rental-bar-card {
+    flex: 1 !important;
+    height: 100% !important;
+    box-sizing: border-box !important;
+    margin: 0 !important;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   NEO-BRUTALISM RENTAL HISTORY SECTION
+   ══════════════════════════════════════════════════════════════════ */
+
+.neo-brutalist-history {
+  background-color: #F8F9FA !important;
+  background-image: 
+    radial-gradient(#d1d5db 1.4px, transparent 1.4px),
+    linear-gradient(180deg, #F0F8FF 0%, #FAF9F6 40%, #FFFFFF 100%) !important;
+  background-size: 20px 20px, 100% 100% !important;
+  min-height: 100svh !important;
+  padding-bottom: 40px !important;
+}
+
+/* Summary Stats Card */
+.neo-brutalist-history .history-summary {
+  background: #FFFFFF !important;
+  border: 3px solid #18181B !important;
+  border-radius: 20px !important;
+  box-shadow: 6px 6px 0px #18181B !important;
+  padding: 18px 14px !important;
+  margin-bottom: 18px !important;
+}
+
+.neo-brutalist-history .history-summary div {
+  border-right: 2px solid #E4E4E7 !important;
+}
+
+.neo-brutalist-history .history-summary div:last-child {
+  border-right: none !important;
+}
+
+.neo-brutalist-history .history-summary strong {
+  font-size: 26px !important;
+  font-weight: 900 !important;
+  color: #18181B !important;
+}
+
+.neo-brutalist-history .history-summary div:nth-child(2) strong {
+  color: #0284C7 !important; /* CoinCubby Blue */
+}
+
+.neo-brutalist-history .history-summary span {
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  color: #52525B !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.04em !important;
+  margin-top: 2px !important;
+}
+
+/* Filter Group Box */
+.neo-brutalist-history .history-filters {
+  background: #FFFFFF !important;
+  border: 2.5px solid #18181B !important;
+  border-radius: 18px !important;
+  box-shadow: 4.5px 4.5px 0px #18181B !important;
+  padding: 16px 18px !important;
+  gap: 14px !important;
+  margin: 16px 0 !important;
+}
+
+.neo-brutalist-history .filter-group label {
+  font-size: 12px !important;
+  font-weight: 900 !important;
+  color: #18181B !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+}
+
+.neo-brutalist-history .filter-pill {
+  background: #FFFFFF !important;
+  color: #18181B !important;
+  border: 2px solid #18181B !important;
+  border-radius: 999px !important;
+  box-shadow: 2.5px 2.5px 0px #18181B !important;
+  font-size: 12px !important;
+  font-weight: 800 !important;
+  padding: 6px 14px !important;
+  transition: transform 0.1s ease, box-shadow 0.1s ease !important;
+  cursor: pointer !important;
+}
+
+.neo-brutalist-history .filter-pill:hover {
+  transform: translate(-1px, -1px) !important;
+  box-shadow: 3.5px 3.5px 0px #18181B !important;
+  background: #EFF6FF !important;
+}
+
+.neo-brutalist-history .filter-pill.active {
+  background: #FDE047 !important; /* Sunshine Yellow active */
+  color: #18181B !important;
+  border-color: #18181B !important;
+  box-shadow: 2.5px 2.5px 0px #18181B !important;
+}
+
+/* Table Head */
+.neo-brutalist-history .xml-table-head {
+  background: #3B9EE8 !important; /* CoinCubby Blue */
+  color: #FFFFFF !important;
+  border: 2.5px solid #18181B !important;
+  border-radius: 12px !important;
+  box-shadow: 3.5px 3.5px 0px #18181B !important;
+  padding: 10px 14px !important;
+  font-size: 12px !important;
+  font-weight: 900 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.06em !important;
+  margin-bottom: 12px !important;
+}
+
+/* History Rows */
+.neo-brutalist-history .history-row {
+  background: #FFFFFF !important;
+  border: 2.5px solid #18181B !important;
+  border-radius: 14px !important;
+  box-shadow: 3.5px 3.5px 0px #18181B !important;
+  margin-bottom: 10px !important;
+  transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+  overflow: hidden !important;
+}
+
+.neo-brutalist-history .history-row:hover {
+  transform: translate(-1.5px, -1.5px) !important;
+  box-shadow: 5px 5px 0px #18181B !important;
+}
+
+.neo-brutalist-history .history-row strong {
+  font-size: 15px !important;
+  font-weight: 900 !important;
+  color: #18181B !important;
+}
+
+.neo-brutalist-history .history-row p {
+  background: #F8FAFC !important;
+  border-top: 1.5px solid #E4E4E7 !important;
+  color: #52525B !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  padding: 8px 14px !important;
+}
+
+.neo-brutalist-history .status-badge {
+  display: inline-block !important;
+  border: 1.5px solid #18181B !important;
+  border-radius: 999px !important;
+  padding: 3px 10px !important;
+  font-size: 11px !important;
+  font-weight: 900 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.04em !important;
+  box-shadow: 1.5px 1.5px 0px #18181B !important;
+}
+
+.neo-brutalist-history .status-badge.completed {
+  background: #86EFAC !important; /* Mint green */
+  color: #18181B !important;
+}
+
+.neo-brutalist-history .status-badge.active {
+  background: #FEF08A !important; /* Sunshine yellow */
+  color: #18181B !important;
+}
+
+/* Pagination Controls */
+.neo-brutalist-history .pagination-controls,
+.neo-brutalist-feedback .pagination-controls {
+  background: #FFFFFF !important;
+  border: 2.5px solid #18181B !important;
+  border-radius: 16px !important;
+  box-shadow: 4px 4px 0px #18181B !important;
+  padding: 10px 16px !important;
+  margin-top: 18px !important;
+}
+
+.neo-brutalist-history .pagination-btn,
+.neo-brutalist-feedback .pagination-btn {
+  background: #3B9EE8 !important;
+  color: #FFFFFF !important;
+  border: 2px solid #18181B !important;
+  border-radius: 10px !important;
+  box-shadow: 2.5px 2.5px 0px #18181B !important;
+  font-weight: 900 !important;
+  padding: 8px 16px !important;
+  cursor: pointer !important;
+  transition: transform 0.1s ease, box-shadow 0.1s ease !important;
+}
+
+.neo-brutalist-history .pagination-btn:hover:not(:disabled),
+.neo-brutalist-feedback .pagination-btn:hover:not(:disabled) {
+  transform: translate(-1px, -1px) !important;
+  box-shadow: 3.5px 3.5px 0px #18181B !important;
+  background: #0284C7 !important;
+}
+
+.neo-brutalist-history .pagination-btn:disabled,
+.neo-brutalist-feedback .pagination-btn:disabled {
+  background: #E4E4E7 !important;
+  color: #A1A1AA !important;
+  border-color: #D4D4D8 !important;
+  box-shadow: none !important;
+  cursor: not-allowed !important;
+}
+
+.neo-brutalist-history .pagination-info,
+.neo-brutalist-feedback .pagination-info {
+  font-weight: 700 !important;
+  color: #18181B !important;
+}
+
+/* Modal Receipt Sheet */
+.neo-brutalist-history .rent-sheet {
+  background: #FFFFFF !important;
+  border: 3px solid #18181B !important;
+  border-radius: 24px !important;
+  box-shadow: 8px 8px 0px #18181B !important;
+}
+
+.neo-brutalist-history .rent-sheet .icon-button {
+  background: #FEE2E2 !important;
+  border: 2px solid #18181B !important;
+  border-radius: 50% !important;
+  width: 32px !important;
+  height: 32px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-weight: 900 !important;
+  color: #18181B !important;
+  box-shadow: 2px 2px 0px #18181B !important;
+  cursor: pointer !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   NEO-BRUTALISM PROFILE SECTION
+   ══════════════════════════════════════════════════════════════════ */
+
+.neo-brutalist-profile {
+  background-color: #F8F9FA !important;
+  background-image: 
+    radial-gradient(#d1d5db 1.4px, transparent 1.4px),
+    linear-gradient(180deg, #F0F8FF 0%, #FAF9F6 40%, #FFFFFF 100%) !important;
+  background-size: 20px 20px, 100% 100% !important;
+  min-height: 100svh !important;
+  padding-bottom: 40px !important;
+}
+
+/* Profile Hero Card */
+.neo-brutalist-profile .neo-profile-hero {
+  background: #FFFFFF !important;
+  border: 3px solid #18181B !important;
+  border-radius: 20px !important;
+  box-shadow: 6px 6px 0px #18181B !important;
+  padding: 28px 20px !important;
+  margin-bottom: 16px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  text-align: center !important;
+}
+
+.neo-brutalist-profile .profile-hero-logo {
+  width: 80px !important;
+  height: 80px !important;
+  filter: drop-shadow(3px 3px 0px #18181B);
+  margin-bottom: 10px !important;
+}
+
+.neo-brutalist-profile .neo-profile-hero h1 {
+  font-size: 24px !important;
+  font-weight: 900 !important;
+  color: #18181B !important;
+  margin: 4px 0 2px 0 !important;
+}
+
+.neo-brutalist-profile .neo-profile-hero p {
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: #71717A !important;
+}
+
+.neo-brutalist-profile .neo-user-id-badge {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin-top: 14px !important;
+  padding: 8px 18px !important;
+  background: #FEF08A !important;
+  border: 2px solid #18181B !important;
+  border-radius: 12px !important;
+  box-shadow: 3px 3px 0px #18181B !important;
+  font-family: monospace !important;
+  font-size: 15px !important;
+  font-weight: 900 !important;
+  color: #18181B !important;
+  letter-spacing: 0.12em !important;
+}
+
+.neo-brutalist-profile .neo-user-id-badge span {
+  font-size: 10px !important;
+  font-weight: 800 !important;
+  color: #71717A !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  font-family: inherit !important;
+}
+
+/* Action Rows (Change PIN, View Guide) */
+.neo-brutalist-profile .neo-action-row {
+  background: #FFFFFF !important;
+  border: 2.5px solid #18181B !important;
+  border-radius: 14px !important;
+  box-shadow: 3.5px 3.5px 0px #18181B !important;
+  padding: 14px 18px !important;
+  margin-top: 12px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  cursor: pointer !important;
+  transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+}
+
+.neo-brutalist-profile .neo-action-row:hover {
+  transform: translate(-1.5px, -1.5px) !important;
+  box-shadow: 5px 5px 0px #18181B !important;
+  background: #EFF6FF !important;
+}
+
+.neo-brutalist-profile .neo-row-icon {
+  font-size: 18px !important;
+  margin-right: 12px !important;
+}
+
+.neo-brutalist-profile .neo-action-row p {
+  font-size: 14px !important;
+  font-weight: 800 !important;
+  color: #18181B !important;
+  margin: 0 !important;
+  flex: 1 !important;
+  text-align: left !important;
+}
+
+.neo-brutalist-profile .neo-action-row b {
+  font-size: 18px !important;
+  font-weight: 900 !important;
+  color: #18181B !important;
+}
+
+/* Change PIN Form */
+.neo-brutalist-profile .neo-pin-form {
+  background: #FFFFFF !important;
+  border: 2.5px solid #18181B !important;
+  border-radius: 18px !important;
+  box-shadow: 5px 5px 0px #18181B !important;
+  padding: 20px 18px !important;
+  margin-top: 14px !important;
+}
+
+.neo-brutalist-profile .neo-pin-form .xml-field > span {
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  color: #FFFFFF !important;
+  background: #3B9EE8 !important;
+  border: 1.5px solid #18181B !important;
+  border-radius: 6px !important;
+  padding: 2px 8px !important;
+  box-shadow: 2px 2px 0px #18181B !important;
+  width: fit-content !important;
+  text-transform: uppercase !important;
+}
+
+.neo-brutalist-profile .neo-pin-form input {
+  height: 44px !important;
+  background: #FFFFFF !important;
+  border: 2.5px solid #18181B !important;
+  border-radius: 12px !important;
+  padding: 0 14px !important;
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  color: #18181B !important;
+  box-shadow: 3px 3px 0px #18181B !important;
+  margin-top: 4px !important;
+}
+
+.neo-brutalist-profile .neo-secondary-button {
+  background: #FFFFFF !important;
+  border: 2px solid #18181B !important;
+  border-radius: 12px !important;
+  box-shadow: 3px 3px 0px #18181B !important;
+  font-weight: 800 !important;
+  color: #18181B !important;
+  cursor: pointer !important;
+  transition: transform 0.1s ease, box-shadow 0.1s ease !important;
+  padding: 10px !important;
+}
+
+.neo-brutalist-profile .neo-secondary-button:hover {
+  transform: translate(-1px, -1px) !important;
+  box-shadow: 4px 4px 0px #18181B !important;
+}
+
+/* Language Switcher Row */
+.neo-brutalist-profile .neo-lang-row {
+  background: #FFFFFF !important;
+  border: 2.5px solid #18181B !important;
+  border-radius: 14px !important;
+  box-shadow: 3.5px 3.5px 0px #18181B !important;
+  padding: 14px 18px !important;
+  margin-top: 14px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+}
+
+.neo-brutalist-profile .neo-lang-row h4 {
+  font-size: 14px !important;
+  font-weight: 800 !important;
+  color: #18181B !important;
+  margin: 0 0 2px 0 !important;
+}
+
+.neo-brutalist-profile .neo-lang-row p {
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  color: #71717A !important;
+  margin: 0 !important;
+}
+
+.neo-brutalist-profile .neo-lang-select {
+  border: 2px solid #18181B !important;
+  border-radius: 10px !important;
+  background: #FEF08A !important;
+  color: #18181B !important;
+  font-weight: 800 !important;
+  font-size: 13px !important;
+  box-shadow: 2px 2px 0px #18181B !important;
+  padding: 8px 12px !important;
+  cursor: pointer !important;
+}
+
+/* Sign Out Button */
+.neo-brutalist-profile .neo-danger-button {
+  background: #EF4444 !important;
+  color: #FFFFFF !important;
+  border: 2.5px solid #18181B !important;
+  border-radius: 14px !important;
+  box-shadow: 4.5px 4.5px 0px #18181B !important;
+  font-size: 14px !important;
+  font-weight: 900 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  padding: 13px !important;
+  margin-top: 20px !important;
+  width: 100% !important;
+  cursor: pointer !important;
+  transition: transform 0.12s ease, box-shadow 0.12s ease !important;
+}
+
+.neo-brutalist-profile .neo-danger-button:hover {
+  background: #DC2626 !important;
+  transform: translate(-1.5px, -1.5px) !important;
+  box-shadow: 6px 6px 0px #18181B !important;
+}
+
+.neo-brutalist-profile .neo-danger-button:active {
+  transform: translate(2px, 2px) !important;
+  box-shadow: 1.5px 1.5px 0px #18181B !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   NEO-BRUTALISM RENTAL PAGE (My Rentals)
+   ══════════════════════════════════════════════════════════════════ */
+
+.neo-brutalist-rent {
+  background-color: #F8F9FA !important;
+  background-image: 
+    radial-gradient(#d1d5db 1.4px, transparent 1.4px),
+    linear-gradient(180deg, #F0F8FF 0%, #FAF9F6 40%, #FFFFFF 100%) !important;
+  background-size: 20px 20px, 100% 100% !important;
+  min-height: 100svh !important;
+  padding-bottom: 40px !important;
+}
+
+/* Active Banner */
+.neo-brutalist-rent .xml-active-banner {
+  background: #3B9EE8 !important; /* CoinCubby Blue */
+  border: 3px solid #18181B !important;
+  border-radius: 20px !important;
+  box-shadow: 6px 6px 0px #18181B !important;
+  padding: 20px 22px !important;
+  color: #FFFFFF !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+}
+
+.neo-brutalist-rent .xml-active-banner small {
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  color: #FEF08A !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.06em !important;
+}
+
+.neo-brutalist-rent .xml-active-banner strong {
+  font-size: 22px !important;
+  font-weight: 900 !important;
+  color: #FFFFFF !important;
+}
+
+.neo-brutalist-rent .banner-locker-wrap {
+  width: 44px !important;
+  height: 44px !important;
+  border-radius: 12px !important;
+  border: 2px solid #18181B !important;
+  box-shadow: 2.5px 2.5px 0px #18181B !important;
+  background: #FFFFFF !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+}
+
+/* Rental Cards in List */
+.neo-brutalist-rent .rental-list {
+  display: grid !important;
+  gap: 16px !important;
+  margin-top: 18px !important;
+}
+
+@media (min-width: 768px) {
+  .neo-brutalist-rent .rental-list {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+.neo-brutalist-rent .rental-card {
+  background: #FFFFFF !important;
+  border: 3px solid #18181B !important;
+  border-radius: 20px !important;
+  box-shadow: 6px 6px 0px #18181B !important;
+  padding: 22px 20px !important;
+  box-sizing: border-box !important;
+  transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+}
+
+.neo-brutalist-rent .rental-card:hover {
+  transform: translate(-1.5px, -1.5px) !important;
+  box-shadow: 7.5px 7.5px 0px #18181B !important;
+}
+
+.neo-brutalist-rent .rental-card--overdue {
+  border-color: #DC2626 !important;
+  background: #FEF2F2 !important;
+  box-shadow: 6px 6px 0px #DC2626 !important;
+}
+
+/* Card Heading */
+.neo-brutalist-rent .card-heading {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: flex-start !important;
+}
+
+.neo-brutalist-rent .card-heading small {
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  color: #71717A !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+}
+
+.neo-brutalist-rent .card-heading h2 {
+  font-size: 24px !important;
+  font-weight: 900 !important;
+  color: #18181B !important;
+  margin: 2px 0 6px 0 !important;
+  line-height: 1.1 !important;
+}
+
+.neo-brutalist-rent .card-heading p {
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  color: #18181B !important;
+  background: #FDE047 !important;
+  border: 1.5px solid #18181B !important;
+  border-radius: 6px !important;
+  padding: 3px 8px !important;
+  box-shadow: 1.5px 1.5px 0px #18181B !important;
+  text-transform: uppercase !important;
+  display: inline-block !important;
+  margin: 0 !important;
+}
+
+.neo-brutalist-rent .card-heading span {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 5px 12px !important;
+  border-radius: 999px !important;
+  background: #86EFAC !important;
+  border: 2px solid #18181B !important;
+  box-shadow: 2.5px 2.5px 0px #18181B !important;
+  font-size: 11.5px !important;
+  font-weight: 900 !important;
+  color: #18181B !important;
+  text-transform: uppercase !important;
+}
+
+.neo-brutalist-rent .badge-overdue {
+  background: #FCA5A5 !important;
+  color: #18181B !important;
+  border: 2px solid #18181B !important;
+  box-shadow: 2.5px 2.5px 0px #18181B !important;
+}
+
+/* Timer Box */
+.neo-brutalist-rent .timer-box {
+  background: #F8FAFC !important;
+  border: 2px solid #18181B !important;
+  border-radius: 14px !important;
+  box-shadow: 3px 3px 0px #18181B !important;
+  padding: 14px 16px !important;
+  margin: 14px 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  text-align: center !important;
+  gap: 4px !important;
+}
+
+.neo-brutalist-rent .timer-box small {
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  color: #71717A !important;
+  letter-spacing: 0.05em !important;
+}
+
+.neo-brutalist-rent .timer-box strong {
+  font-size: 28px !important;
+  font-weight: 900 !important;
+  color: #18181B !important;
+  letter-spacing: 0.04em !important;
+  font-variant-numeric: tabular-nums !important;
+}
+
+.neo-brutalist-rent .timer-box span {
+  font-size: 13px !important;
+  font-weight: 900 !important;
+  color: #18181B !important;
+  background: #FEF08A !important;
+  border: 1.5px solid #18181B !important;
+  border-radius: 8px !important;
+  padding: 3px 10px !important;
+  box-shadow: 1.5px 1.5px 0px #18181B !important;
+  margin-top: 2px !important;
+}
+
+/* Detail Grid */
+.neo-brutalist-rent .detail-grid {
+  border-top: 2px dashed #E4E4E7 !important;
+  padding-top: 10px !important;
+}
+
+.neo-brutalist-rent .detail-grid div {
+  border-bottom: 1px solid #F4F4F5 !important;
+  padding: 6px 0 !important;
+}
+
+.neo-brutalist-rent .detail-grid dt {
+  font-weight: 800 !important;
+  color: #71717A !important;
+  font-size: 12px !important;
+}
+
+.neo-brutalist-rent .detail-grid dd {
+  font-weight: 900 !important;
+  color: #18181B !important;
+  font-size: 13px !important;
+}
+
+
+/* ══════════════════════════════════════════════════════════════════
+   NEO-BRUTALISM FEEDBACK PAGE (With Pastel Organic Cards & Pagination)
+   ══════════════════════════════════════════════════════════════════ */
+
+.neo-brutalist-feedback {
+  background-color: #F8F9FA !important;
+  background-image: 
+    radial-gradient(#d1d5db 1.4px, transparent 1.4px),
+    linear-gradient(180deg, #F0F8FF 0%, #FAF9F6 40%, #FFFFFF 100%) !important;
+  background-size: 20px 20px, 100% 100% !important;
+  min-height: 100svh !important;
+  padding-bottom: 40px !important;
+}
+
+/* Feedback Navigation Tabs */
+.neo-brutalist-feedback .fb-tabs {
+  background: #FFFFFF !important;
+  border: 2.5px solid #18181B !important;
+  border-radius: 14px !important;
+  box-shadow: 4px 4px 0px #18181B !important;
+  padding: 5px !important;
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 8px !important;
+  margin-bottom: 18px !important;
+}
+
+.neo-brutalist-feedback .fb-tab-btn {
+  border-radius: 10px !important;
+  font-weight: 800 !important;
+  font-size: 13px !important;
+  padding: 10px 14px !important;
+  color: #52525B !important;
+  cursor: pointer !important;
+  border: 2px solid transparent !important;
+  transition: all 0.15s ease !important;
+}
+
+.neo-brutalist-feedback .fb-tab-btn.active {
+  background: #FDE047 !important; /* Sunshine Yellow */
+  color: #18181B !important;
+  border-color: #18181B !important;
+  box-shadow: 2.5px 2.5px 0px #18181B !important;
+  font-weight: 900 !important;
+}
+
+/* Section labels */
+.neo-brutalist-feedback .fb-section-label {
+  font-size: 12px !important;
+  font-weight: 900 !important;
+  color: #18181B !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.06em !important;
+  margin: 16px 0 10px 0 !important;
+}
+
+/* Textarea styling */
+.neo-brutalist-feedback .fb-textarea {
+  background: #FFFFFF !important;
+  border: 2.5px solid #18181B !important;
+  border-radius: 12px !important;
+  box-shadow: 3px 3px 0px #18181B !important;
+  padding: 12px 14px !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  color: #18181B !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+  transition: all 0.15s ease !important;
+  margin: 10px 0 !important;
+}
+
+.neo-brutalist-feedback .fb-textarea:focus {
+  outline: none !important;
+  border-color: #18181B !important;
+  box-shadow: 4px 4px 0px #3B9EE8 !important;
+  transform: translate(-1px, -1px) !important;
+}
+
+/* Star Picker - Big Bold Cartoon Stars */
+.neo-brutalist-feedback .fb-stars {
+  display: flex !important;
+  gap: 6px !important;
+  margin: 8px 0 !important;
+}
+
+.neo-brutalist-feedback .fb-star {
+  font-size: 32px !important;
+  color: #E4E4E7 !important;
+  background: transparent !important;
+  border: none !important;
+  cursor: pointer !important;
+  transition: transform 0.12s ease !important;
+  padding: 0 !important;
+  line-height: 1 !important;
+}
+
+.neo-brutalist-feedback .fb-star:hover {
+  transform: scale(1.15) !important;
+}
+
+.neo-brutalist-feedback .fb-star--on {
+  color: #FACC15 !important;
+  -webkit-text-stroke: 1.5px #18181B !important;
+  text-shadow: 2px 2px 0px #18181B !important;
+}
+
+.neo-brutalist-feedback .fb-rating-label {
+  font-size: 12px !important;
+  font-weight: 900 !important;
+  color: #18181B !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.04em !important;
+  margin: 2px 0 6px 0 !important;
+}
+
+/* General Review Box in Global Tab */
+.neo-brutalist-feedback .fb-card {
+  background: #FFFFFF !important;
+  border: 2.5px solid #18181B !important;
+  border-radius: 18px !important;
+  box-shadow: 5px 5px 0px #18181B !important;
+  padding: 18px 20px !important;
+  box-sizing: border-box !important;
+}
+
+/* Rating Summary Widget */
+.neo-brutalist-feedback .fb-summary-widget {
+  background: #FFFFFF !important;
+  border: 2.5px solid #18181B !important;
+  border-radius: 20px !important;
+  box-shadow: 5px 5px 0px #18181B !important;
+  padding: 18px 20px !important;
+  margin-bottom: 20px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 20px !important;
+}
+
+.neo-brutalist-feedback .fb-big-score {
+  font-size: 42px !important;
+  font-weight: 900 !important;
+  color: #18181B !important;
+  line-height: 1 !important;
+  text-shadow: 2px 2px 0px #FEF08A !important;
+}
+
+.neo-brutalist-feedback .fb-summary-star {
+  font-size: 16px !important;
+  color: #E4E4E7 !important;
+}
+
+.neo-brutalist-feedback .fb-summary-star.active {
+  color: #FACC15 !important;
+  -webkit-text-stroke: 1px #18181B !important;
+}
+
+.neo-brutalist-feedback .fb-summary-bar-track {
+  height: 10px !important;
+  border: 2px solid #18181B !important;
+  border-radius: 999px !important;
+  background: #F4F4F5 !important;
+  box-shadow: 1px 1px 0px #18181B !important;
+  overflow: hidden !important;
+}
+
+.neo-brutalist-feedback .fb-summary-bar-fill {
+  background: #FACC15 !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   USER-REQUESTED PASTEL ORGANIC REVIEW CARDS (Matching uploaded image)
+   ══════════════════════════════════════════════════════════════════ */
+
+.neo-brutalist-feedback .neo-feedback-card {
+  border: 2.5px solid #18181B !important;
+  box-shadow: 5px 5px 0px #18181B !important;
+  padding: 18px 22px !important;
+  box-sizing: border-box !important;
+  transition: transform 0.15s ease, box-shadow 0.15s ease !important;
+  position: relative !important;
+}
+
+.neo-brutalist-feedback .neo-feedback-card:hover {
+  transform: translate(-1.5px, -1.5px) !important;
+  box-shadow: 6.5px 6.5px 0px #18181B !important;
+}
+
+/* Asymmetrical organic corner shapes from user image */
+.neo-brutalist-feedback .fb-shape--tr {
+  border-radius: 16px 44px 16px 16px !important;
+}
+
+.neo-brutalist-feedback .fb-shape--bl {
+  border-radius: 16px 16px 16px 44px !important;
+}
+
+/* Pastel Theme Palette from reference image */
+.neo-brutalist-feedback .fb-card--pink {
+  background: #FCE7F3 !important; /* Soft Pastel Pink */
+}
+
+.neo-brutalist-feedback .fb-card--cyan {
+  background: #E0F2FE !important; /* Soft Pastel Sky Blue / Cyan */
+}
+
+.neo-brutalist-feedback .fb-card--green {
+  background: #DCFCE7 !important; /* Soft Pastel Mint Green */
+}
+
+.neo-brutalist-feedback .fb-card--lavender {
+  background: #EDE9FE !important; /* Soft Pastel Lavender */
+}
+
+/* Reviewer Avatar */
+.neo-brutalist-feedback .neo-avatar {
+  width: 48px !important;
+  height: 48px !important;
+  border-radius: 50% !important;
+  border: 2.5px solid #18181B !important;
+  box-shadow: 2.5px 2.5px 0px #18181B !important;
+  background: #FFFFFF !important;
+  color: #18181B !important;
+  font-weight: 900 !important;
+  font-size: 16px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+}
+
+/* Reviewer Name */
+.neo-brutalist-feedback .fb-global-reviewer-name {
+  font-size: 18px !important;
+  font-weight: 900 !important;
+  color: #18181B !important;
+  letter-spacing: -0.01em !important;
+}
+
+/* Stars in Review Cards */
+.neo-brutalist-feedback .fb-global-stars .fb-star-mini {
+  font-size: 20px !important;
+  color: #E4E4E7 !important;
+}
+
+.neo-brutalist-feedback .fb-global-stars .fb-star-mini.active {
+  color: #FACC15 !important;
+  -webkit-text-stroke: 1.5px #18181B !important;
+  text-shadow: 1.5px 1.5px 0px #18181B !important;
+}
+
+/* Comment text inside pastel review cards */
+.neo-brutalist-feedback .fb-global-comment {
+  font-size: 13.5px !important;
+  font-weight: 600 !important;
+  color: #18181B !important;
+  line-height: 1.5 !important;
+  margin: 10px 0 0 0 !important;
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+}
+
+/* Verified Badge */
+.neo-brutalist-feedback .fb-verified-badge {
+  background: #FFFFFF !important;
+  border: 1.5px solid #18181B !important;
+  border-radius: 6px !important;
+  box-shadow: 1px 1px 0px #18181B !important;
+  color: #16A34A !important;
+  font-weight: 800 !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   NEO-BRUTALISM: PROFILE LANGUAGE TOGGLE
+   ══════════════════════════════════════════════════════════════════ */
+.neo-lang-toggle-group {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  background: #F4F4F5 !important;
+  border: 2px solid #18181B !important;
+  border-radius: 12px !important;
+  padding: 4px !important;
+  box-shadow: 2px 2px 0px #18181B !important;
+}
+
+.neo-lang-toggle-btn {
+  border: 1.5px solid transparent !important;
+  border-radius: 8px !important;
+  background: transparent !important;
+  color: #71717A !important;
+  font-weight: 800 !important;
+  font-size: 13px !important;
+  padding: 7px 14px !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+  white-space: nowrap !important;
+  line-height: 1.2 !important;
+}
+
+.neo-lang-toggle-btn:hover:not(.active) {
+  background: #E4E4E7 !important;
+  color: #18181B !important;
+}
+
+.neo-lang-toggle-btn.active {
+  background: #FDE047 !important; /* Sunshine yellow */
+  color: #18181B !important;
+  border: 1.5px solid #18181B !important;
+  box-shadow: 2px 2px 0px #18181B !important;
+  font-weight: 900 !important;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   NEO-BRUTALISM: NAVBAR & MOBILE HAMBURGER MENU
+   ══════════════════════════════════════════════════════════════════ */
+
+/* Mobile Hamburger Button */
+.hamburger-button {
+  display: grid;
+  place-items: center !important;
+  width: 42px !important;
+  height: 42px !important;
+  background: #FFFFFF !important;
+  border: 2.5px solid #18181B !important;
+  border-radius: 12px !important;
+  box-shadow: 3px 3px 0px #18181B !important;
+  cursor: pointer !important;
+  transition: transform 0.12s ease, box-shadow 0.12s ease !important;
+  padding: 0 !important;
+  gap: 4px !important;
+}
+
+.hamburger-button:hover {
+  transform: translate(-1px, -1px) !important;
+  box-shadow: 4px 4px 0px #18181B !important;
+  background: #FEF9C3 !important;
+}
+
+.hamburger-button:active {
+  transform: translate(2px, 2px) !important;
+  box-shadow: 1px 1px 0px #18181B !important;
+}
+
+.hamburger-button span {
+  display: block !important;
+  width: 20px !important;
+  height: 2.5px !important;
+  background: #18181B !important;
+  border-radius: 2px !important;
+  transition: all 0.2s ease !important;
+}
+
+/* Notification Bell Button */
+.notif-bell-button {
+  display: grid !important;
+  place-items: center !important;
+  width: 42px !important;
+  height: 42px !important;
+  background: #FFFFFF !important;
+  border: 2.5px solid #18181B !important;
+  border-radius: 50% !important;
+  box-shadow: 3px 3px 0px #18181B !important;
+  color: #18181B !important;
+  cursor: pointer !important;
+  position: relative !important;
+  transition: transform 0.12s ease, box-shadow 0.12s ease !important;
+  padding: 0 !important;
+}
+
+.notif-bell-button:hover {
+  transform: translate(-1px, -1px) !important;
+  box-shadow: 4px 4px 0px #18181B !important;
+  background: #EFF6FF !important;
+}
+
+.notif-bell-button:active {
+  transform: translate(2px, 2px) !important;
+  box-shadow: 1px 1px 0px #18181B !important;
+}
+
+.notif-bell-button svg {
+  width: 20px !important;
+  height: 20px !important;
+}
+
+.notif-badge {
+  position: absolute !important;
+  top: -4px !important;
+  right: -4px !important;
+  background: #EF4444 !important;
+  color: #FFFFFF !important;
+  border: 2px solid #18181B !important;
+  font-weight: 900 !important;
+  font-size: 11px !important;
+  min-width: 18px !important;
+  height: 18px !important;
+  border-radius: 999px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-shadow: 1.5px 1.5px 0px #18181B !important;
+}
+
+/* Mobile Dropdown Nav Menu (< 900px) */
+@media (max-width: 899px) {
+  .hamburger-button {
+    display: grid !important;
+  }
+
+  .sidebar nav {
+    display: none !important;
+  }
+
+  .sidebar.menu-open nav {
+    display: grid !important;
+    gap: 6px !important;
+    position: absolute !important;
+    top: 52px !important;
+    right: 0 !important;
+    min-width: 185px !important;
+    background: #FFFFFF !important;
+    border: 3px solid #18181B !important;
+    border-radius: 16px !important;
+    box-shadow: 5px 5px 0px #18181B !important;
+    padding: 10px !important;
+    z-index: 50 !important;
+  }
+
+  .sidebar nav button {
+    border: 2px solid transparent !important;
+    border-radius: 10px !important;
+    padding: 10px 14px !important;
+    background: transparent !important;
+    color: #18181B !important;
+    font-weight: 800 !important;
+    font-size: 14px !important;
+    text-align: left !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
+  }
+
+  .sidebar nav button:hover {
+    background: #FEF9C3 !important;
+    color: #18181B !important;
+  }
+
+  .sidebar nav button.active {
+    background: #FDE047 !important; /* Sunshine yellow */
+    color: #18181B !important;
+    border: 2px solid #18181B !important;
+    box-shadow: 2.5px 2.5px 0px #18181B !important;
+    font-weight: 900 !important;
+  }
+}
+
+/* Desktop Floating Pill Navbar (>= 900px) */
+@media (min-width: 900px) {
+  .hamburger-button {
+    display: none !important;
+  }
+
+  .sidebar {
+    top: 22px !important;
+    right: 36px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+  }
+
+  .sidebar nav,
+  .sidebar.menu-open nav {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    background: #FFFFFF !important;
+    border: 2.5px solid #18181B !important;
+    border-radius: 999px !important;
+    box-shadow: 4px 4px 0px #18181B !important;
+    padding: 5px 8px !important;
+    min-width: 0 !important;
+    margin-top: 0 !important;
+  }
+
+  .sidebar nav button {
+    min-height: 38px !important;
+    border-radius: 999px !important;
+    padding: 8px 18px !important;
+    border: 2px solid transparent !important;
+    background: transparent !important;
+    color: #18181B !important;
+    font-weight: 800 !important;
+    font-size: 14px !important;
+    white-space: nowrap !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
+  }
+
+  .sidebar nav button:hover {
+    background: #FEF08A !important;
+    color: #18181B !important;
+    border-color: #18181B !important;
+  }
+
+  .sidebar nav button.active {
+    background: #FDE047 !important; /* Sunshine Yellow arcade button */
+    color: #18181B !important;
+    border: 2px solid #18181B !important;
+    box-shadow: 2.5px 2.5px 0px #18181B !important;
+    font-weight: 900 !important;
+    transform: translate(-1px, -1px) !important;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   NEO-BRUTALISM: TUTORIAL / ONBOARDING (WelcomeIntro.jsx)
+   ══════════════════════════════════════════════════════════════════ */
+.neo-brutalist-intro {
+  background-color: #F8F9FA !important;
+  background-image: 
+    radial-gradient(#d1d5db 1.6px, transparent 1.6px),
+    linear-gradient(135deg, #FEF9C3 0%, #EFF6FF 50%, #FDF2F8 100%) !important;
+  background-size: 20px 20px, 100% 100% !important;
+}
+
+.neo-brutalist-intro .neo-intro-card,
+.neo-brutalist-intro .intro-panel-card,
+.neo-brutalist-intro .tutorial-panel {
+  background: #FFFFFF !important;
+  border: 3px solid #18181B !important;
+  border-radius: 24px !important;
+  box-shadow: 6px 6px 0px #18181B !important;
+  box-sizing: border-box !important;
+}
+
+/* Header & Typography in Tutorial */
+.neo-brutalist-intro .intro-title {
+  font-size: 30px !important;
+  font-weight: 900 !important;
+  color: #18181B !important;
+  letter-spacing: -0.02em !important;
+}
+
+.neo-brutalist-intro .intro-sub-title,
+.neo-brutalist-intro .tutorial-slide-title {
+  font-size: 22px !important;
+  font-weight: 900 !important;
+  color: #18181B !important;
+  letter-spacing: -0.01em !important;
+}
+
+.neo-brutalist-intro .intro-instructions,
+.neo-brutalist-intro .tutorial-slide-desc {
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  color: #52525B !important;
+  line-height: 1.5 !important;
+}
+
+/* Language Selection Options in Tutorial Step 1 */
+.neo-brutalist-intro .lang-button-group {
+  gap: 14px !important;
+}
+
+.neo-brutalist-intro .lang-select-btn {
+  background: #FFFFFF !important;
+  border: 2.5px solid #18181B !important;
+  border-radius: 14px !important;
+  box-shadow: 3.5px 3.5px 0px #18181B !important;
+  padding: 16px 20px !important;
+  cursor: pointer !important;
+  transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease !important;
+}
+
+.neo-brutalist-intro .lang-select-btn:hover {
+  background: #FEF9C3 !important;
+  transform: translate(-1px, -1px) !important;
+  box-shadow: 4.5px 4.5px 0px #18181B !important;
+}
+
+.neo-brutalist-intro .lang-select-btn:active {
+  transform: translate(2px, 2px) !important;
+  box-shadow: 1.5px 1.5px 0px #18181B !important;
+}
+
+.neo-brutalist-intro .lang-select-btn.active {
+  background: #FDE047 !important; /* Sunshine Yellow */
+  border: 2.5px solid #18181B !important;
+  box-shadow: 4px 4px 0px #18181B !important;
+}
+
+.neo-brutalist-intro .lang-name {
+  font-size: 16px !important;
+  font-weight: 900 !important;
+  color: #18181B !important;
+}
+
+/* Action Buttons in Tutorial */
+.neo-brutalist-intro .intro-action-btn,
+.neo-brutalist-intro .tutorial-action-btn {
+  background: #3B9EE8 !important; /* CoinCubby primary blue */
+  color: #FFFFFF !important;
+  border: 3px solid #18181B !important;
+  border-radius: 14px !important;
+  box-shadow: 4.5px 4.5px 0px #18181B !important;
+  font-size: 16px !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.04em !important;
+  text-transform: uppercase !important;
+  cursor: pointer !important;
+  transition: transform 0.12s ease, box-shadow 0.12s ease !important;
+}
+
+.neo-brutalist-intro .intro-action-btn:hover,
+.neo-brutalist-intro .tutorial-action-btn:hover {
+  background: #258ad4 !important;
+  transform: translate(-1.5px, -1.5px) !important;
+  box-shadow: 6px 6px 0px #18181B !important;
+}
+
+.neo-brutalist-intro .intro-action-btn:active,
+.neo-brutalist-intro .tutorial-action-btn:active {
+  transform: translate(2px, 2px) !important;
+  box-shadow: 2px 2px 0px #18181B !important;
+}
+
+/* Back button and Skip button */
+.neo-brutalist-intro .tutorial-back-btn {
+  width: 38px !important;
+  height: 38px !important;
+  background: #FFFFFF !important;
+  border: 2px solid #18181B !important;
+  border-radius: 10px !important;
+  box-shadow: 2px 2px 0px #18181B !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-weight: 900 !important;
+  font-size: 18px !important;
+  cursor: pointer !important;
+  transition: transform 0.12s ease, box-shadow 0.12s ease !important;
+  padding: 0 !important;
+}
+
+.neo-brutalist-intro .tutorial-back-btn:hover {
+  transform: translate(-1px, -1px) !important;
+  box-shadow: 3px 3px 0px #18181B !important;
+  background: #FEF9C3 !important;
+}
+
+.neo-brutalist-intro .tutorial-skip-btn {
+  background: #FFFFFF !important;
+  border: 2px solid #18181B !important;
+  border-radius: 999px !important;
+  box-shadow: 2.5px 2.5px 0px #18181B !important;
+  color: #18181B !important;
+  font-weight: 900 !important;
+  font-size: 13px !important;
+  padding: 6px 16px !important;
+  cursor: pointer !important;
+  transition: transform 0.12s ease, box-shadow 0.12s ease !important;
+}
+
+.neo-brutalist-intro .tutorial-skip-btn:hover {
+  background: #FEF08A !important;
+  transform: translate(-1px, -1px) !important;
+  box-shadow: 3.5px 3.5px 0px #18181B !important;
+}
+
+/* Visual Canvas in Slides */
+.neo-brutalist-intro .tutorial-visual {
+  background: #EFF6FF !important;
+  border: 2.5px solid #18181B !important;
+  border-radius: 18px !important;
+  box-shadow: 3.5px 3.5px 0px #18181B !important;
+}
+
+/* Dots in Slide Footer */
+.neo-brutalist-intro .tutorial-dots {
+  gap: 8px !important;
+}
+
+.neo-brutalist-intro .tutorial-dot {
+  width: 10px !important;
+  height: 10px !important;
+  background: #E4E4E7 !important;
+  border: 2px solid #18181B !important;
+  border-radius: 50% !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+.neo-brutalist-intro .tutorial-dot.active {
+  width: 24px !important;
+  border-radius: 999px !important;
+  background: #FDE047 !important; /* Sunshine Yellow */
+  border: 2px solid #18181B !important;
+  box-shadow: 1.5px 1.5px 0px #18181B !important;
+}
+
+/* Kiosk slide mocks in Neo-Brutalism */
+.neo-brutalist-intro .kiosk-screen-mock {
+  border: 2.5px solid #18181B !important;
+  border-radius: 14px !important;
+  box-shadow: 3px 3px 0px #18181B !important;
+  background: #FFFFFF !important;
+  padding: 14px 18px !important;
+}
+
+.neo-brutalist-intro .kiosk-digit {
+  border: 2px solid #18181B !important;
+  border-radius: 8px !important;
+  box-shadow: 1.5px 1.5px 0px #18181B !important;
+  background: #FFFFFF !important;
+  font-weight: 900 !important;
+}
+
+.neo-brutalist-intro .kiosk-digit.filled {
+  background: #FDE047 !important;
+}
+
+.neo-brutalist-intro .pin-visual-card {
+  border: 2.5px solid #18181B !important;
+  border-radius: 16px !important;
+  box-shadow: 3.5px 3.5px 0px #18181B !important;
+  background: #FFFFFF !important;
+}
+
+.neo-brutalist-intro .mini-tile {
+  border: 2px solid #18181B !important;
+  border-radius: 10px !important;
+  box-shadow: 2px 2px 0px #18181B !important;
+}
+
+.neo-brutalist-intro .mini-type-btn {
+  border: 2px solid #18181B !important;
+  border-radius: 12px !important;
+  box-shadow: 2px 2px 0px #18181B !important;
+  background: #FFFFFF !important;
+}
+
+.neo-brutalist-intro .mini-type-btn.active {
+  background: #FDE047 !important;
+  box-shadow: 3px 3px 0px #18181B !important;
+}
+
+.neo-brutalist-intro .return-success-badge {
+  border: 2.5px solid #18181B !important;
+  border-radius: 16px !important;
+  box-shadow: 3.5px 3.5px 0px #18181B !important;
+  background: #DCFCE7 !important;
+}
+
+
+/* ══════════════════════════════════════════════════════════════════
+   NEO-BRUTALISM: ALERT DIALOG — overrides old plain styles
+   ══════════════════════════════════════════════════════════════════ */
+
+/* Backdrop — slightly darker + stronger blur */
+.alert-dialog-backdrop {
+  background: rgba(0, 0, 0, 0.58) !important;
+  backdrop-filter: blur(5px) !important;
+}
+
+/* Core card */
+.neo-dialog-card {
+  background: #FFFFFF !important;
+  border: 3px solid #18181B !important;
+  border-radius: 24px !important;
+  padding: 32px 28px !important;
+  width: min(92%, 370px) !important;
+  box-shadow: 7px 7px 0px #18181B !important;
+  text-align: center !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 14px !important;
+  animation: neo-dialog-pop 0.22s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+@keyframes neo-dialog-pop {
+  from { transform: scale(0.88) translateY(14px); opacity: 0; }
+  to   { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+/* Icon circle */
+.neo-dialog-card .alert-dialog-icon {
+  font-size: 26px !important;
+  width: 62px !important;
+  height: 62px !important;
+  display: grid !important;
+  place-items: center !important;
+  border-radius: 50% !important;
+  border: 3px solid #18181B !important;
+  font-weight: 900 !important;
+  box-shadow: 3px 3px 0px #18181B !important;
+  flex-shrink: 0 !important;
+}
+
+/* Error icon — coral red */
+.neo-dialog-card.alert-dialog--error .alert-dialog-icon {
+  background: #FEE2E2 !important;
+  color: #DC2626 !important;
+}
+
+/* Success icon — mint green */
+.neo-dialog-card.alert-dialog--success .alert-dialog-icon {
+  background: #DCFCE7 !important;
+  color: #16A34A !important;
+}
+
+/* Warning icon — sunshine yellow */
+.neo-dialog-card.alert-dialog--warning .alert-dialog-icon {
+  background: #FEF9C3 !important;
+  color: #CA8A04 !important;
+}
+
+/* Confirm / logout icon — CoinCubby blue */
+.neo-dialog-card.alert-dialog--confirm .alert-dialog-icon {
+  background: #EFF6FF !important;
+  color: #2563EB !important;
+  font-size: 22px !important;
+}
+
+/* Title */
+.neo-dialog-card .alert-dialog-title {
+  font-size: 20px !important;
+  font-weight: 900 !important;
+  color: #18181B !important;
+  margin: 0 !important;
+  letter-spacing: -0.01em !important;
+}
+
+/* Message */
+.neo-dialog-card .alert-dialog-message {
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  color: #52525B !important;
+  line-height: 1.55 !important;
+  margin: 0 !important;
+}
+
+/* Button row container */
+.alert-dialog-actions {
+  display: flex !important;
+  gap: 10px !important;
+  width: 100% !important;
+  margin-top: 4px !important;
+}
+
+.alert-dialog-actions.single {
+  flex-direction: column !important;
+}
+
+/* Base button (all dialog buttons) */
+.alert-dialog-btn {
+  flex: 1 !important;
+  width: auto !important;
+  padding: 13px 16px !important;
+  border-radius: 12px !important;
+  font-size: 14px !important;
+  font-weight: 900 !important;
+  cursor: pointer !important;
+  letter-spacing: 0.03em !important;
+  border: 2.5px solid #18181B !important;
+  transition: transform 0.1s ease, box-shadow 0.1s ease !important;
+  opacity: 1 !important;
+}
+
+.alert-dialog-btn:hover {
+  transform: translate(-1.5px, -1.5px) !important;
+  opacity: 1 !important;
+}
+
+.alert-dialog-btn:active {
+  transform: translate(2px, 2px) !important;
+  box-shadow: 1.5px 1.5px 0px #18181B !important;
+}
+
+/* Error button */
+.alert-dialog-btn--error {
+  background: #EF4444 !important;
+  color: #FFFFFF !important;
+  box-shadow: 3.5px 3.5px 0px #18181B !important;
+}
+
+.alert-dialog-btn--error:hover {
+  background: #DC2626 !important;
+  box-shadow: 5px 5px 0px #18181B !important;
+}
+
+/* Success button */
+.alert-dialog-btn--success {
+  background: #22C55E !important;
+  color: #FFFFFF !important;
+  box-shadow: 3.5px 3.5px 0px #18181B !important;
+}
+
+.alert-dialog-btn--success:hover {
+  background: #16A34A !important;
+  box-shadow: 5px 5px 0px #18181B !important;
+}
+
+/* Warning button */
+.alert-dialog-btn--warning {
+  background: #FDE047 !important;
+  color: #18181B !important;
+  box-shadow: 3.5px 3.5px 0px #18181B !important;
+}
+
+.alert-dialog-btn--warning:hover {
+  background: #FACC15 !important;
+  box-shadow: 5px 5px 0px #18181B !important;
+}
+
+/* Danger button (Sign Out, destructive confirm) */
+.alert-dialog-btn--danger {
+  background: #EF4444 !important;
+  color: #FFFFFF !important;
+  box-shadow: 3.5px 3.5px 0px #18181B !important;
+}
+
+.alert-dialog-btn--danger:hover {
+  background: #DC2626 !important;
+  box-shadow: 5px 5px 0px #18181B !important;
+}
+
+/* Cancel button */
+.alert-dialog-btn--cancel {
+  background: #FFFFFF !important;
+  color: #18181B !important;
+  box-shadow: 3px 3px 0px #18181B !important;
+}
+
+.alert-dialog-btn--cancel:hover {
+  background: #F4F4F5 !important;
+  box-shadow: 4.5px 4.5px 0px #18181B !important;
+}
+
+
+/* ══════════════════════════════════════════════════════════════════
+   RESPONSIVE FULL-VIEWPORT BACKGROUND CANVAS (DESKTOP & MOBILE)
+   Ensures the Neo-Brutalist dotted matrix canvas stretches across
+   the entire screen width without cutoffs or side margin gaps.
+   ══════════════════════════════════════════════════════════════════ */
+html,
+body,
+.app-shell {
+  min-height: 100svh !important;
+  width: 100% !important;
+  background-color: #F8F9FA !important;
+  background-image: 
+    radial-gradient(#d1d5db 1.4px, transparent 1.4px),
+    linear-gradient(180deg, #F0F8FF 0%, #FAF9F6 40%, #FFFFFF 100%) !important;
+  background-size: 20px 20px, 100% 100% !important;
+  background-attachment: fixed !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
+}
+
+.content-shell {
+  min-height: 100svh !important;
+  width: 100% !important;
+  background: transparent !important;
+}
+
+/* Remove individual background fills on page wrappers so the global full-width canvas shines through seamlessly */
+.page,
+.xml-page,
+.neo-brutalist-home,
+.neo-brutalist-rent,
+.neo-brutalist-history,
+.neo-brutalist-profile,
+.neo-brutalist-feedback {
+  background: transparent !important;
+  background-image: none !important;
+}
+
+
+/* ══════════════════════════════════════════════════════════════════
+   NEO-BRUTALISM ANIMATED LOADING SCREEN (BRANDED LOGO SPLASH)
+   Used for: Initial app open, login transitions, and logout transitions
+   ══════════════════════════════════════════════════════════════════ */
+.neo-loading-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 99999 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background-color: rgba(248, 249, 250, 0.94) !important;
+  backdrop-filter: blur(8px) !important;
+  background-image: radial-gradient(#d1d5db 1.6px, transparent 1.6px) !important;
+  background-size: 20px 20px !important;
+  animation: neoFadeIn 0.22s ease-out !important;
+}
+
+@keyframes neoFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.neo-loading-card {
+  background: #FFFFFF !important;
+  border: 3.5px solid #18181B !important;
+  border-radius: 28px !important;
+  padding: 38px 32px 30px 32px !important;
+  box-shadow: 8px 8px 0px #18181B !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  text-align: center !important;
+  width: min(92%, 360px) !important;
+  box-sizing: border-box !important;
+  animation: neoCardPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+@keyframes neoCardPop {
+  from { transform: scale(0.85) translateY(16px); opacity: 0; }
+  to { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+.neo-loading-logo-box {
+  position: relative !important;
+  width: 124px !important;
+  height: 124px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin-bottom: 8px !important;
+}
+
+.neo-loading-logo {
+  width: 115px !important;
+  height: 115px !important;
+  object-fit: contain !important;
+  filter: drop-shadow(4px 4px 0px #18181B) !important;
+  animation: neoLogoBounce 1.5s ease-in-out infinite !important;
+}
+
+@keyframes neoLogoBounce {
+  0%, 100% {
+    transform: translateY(0) scale(1) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-10px) scale(1.06) rotate(-2deg);
+  }
+}
+
+.neo-loading-brand {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 2px !important;
+  margin-bottom: 4px !important;
+}
+
+.neo-loading-title {
+  font-size: 26px !important;
+  font-weight: 900 !important;
+  color: #18181B !important;
+  letter-spacing: -0.02em !important;
+  margin: 0 !important;
+  line-height: 1.1 !important;
+}
+
+.neo-loading-tagline {
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  color: #71717A !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.08em !important;
+}
+
+/* Wave Dots Indicator (. . . . . . . . . . . .) */
+.neo-loading-wave {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 5px !important;
+  margin: 14px 0 10px 0 !important;
+  padding: 6px 2px !important;
+}
+
+.neo-wave-dot {
+  width: 8px !important;
+  height: 8px !important;
+  border-radius: 50% !important;
+  background: #18181B !important;
+  border: 1.5px solid #18181B !important;
+  display: inline-block !important;
+  animation: neoWaveAnimation 1.25s ease-in-out infinite !important;
+}
+
+.neo-wave-dot:nth-child(3n + 1) {
+  background: #3B9EE8 !important; /* Blue */
+}
+.neo-wave-dot:nth-child(3n + 2) {
+  background: #FDE047 !important; /* Yellow */
+}
+.neo-wave-dot:nth-child(3n) {
+  background: #86EFAC !important; /* Mint */
+}
+
+@keyframes neoWaveAnimation {
+  0%, 100% {
+    transform: translateY(0) scale(0.85);
+    opacity: 0.35;
+  }
+  50% {
+    transform: translateY(-8px) scale(1.25);
+    opacity: 1;
+    box-shadow: 1px 1px 0px #18181B;
+  }
+}
+
+.neo-loading-message {
+  font-size: 14.5px !important;
+  font-weight: 800 !important;
+  color: #18181B !important;
+  margin: 0 !important;
+  line-height: 1.4 !important;
+}
+
+.neo-loading-submessage {
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  color: #71717A !important;
+  margin-top: 4px !important;
 }
