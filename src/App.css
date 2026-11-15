@@ -1362,7 +1362,7 @@ dd {
 }
 
 .profile-page {
-  padding: 0 10px 16px;
+  padding: 18px 16px 36px 16px;
 }
 
 .xml-topbar {
@@ -7178,4 +7178,72 @@ body,
   font-weight: 600 !important;
   color: #71717A !important;
   margin-top: 4px !important;
+}
+
+
+/* ══════════════════════════════════════════════════════════════════
+   UNIFIED PAGE HEADERS & PROFILE SPACING FIX
+   Fixes Profile header label and mascot being pressed against the top edge,
+   and ensures the profile panel sits well below the bell & hamburger buttons.
+   ══════════════════════════════════════════════════════════════════ */
+
+/* Consistent top-level padding across all app pages on mobile */
+.profile-page,
+.neo-brutalist-profile,
+.neo-brutalist-home,
+.neo-brutalist-rent,
+.neo-brutalist-history,
+.neo-brutalist-feedback {
+  padding: 18px 16px 40px 16px !important;
+  box-sizing: border-box !important;
+}
+
+@media (min-width: 900px) {
+  .profile-page,
+  .neo-brutalist-profile {
+    width: min(720px, calc(100% - 96px)) !important;
+    padding: 28px 24px 48px 24px !important;
+  }
+}
+
+/* Unified header container matching Home screen */
+.page-header,
+.xml-screen-header {
+  display: flex !important;
+  align-items: center !important;
+  min-height: 42px !important;
+  margin-bottom: 20px !important;
+  padding: 0 !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.home-logo-wrap {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+
+.home-logo-img {
+  width: 34px !important;
+  height: 34px !important;
+  filter: drop-shadow(2px 2px 0px #18181B) !important;
+  flex-shrink: 0 !important;
+}
+
+.page-header h1,
+.xml-screen-header h1,
+.xml-app-title {
+  font-size: 24px !important;
+  font-weight: 900 !important;
+  color: #18181B !important;
+  letter-spacing: -0.02em !important;
+  line-height: 1.1 !important;
+  margin: 0 !important;
+}
+
+/* Profile hero card clearance below floating controls (bell and hamburger) */
+.neo-brutalist-profile .neo-profile-hero {
+  margin-top: 8px !important;
+  margin-bottom: 18px !important;
 }

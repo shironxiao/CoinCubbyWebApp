@@ -109,10 +109,10 @@ export default function Profile({ session, onLogout, onNavigate, addNotification
           message={lang === 'tl' ? 'Nag-sa-sign out...' : 'Signing out of CoinCubby...'}
         />
       )}
-      <section className="xml-screen-header">
+      <section className="xml-screen-header page-header">
         <div className="home-logo-wrap">
           <img className="home-logo-img coin-logo-animated" src={logo} alt="CoinCubby" />
-          <h1>{t('profile_title')}</h1>
+          <h1 className="xml-app-title">{t('profile_title')}</h1>
         </div>
       </section>
 

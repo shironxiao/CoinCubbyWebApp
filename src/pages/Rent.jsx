@@ -93,10 +93,10 @@ export default function Rent({
 
   return (
     <main className="page xml-page xml-rentals neo-brutalist-rent">
-      <section className="xml-screen-header">
+      <section className="xml-screen-header page-header">
         <div className="home-logo-wrap">
           <img className="home-logo-img coin-logo-animated" src={logo} alt="CoinCubby" />
-          <h1>{t('my_rentals')}</h1>
+          <h1 className="xml-app-title">{t('my_rentals')}</h1>
         </div>
       </section>
 

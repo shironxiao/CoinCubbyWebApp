@@ -113,10 +113,10 @@ export default function History({
 
   return (
     <main className="page xml-page xml-history neo-brutalist-history">
-      <section className="xml-screen-header" style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: '16px', width: '100%', flexWrap: 'wrap' }}>
+      <section className="xml-screen-header page-header">
         <div className="home-logo-wrap">
           <img className="home-logo-img coin-logo-animated" src={logo} alt="CoinCubby" />
-          <h1>{t('rental_history')}</h1>
+          <h1 className="xml-app-title">{t('rental_history')}</h1>
         </div>
       </section>
 
