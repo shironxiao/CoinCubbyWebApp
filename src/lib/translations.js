@@ -176,6 +176,11 @@ export const translations = {
     general_review_sub: "Share your experience even if you haven't rented a locker yet",
     submit_general_review: "Submit General Review",
     general_review_success: "Thank you for your general review!",
+
+    // PWA Install
+    pwa_install_title: "Install CoinCubby App",
+    pwa_install_desc: "Add to home screen for faster access & offline support",
+    pwa_install_btn: "Install",
   },
   tl: {
     // Welcome Onboarding
@@ -354,5 +359,10 @@ export const translations = {
     general_review_sub: "Ibahagi ang iyong karanasan kahit wala ka pang narentahang locker",
     submit_general_review: "Isumite ang Pangkalahatang Puna",
     general_review_success: "Salamat sa iyong pangkalahatang puna!",
+
+    // PWA Install
+    pwa_install_title: "I-install ang CoinCubby App",
+    pwa_install_desc: "Ilagay sa home screen para mas mabilis gamitin at may offline support",
+    pwa_install_btn: "I-install",
   }
 }

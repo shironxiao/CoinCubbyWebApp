@@ -7247,3 +7247,120 @@ body,
   margin-top: 8px !important;
   margin-bottom: 18px !important;
 }
+
+
+/* ── Neo-Brutalist PWA Install Banner ── */
+.neo-install-banner {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 32px);
+  max-width: 480px;
+  background: #ffffff;
+  border: 2.5px solid #18181B;
+  border-radius: 14px;
+  box-shadow: 4px 4px 0px #18181B;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  z-index: 9999;
+  animation: slideUpBanner 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideUpBanner {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 20px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.neo-install-banner-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.neo-install-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  border: 1.5px solid #18181B;
+  background: #f8f9fa;
+  flex-shrink: 0;
+  object-fit: contain;
+}
+
+.neo-install-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.neo-install-text strong {
+  font-size: 14px;
+  font-weight: 800;
+  color: #18181B;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.neo-install-text span {
+  font-size: 11px;
+  font-weight: 500;
+  color: #52525B;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.neo-install-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.neo-install-button {
+  background: #4caf50;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 800;
+  padding: 8px 14px;
+  border: 2px solid #18181B;
+  border-radius: 8px;
+  box-shadow: 2px 2px 0px #18181B;
+  cursor: pointer;
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.neo-install-button:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0px #18181B;
+}
+
+.neo-install-close {
+  background: transparent;
+  border: none;
+  font-size: 16px;
+  font-weight: 700;
+  color: #71717A;
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.neo-install-close:hover {
+  color: #18181B;
+}
