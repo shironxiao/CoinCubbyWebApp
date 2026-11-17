@@ -88,47 +88,6 @@ export default function App() {
   const [validating, setValidating] = useState(() => Boolean(getSession()))
   // Initial branded splash when opening the app
   const [isInitialLoading, setIsInitialLoading] = useState(true)
-  const [installPrompt, setInstallPrompt] = useState(null)
-  const [showInstallBanner, setShowInstallBanner] = useState(false)
-
-  useEffect(() => {
-    const handleBeforeInstallPrompt = (e) => {
-      e.preventDefault()
-      setInstallPrompt(e)
-      const dismissed = sessionStorage.getItem('coincubby.installDismissed')
-      if (!dismissed) {
-        setShowInstallBanner(true)
-      }
-    }
-
-    const handleAppInstalled = () => {
-      setInstallPrompt(null)
-      setShowInstallBanner(false)
-    }
-
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
-    window.addEventListener('appinstalled', handleAppInstalled)
-
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
-      window.removeEventListener('appinstalled', handleAppInstalled)
-    }
-  }, [])
-
-  const handleInstallClick = async () => {
-    if (!installPrompt) return
-    installPrompt.prompt()
-    const { outcome } = await installPrompt.userChoice
-    if (outcome === 'accepted') {
-      setInstallPrompt(null)
-      setShowInstallBanner(false)
-    }
-  }
-
-  const handleDismissInstall = () => {
-    setShowInstallBanner(false)
-    sessionStorage.setItem('coincubby.installDismissed', 'true')
-  }
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -616,35 +575,6 @@ export default function App() {
           <LoadingScreen message={lang === 'tl' ? 'Inihahanda ang CoinCubby...' : 'Loading CoinCubby...'} />
         ) : renderPage()}
       </div>
-
-      {showInstallBanner && installPrompt && (
-        <div className="neo-install-banner" role="banner">
-          <div className="neo-install-banner-content">
-            <img src="/favicon.png" alt="CoinCubby" className="neo-install-icon" />
-            <div className="neo-install-text">
-              <strong>{t('pwa_install_title')}</strong>
-              <span>{t('pwa_install_desc')}</span>
-            </div>
-          </div>
-          <div className="neo-install-actions">
-            <button
-              type="button"
-              className="neo-install-button"
-              onClick={handleInstallClick}
-            >
-              {t('pwa_install_btn')}
-            </button>
-            <button
-              type="button"
-              className="neo-install-close"
-              onClick={handleDismissInstall}
-              aria-label="Dismiss install banner"
-            >
-              ✕
-            </button>
-          </div>
-        </div>
-      )}
 
       <NotificationsDrawer
         isOpen={notifOpen}

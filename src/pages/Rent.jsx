@@ -26,7 +26,7 @@ function LockerIcon({ size = 24, color = 'currentColor' }) {
 }
 
 function calculateOvertimeFee(item, currentTick) {
-  let mins
+  let mins = 0
   if (item.isOpenTime) {
     const durationMs = Math.max(0, currentTick - item.startMs)
     mins = Math.floor(durationMs / 60000)
