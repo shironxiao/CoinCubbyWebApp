@@ -81,7 +81,6 @@ export default function App() {
   const [rentalHistory, setRentalHistory] = useState([])
   const [lockers, setLockers] = useState([])
   const [modules, setModules] = useState([])
-  const [selectedModuleId, setSelectedModuleId] = useState('')
   const [ratesMap, setRatesMap] = useState(null)
   const [loadingData, setLoadingData] = useState(true)
   // True while we're verifying the stored session token on first load
@@ -202,12 +201,6 @@ export default function App() {
 
       if (allModules?.length) {
         setModules(allModules)
-        setSelectedModuleId((prev) => {
-          if (!prev || !allModules.some((m) => String(m.module_id) === String(prev))) {
-            return String(allModules[0].module_id)
-          }
-          return prev
-        })
       }
 
       if (rates) {
@@ -529,8 +522,6 @@ export default function App() {
         onNavigate={navigate}
         addNotification={addNotification}
         modules={modules}
-        selectedModuleId={selectedModuleId}
-        setSelectedModuleId={setSelectedModuleId}
         lockers={lockers}
         walletBalance={walletBalance}
         activeRentals={activeRentals}
