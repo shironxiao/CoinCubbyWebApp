@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { formatMoney } from '../lib/supabase'
 import { formatDuration } from '../lib/time'
 import logo from '../assets/CoinCubby.png'
@@ -31,8 +31,6 @@ function LockerIcon({ size = 18, color = 'currentColor' }) {
 
 export default function Home({
   modules,
-  selectedModuleId,
-  setSelectedModuleId,
   lockers,
   walletBalance,
   activeRentals,
@@ -46,20 +44,6 @@ export default function Home({
 
   const balance = walletBalance
   const loading = loadingData
-
-  const filteredLockers = useMemo(() => {
-    return lockers.filter((locker) => String(locker.moduleId) === String(selectedModuleId))
-  }, [lockers, selectedModuleId])
-
-  const availableCount = useMemo(
-    () => filteredLockers.filter((locker) => locker.status === 'Available').length,
-    [filteredLockers],
-  )
-
-  const selectedModule = useMemo(
-    () => modules.find((moduleItem) => String(moduleItem.module_id) === String(selectedModuleId)),
-    [modules, selectedModuleId],
-  )
 
   useEffect(() => {
     const timer = setInterval(() => setTick(Date.now()), 1000)
@@ -244,65 +228,76 @@ export default function Home({
         </div>
       </section>
 
-      {/* Module Selector */}
-      {modules.length > 1 && (
-        <div className="module-selector">
-          {modules.map((mod) => (
-            <button
-              key={mod.module_id}
-              className={String(mod.module_id) === String(selectedModuleId) ? 'active' : ''}
-              onClick={() => setSelectedModuleId(mod.module_id)}
-            >
-              {mod.name || mod.module_name || `Module ${mod.module_id}`}
-            </button>
-          ))}
-        </div>
-      )}
-
       {/* Locker Panel */}
-      <section className="xml-locker-panel" ref={lockerPanelRef}>
-        <div className="xml-locker-panel-head">
-          <div>
-            <strong style={{ fontSize: '14px', fontWeight: 800 }}>
-              {lang === 'tl' ? 'Mga Locker' : 'Lockers'}
-            </strong>
-            <div className="xml-location">
-              <strong>{availableCount} {lang === 'tl' ? 'Bakante' : 'Available'}</strong>
-              <small>{selectedModule?.location || ''}</small>
-            </div>
-          </div>
-        </div>
-
+      <section className="home-modules-panel" ref={lockerPanelRef}>
         {loading ? (
           <div className="xml-loading">
             <span />
           </div>
-        ) : filteredLockers.length === 0 ? (
+        ) : modules.length === 0 ? (
           <div className="empty-state">{t('no_lockers')}</div>
         ) : (
-          <div className="locker-grid">
-            {filteredLockers.map((locker) => {
-              const rawNum = locker.id || locker.lockerNumber || locker.locker_number || ''
-              const lockerName = String(rawNum).toLowerCase().startsWith('locker') ? rawNum : `Locker ${rawNum}`
-              const sizeName = locker.size || locker.sizeName || locker.size_name || ''
-              const pricePerHr = locker.rate ?? (ratesMap && locker.sizeTypeId ? ratesMap[locker.sizeTypeId] : null)
-              const priceLabel = pricePerHr != null ? `₱${pricePerHr}/hr` : ''
-              const subLabel = [sizeName, priceLabel].filter(Boolean).join(' · ')
+          <div className="home-module-grid">
+            {modules.map((moduleItem, moduleIndex) => {
+              const moduleLockers = lockers
+                .filter(
+                  (locker) => String(locker.moduleId) === String(moduleItem.module_id),
+                )
+                .slice()
+                .sort((a, b) => {
+                  const sizeOrder = { Small: 1, Medium: 2, Large: 3 }
+                  const sizeDifference =
+                    (sizeOrder[a.size] || 99) - (sizeOrder[b.size] || 99)
+                  if (sizeDifference !== 0) return sizeDifference
+                  return String(a.id || '').localeCompare(String(b.id || ''), undefined, {
+                    numeric: true,
+                  })
+                })
+              const moduleAvailableCount = moduleLockers.filter(
+                (locker) => locker.status === 'Available',
+              ).length
+
               return (
-                <div
-                  key={locker.id}
-                  className={`locker-tile ${statusClass(locker.status)}`}
-                >
-                  <span className="locker-icon" aria-hidden="true">
-                    <LockerIcon size={18} color="#3B9EE8" />
-                  </span>
-                  <div>
-                    <strong>{lockerName}</strong>
-                    <small>{subLabel}</small>
-                  </div>
-                  <span className={`locker-dot ${statusClass(locker.status)}`} />
-                  <b>{locker.status}</b>
-                </div>
+                <section className="home-module-panel" key={moduleItem.module_id}>
+                  <header className="home-module-heading">
+                    <strong>{`Module ${moduleIndex + 1}`}</strong>
+                    <span>{moduleAvailableCount} {lang === 'tl' ? 'Bakante' : 'Available'}</span>
+                  </header>
+
+                  {moduleLockers.length === 0 ? (
+                    <div className="empty-state">{t('no_lockers')}</div>
+                  ) : (
+                    <div className="home-module-locker-grid">
+                      {moduleLockers.map((locker) => {
+                        const rawNum = locker.id || locker.lockerNumber || locker.locker_number || ''
+                        const lockerName = String(rawNum).replace(/^Locker\s+/i, '') || 'Locker'
+                        const sizeName = locker.size || locker.sizeName || locker.size_name || ''
+                        const sizeClass = String(sizeName).toLowerCase()
+                        const pricePerHr = locker.rate ?? (ratesMap && locker.sizeTypeId ? ratesMap[locker.sizeTypeId] : null)
+                        const priceLabel = pricePerHr != null ? `₱${pricePerHr}/hr` : ''
+                        const status = String(locker.status || 'Available')
+                        const statusLabel = status.toLowerCase() === 'occupied' ? 'In Use' : status
+
+                        return (
+                          <article
+                            key={locker.id}
+                            className={`home-locker-card ${statusClass(status)} home-locker-card--${sizeClass}`}
+                          >
+                            <div className="home-locker-card-title">
+                              <strong>{lockerName}</strong>
+                              <span className={`home-locker-status ${statusClass(status)}`}>
+                                <i />
+                                {statusLabel}
+                              </span>
+                            </div>
+                            <small>{sizeName} {lang === 'tl' ? 'SUKAT' : 'SIZE'}</small>
+                            {priceLabel && <b>{priceLabel}</b>}
+                          </article>
+                        )
+                      })}
+                    </div>
+                  )}
+                </section>
               )
             })}
           </div>
