@@ -76,7 +76,7 @@ export default function App() {
     localStorage.setItem('coincubby.lang', newLang)
   }
 
-  const [walletBalance, setWalletBalance] = useState(50)
+  const [walletBalance, setWalletBalance] = useState(0)
   const [activeRentals, setActiveRentals] = useState([])
   const [rentalHistory, setRentalHistory] = useState([])
   const [lockers, setLockers] = useState([])
@@ -260,7 +260,7 @@ export default function App() {
   // Clear states when user logs out
   useEffect(() => {
     if (!session) {
-      setWalletBalance(50)
+      setWalletBalance(0)
       setActiveRentals([])
       setRentalHistory([])
       setLockers([])

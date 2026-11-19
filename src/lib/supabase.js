@@ -908,18 +908,16 @@ export async function getOrCreateWallet(session) {
     })
     if (data && data.length > 0) {
       const balance = Number(data[0].balance)
+      if (!Number.isFinite(balance)) return null
       localStorage.setItem(`coincubby.balance.${session.userId}`, balance.toFixed(2))
       return balance
     }
   } catch (err) {
-    console.warn('Failed to fetch wallet from database, trying to create one:', err)
+    console.error('Failed to fetch wallet from database:', err)
+    return null
   }
 
   try {
-    // Read from localStorage to check if there is an existing balance from an old account
-    const cached = localStorage.getItem(`coincubby.balance.${session.userId}`)
-    const initialBalance = cached !== null && !Number.isNaN(Number(cached)) ? Number(cached) : 50.00
-
     await request('/rest/v1/wallets?on_conflict=customer_id', {
       method: 'POST',
       headers: authHeaders(session.accessToken, {
@@ -928,15 +926,14 @@ export async function getOrCreateWallet(session) {
       }),
       body: JSON.stringify({
         customer_id: session.userId,
-        balance: initialBalance
+        balance: 0
       })
     })
-    localStorage.setItem(`coincubby.balance.${session.userId}`, initialBalance.toFixed(2))
-    return initialBalance
+    localStorage.setItem(`coincubby.balance.${session.userId}`, '0.00')
+    return 0
   } catch (err) {
     console.error('Failed to create default wallet in database:', err)
-    const cached = localStorage.getItem(`coincubby.balance.${session.userId}`)
-    return cached !== null ? Number(cached) : 50.00
+    return null
   }
 }
 
